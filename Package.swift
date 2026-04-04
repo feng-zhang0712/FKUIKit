@@ -1,24 +1,44 @@
-// swift-tools-version: 6.3
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
-    name: "FKUIKit",
-    products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "FKUIKit",
-            targets: ["FKUIKit"]
-        ),
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "FKUIKit"
-        ),
-
-    ],
-    swiftLanguageModes: [.v6]
+  name: "FKUIKit",
+  platforms: [
+    .iOS(.v15),
+  ],
+  products: [
+    .library(name: "FKBar", targets: ["FKBar"]),
+    .library(name: "FKButton", targets: ["FKButton"]),
+    .library(name: "FKPopover", targets: ["FKPopover"]),
+    .library(name: "FKPresentation", targets: ["FKPresentation"]),
+    .library(name: "FKUIKitCore", targets: ["FKUIKitCore"]),
+  ],
+  targets: [
+    .target(
+      name: "FKBar",
+      dependencies: ["FKButton", "FKUIKitCore"],
+      path: "Sources/FKBar"
+    ),
+    .target(
+      name: "FKButton",
+      dependencies: ["FKUIKitCore"],
+      path: "Sources/FKButton"
+    ),
+    .target(
+      name: "FKPopover",
+      dependencies: ["FKBar", "FKPresentation", "FKUIKitCore"],
+      path: "Sources/FKPopover"
+    ),
+    .target(
+      name: "FKPresentation",
+      dependencies: ["FKUIKitCore"],
+      path: "Sources/FKPresentation"
+    ),
+    .target(
+      name: "FKUIKitCore",
+      path: "Sources/FKUIKitCore"
+    ),
+  ],
+  swiftLanguageModes: [.v6]
 )

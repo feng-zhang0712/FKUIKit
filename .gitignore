@@ -1,8 +1,25 @@
+# macOS
 .DS_Store
-/.build
-/Packages
-xcuserdata/
+
+# Swift Package Manager / Xcode 本地 Package 工作区（勿提交）
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode（若在本仓库内打开 Package 或放 Example 工程）
 DerivedData/
-.swiftpm/configuration/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+*.xcuserstate
+**/xcuserdata/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods / Carthage（若后续混用）
+Pods/
+Carthage/Build/
+
+# 其他
 .netrc
