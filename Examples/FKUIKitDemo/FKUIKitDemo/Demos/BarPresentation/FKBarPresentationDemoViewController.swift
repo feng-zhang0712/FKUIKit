@@ -23,14 +23,23 @@ final class FKBarPresentationDemoViewController: UIViewController {
 
   private var contentMode: ContentMode = .closure
 
-  private let logLabel: UILabel = {
-    let label = UILabel()
-    label.numberOfLines = 0
-    label.font = .preferredFont(forTextStyle: .footnote)
-    label.textColor = .secondaryLabel
-    label.text = "日志：选中条目后展示浮层；此处记录 FKBarPresentation / Bar 回调。"
-    return label
+  /// Demo 日志：只读可滚动，避免长文本导致 `UILabel` 无限增长进而越点越慢。
+  private let logTextView: UITextView = {
+    let tv = UITextView()
+    tv.isEditable = false
+    tv.isSelectable = false
+    tv.isScrollEnabled = true
+    tv.backgroundColor = .clear
+    tv.textColor = .secondaryLabel
+    tv.font = .preferredFont(forTextStyle: .footnote)
+    tv.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
+    tv.textContainer.lineFragmentPadding = 0
+    tv.text = "日志："
+    tv.translatesAutoresizingMaskIntoConstraints = false
+    return tv
   }()
+
+  private let maxLogCharacters: Int = 6000
 
   private let passthroughButton: UIButton = {
     var config = UIButton.Configuration.filled()
@@ -393,8 +402,9 @@ final class FKBarPresentationDemoViewController: UIViewController {
     let reloadBtn = makeFilledButton(title: "重置 Bar 条目", action: #selector(onReloadBar))
     stack.addArrangedSubview(reloadBtn)
 
-    logLabel.translatesAutoresizingMaskIntoConstraints = false
-    stack.addArrangedSubview(logLabel)
+    stack.addArrangedSubview(logTextView)
+    // 将日志区域限制在固定高度内，保证 panel 布局稳定、避免长文本继续撑大 UI。
+    logTextView.heightAnchor.constraint(equalToConstant: 160).isActive = true
     return stack
   }
 
@@ -448,8 +458,18 @@ final class FKBarPresentationDemoViewController: UIViewController {
 
   private func appendLog(_ line: String) {
     let stamp = Self.timeFormatter.string(from: Date())
-    let prefix = logLabel.text ?? ""
-    logLabel.text = prefix + "\n[\(stamp)] \(line)"
+    let entry = "\n[\(stamp)] \(line)"
+    logTextView.textStorage.append(NSAttributedString(string: entry))
+
+    // 裁剪旧内容，避免文本无限增长导致的性能退化。
+    if logTextView.textStorage.length > maxLogCharacters {
+      let excess = logTextView.textStorage.length - maxLogCharacters
+      logTextView.textStorage.deleteCharacters(in: NSRange(location: 0, length: excess))
+    }
+
+    // 尽量保持滚动位置在末尾。
+    let bottom = max(logTextView.textStorage.length - 1, 0)
+    logTextView.scrollRangeToVisible(NSRange(location: bottom, length: 1))
   }
 
   private static let timeFormatter: DateFormatter = {

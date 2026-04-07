@@ -160,9 +160,7 @@ open class FKBarPresentation: UIView {
       return
     }
     scheduledDismissReason = .programmatic
-    embeddedPresentation.dismiss(animated: animated) {
-      completion?()
-    }
+    embeddedPresentation.dismiss(animated: animated, completion: completion)
   }
 
   // MARK: - Bar
