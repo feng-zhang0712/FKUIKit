@@ -1,7 +1,7 @@
 //
 // FKBar+Configuration.swift
 //
-// `FKBar` 的声明式配置（间距、滚动、外观等），通过关联对象挂在实例上。
+// Declarative `FKBar` configuration (spacing, scrolling, appearance, etc.) stored via associated objects.
 //
 
 import UIKit
@@ -13,16 +13,16 @@ private enum FKBarConfigurationAssociatedKeys {
 }
 
 public extension FKBar {
-  /// 横向滚动条与内部 `UIStackView` 的布局与视觉参数。
+  /// Layout and visual parameters for the horizontal bar and its internal `UIStackView`.
   struct Configuration: Sendable {
-    /// 选中条目后自动滚动时的对齐方式。
+    /// Alignment strategy when auto-scrolling to the selected item.
     public enum SelectionScrollAlignment: Sendable {
       case leading
       case center
       case trailing
     }
 
-    /// 选中触发滚动时的动画时长等。
+    /// Scroll animation parameters when a selection triggers scrolling.
     public struct ScrollAnimation: Sendable {
       public var duration: TimeInterval
 
@@ -31,7 +31,7 @@ public extension FKBar {
       }
     }
 
-    /// Bar 容器 layer 的阴影；与 `Appearance.shadow` 一致语义。
+    /// Shadow on the bar container layer (semantics aligned with `Appearance.shadow`).
     public struct Shadow: Sendable {
       public var color: UIColor
       public var opacity: Float
@@ -51,7 +51,7 @@ public extension FKBar {
       }
     }
 
-    /// Bar 根视图背景、圆角、边框与阴影。
+    /// Background, corner radius, border, and shadow for the bar root view.
     public struct Appearance: Sendable {
       public var backgroundColor: UIColor
       public var alpha: CGFloat
@@ -63,12 +63,12 @@ public extension FKBar {
       public var borderWidth: CGFloat
       public var borderColor: UIColor
 
-      /// 阴影配置；`nil` 表示不显示阴影。
+      /// Shadow configuration; `nil` disables shadow.
       public var shadow: Shadow?
 
-      /// 是否裁剪子视图；`nil` 时会自动策略：
-      /// - 存在阴影：不裁剪
-      /// - 不存在阴影：裁剪
+      /// Whether to clip subviews. When `nil`, uses:
+      /// - Has shadow: do not clip
+      /// - No shadow: clip
       public var clipsToBounds: Bool?
 
       public init(
@@ -100,13 +100,14 @@ public extension FKBar {
     }
 
     public struct SelectionScroll: Sendable {
-      /// 选中条目时是否自动滚动到对应位置。
+    /// Whether to auto-scroll to the corresponding position when an item is selected.
       public var isEnabled: Bool
 
-      /// 条目滚动对齐策略；条目自身如果也带有对齐字段，可在 `FKBar` 内部实现“条目优先”逻辑。
+    /// Alignment strategy when scrolling to an item.
+    /// If the item itself also has an alignment field, `FKBar` may apply item-first logic.
       public var alignment: SelectionScrollAlignment
 
-      /// 当需要滚动时的动画参数。
+    /// Animation parameters when scrolling is needed.
       public var animation: ScrollAnimation
 
       public init(
@@ -120,31 +121,31 @@ public extension FKBar {
       }
     }
 
-    /// 相邻条目之间的间距（映射到内部 `UIStackView.spacing`）。
+    /// Spacing between adjacent items (mapped to `UIStackView.spacing`).
     public var itemSpacing: CGFloat
 
-    /// 条目整体内容的方向性 inset（会映射到内部 `UIScrollView.contentInset` 或其它布局容器）。
+    /// Directional content insets for the items (mapped to `UIScrollView.contentInset` or other containers).
     public var contentInsets: NSDirectionalEdgeInsets
 
-    /// 是否允许在水平方向回弹（适配 iOS 系统滚动体验）。
+    /// Whether horizontal bounce is allowed.
     public var alwaysBounceHorizontal: Bool
 
-    /// 是否显示水平滚动指示器。
+    /// Whether to show the horizontal scroll indicator.
     public var showsHorizontalScrollIndicator: Bool
 
-    /// 是否允许滚动（禁用后 bar 变成静态布局）。
+    /// Whether scrolling is enabled (disabling makes the bar a static layout).
     public var isScrollEnabled: Bool
 
-    /// 当滚动被禁用时，条目是否仍需要响应点击（通常需要）。
+    /// When scrolling is disabled, whether items should still respond to taps/clicks.
     public var enablesSelectionWhileScrollingDisabled: Bool
 
-    /// bar 外观配置（圆角/边框/阴影等）。
+    /// Bar appearance configuration (corners, borders, shadow, etc.).
     public var appearance: Appearance
 
-    /// 选中后滚动策略。
+    /// Scrolling strategy after selection.
     public var selectionScroll: SelectionScroll
 
-    /// 是否应用内置的选中态/禁用态兜底视觉（背景色、前景色、alpha）。
+    /// Whether to apply built-in fallback visuals for selected/disabled states (background/foreground/alpha).
     public var usesDefaultSelectionAppearance: Bool
 
     public var stackViewAlignment: UIStackView.Alignment
@@ -179,7 +180,7 @@ public extension FKBar {
     public static let `default` = Configuration()
   }
 
-  /// 通过关联对象持久化；赋值后会触发 `applyBarConfiguration`。
+  /// Stored via an associated object; assignment triggers `applyBarConfiguration`.
   var configuration: Configuration {
     get {
       (objc_getAssociatedObject(self, &FKBarConfigurationAssociatedKeys.configuration) as? Configuration)
@@ -196,7 +197,8 @@ public extension FKBar {
     }
   }
 
-  /// 将 `configuration` 应用到 bar 根视图及子树中的 `UIScrollView` / `UIStackView`（通过遍历查找，便于扩展文件复用）。
+  /// Applies `configuration` to the bar root view and descendant `UIScrollView` / `UIStackView`
+  /// (found via traversal to keep this file reusable for extensions).
   func applyBarConfiguration(animated: Bool = false, completion: (() -> Void)? = nil) {
     let cfg = configuration
 
@@ -225,7 +227,7 @@ public extension FKBar {
         layer.shadowOpacity = shadow.opacity
         layer.shadowRadius = shadow.radius
         layer.shadowOffset = shadow.offset
-        // `shadowPath` 随布局变化；外部布局结束可再次调用本方法刷新。
+        // `shadowPath` changes with layout. Re-call this method after external layout completes to refresh.
         layer.shadowPath = nil
       } else {
         layer.shadowOpacity = 0
@@ -241,7 +243,7 @@ public extension FKBar {
       scrollView.showsHorizontalScrollIndicator = cfg.showsHorizontalScrollIndicator
       scrollView.isScrollEnabled = cfg.isScrollEnabled
 
-      // NSDirectionalEdgeInsets -> UIEdgeInsets (按当前语义方向转换)
+      // NSDirectionalEdgeInsets -> UIEdgeInsets (converted by current semantic direction)
       let isRTL = (UIView.userInterfaceLayoutDirection(for: self.semanticContentAttribute) == .rightToLeft)
       let left = isRTL ? cfg.contentInsets.trailing : cfg.contentInsets.leading
       let right = isRTL ? cfg.contentInsets.leading : cfg.contentInsets.trailing

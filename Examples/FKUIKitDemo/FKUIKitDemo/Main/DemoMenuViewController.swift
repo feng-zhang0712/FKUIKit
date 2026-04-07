@@ -5,7 +5,7 @@
 
 import UIKit
 
-/// 演示入口列表：按模块跳转到 `Demos/` 下对应页面。
+/// Demo entry list: navigates to view controllers under `Demos/`.
 final class DemoMenuViewController: UITableViewController {
 
   private struct MenuItem {
@@ -17,22 +17,22 @@ final class DemoMenuViewController: UITableViewController {
   private let menuItems: [MenuItem] = [
     MenuItem(
       title: "FKButton",
-      subtitle: "标题、图片、副标题与多种外观",
+      subtitle: "Title, image, subtitle, and appearance variants",
       make: { FKButtonDemoViewController() }
     ),
     MenuItem(
       title: "FKBar",
-      subtitle: "横向条目条与选中 / 回调",
+      subtitle: "Horizontal item bar with selection callbacks",
       make: { FKBarDemoViewController() }
     ),
     MenuItem(
       title: "FKPresentation",
-      subtitle: "锚点浮层与遮罩",
+      subtitle: "Anchored panel with mask",
       make: { FKPresentationDemoViewController() }
     ),
     MenuItem(
       title: "FKBarPresentation",
-      subtitle: "Bar + 浮层组合",
+      subtitle: "Bar + anchored panel composite",
       make: { FKBarPresentationDemoViewController() }
     ),
   ]

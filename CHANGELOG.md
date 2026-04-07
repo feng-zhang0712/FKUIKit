@@ -1,42 +1,56 @@
 # Changelog
 
-本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### 计划中
-- 单元测试 target 与 `Tests/` 目录
-- 可选：`Examples` 示例 App（本地依赖本 Package）
+### Planned
+- Unit test target and `Tests/` directory
+- Optional: Example app under `Examples/` (depending on this package locally)
+
+## [0.2.2] - 2026-04-07
+
+### Changed
+- Localized all source files, core types, and demos to **English-only** (comments, assertion messages, and demo UI strings).
+- Updated `README.md` and `CHANGELOG.md` to English to better support international usage.
+
+## [0.2.1] - 2026-04-07
+
+### Fixed
+- `FKBarPresentation` demo: replace the log area `UILabel` with a scrollable `UITextView`, and cap the maximum text length to avoid slowdowns caused by unbounded log growth.
+- `FKBarPresentation.dismissPresentation(animated:completion:)`: forward `completion` directly to `FKPresentation.dismiss` (remove redundant wrapping).
 
 ## [0.2.0] - 2026-04-05
 
-### 破坏性变更
-- SwiftPM **Product / Target**：`FKPopover` 更名为 **`FKBarPresentation`**，源码目录为 `Sources/FKBarPresentation/`。
-- 类型与协议：`FKPopover` → `FKBarPresentation`；`FKPopoverDelegate` → `FKBarPresentationDelegate`；`FKPopoverDataSource` → `FKBarPresentationDataSource`。
-- 协议方法首参标签：`popover(_:…)` → **`barPresentation(_:…)`**（`shouldPresentFor` / `willPresentFor` / `didPresentFor` / 尺寸与内容提供等）。
-- 闭包类型：`presentationContent` / `presentationViewController` 的首参类型由 `FKPopover` 改为 `FKBarPresentation`。
-- 嵌套类型：如 `PresentationDismissReason` 等现位于 **`FKBarPresentation`** 命名空间下。
+### Breaking changes
+- SwiftPM **product/target**: `FKPopover` was renamed to **`FKBarPresentation`**, and sources moved to `Sources/FKBarPresentation/`.
+- Types and protocols: `FKPopover` → `FKBarPresentation`; `FKPopoverDelegate` → `FKBarPresentationDelegate`; `FKPopoverDataSource` → `FKBarPresentationDataSource`.
+- Delegate method labels: `popover(_:…)` → **`barPresentation(_:…)`** (`shouldPresentFor` / `willPresentFor` / `didPresentFor` / sizing & content APIs).
+- Closure types: `presentationContent` / `presentationViewController` now take `FKBarPresentation` instead of `FKPopover` as the first argument.
+- Nested types: e.g. `PresentationDismissReason` is now under the **`FKBarPresentation`** namespace.
 
-### 迁移说明
-- 将 `import FKPopover` 改为 **`import FKBarPresentation`**，并在 Xcode 依赖中改选对应 Product。
-- 全局替换公开类型名与协议实现中的方法签名；`delegate` / `dataSource` 属性名未变。
+### Migration
+- Replace `import FKPopover` with **`import FKBarPresentation`**, and update the selected product in Xcode.
+- Update public type names and delegate/data source method signatures. Property names `delegate` / `dataSource` remain unchanged.
 
 ## [0.1.0] - 2026-04-04
 
 ### Added
-- 多 Product 布局：`FKUIKitCore`、`FKButton`、`FKBar`、`FKPresentation`、`FKPopover`
-- `Package.swift`：`platforms: [.iOS(.v15)]`、`swiftLanguageModes: [.v6]`
-- `README.md`、`LICENSE`（MIT）、`CHANGELOG.md`、扩充后的 `.gitignore`
+- Multiple SwiftPM products: `FKUIKitCore`, `FKButton`, `FKBar`, `FKPresentation`, `FKPopover`
+- `Package.swift`: `platforms: [.iOS(.v15)]`, `swiftLanguageModes: [.v6]`
+- `README.md`, `LICENSE` (MIT), `CHANGELOG.md`, and an extended `.gitignore`
 
-### Changed（为 SPM / Swift 6 可编译）
-- 各配置类型上 `static let default` 使用 `nonisolated(unsafe)`，避免全局 `default` 的并发检查报错
-- `FKBarConfigurationAssociatedKeys` 使用 `nonisolated(unsafe)` 关联对象 key
-- `FKBar` / `FKPopover` 等补充 `import FKUIKitCore`、`FKButton`、`FKPresentation`、`FKBar` 等模块引用
-- `FKPresentation` 标为 `@MainActor`；`FKBarDelegate`、`FKPresentationDelegate`、`FKPresentationDataSource` 标为 `@MainActor`
-- `FKBar.Item.FKButtonSpec.apply(to:)` 标为 `@MainActor`
-- `FKPopover.PresentationDismissReason` 遵循 `Sendable`
+### Changed (for SwiftPM / Swift 6 compatibility)
+- Use `nonisolated(unsafe)` on `static let default` for config types to satisfy Swift concurrency checks.
+- Use `nonisolated(unsafe)` for `FKBarConfigurationAssociatedKeys` (associated object keys).
+- Add missing module imports (e.g. `FKUIKitCore`, `FKButton`, `FKPresentation`, `FKBar`) across targets.
+- Mark `FKPresentation` as `@MainActor`; `FKBarDelegate`, `FKPresentationDelegate`, `FKPresentationDataSource` are `@MainActor`.
+- Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
+- Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-<!-- 发布到远程后，可将下方链接替换为实际仓库 URL -->
+<!-- Replace the links below with your repository URL when published -->
 [Unreleased]: #
+[0.2.2]: #
+[0.2.1]: #
 [0.2.0]: #
 [0.1.0]: #

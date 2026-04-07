@@ -1,37 +1,38 @@
 //
 //  FKButton+Appearance.swift
 //
-//  `FKButton` 按 `UIControl.State` 应用的外观模型：圆角、阴影、边框、背景与内容边距等。
+// Appearance model applied to `FKButton` for `UIControl.State`: corners, shadow, border, background, and insets.
 //
 
 import UIKit
 
 public extension FKButton {
-  /// 某一状态下按钮容器（layer）与内容边距的外观。
+  /// Appearance for the button container layer and content insets for a specific state.
   struct Appearance {
-    /// 圆角策略（无圆角/固定圆角/胶囊）。
+    /// Corner strategy (none / fixed radius / capsule).
     public let corner: Corner
-    /// 圆角曲线风格（`.continuous` 更接近系统卡片观感）。
+    /// Corner curve style (`.continuous` matches iOS card-like rounding).
     public let cornerCurve: CALayerCornerCurve
-    /// 指定生效的圆角角位；默认全部角。
+    /// Specifies which corners are active; default is all corners.
     public let maskedCorners: CACornerMask
 
-    /// 阴影配置；为 `nil` 表示不显示阴影。
+    /// Shadow configuration. `nil` disables shadow.
     public let shadow: Shadow?
     
-    /// 边框宽度。
+    /// Border width.
     public let borderWidth: CGFloat
-    /// 边框颜色。
+    /// Border color.
     public let borderColor: UIColor
     
-    /// 背景色。
+    /// Background color.
     public let backgroundColor: UIColor
-    /// 整体透明度（0...1）。
+    /// Overall alpha (0...1).
     public let alpha: CGFloat
     
-    /// 内容内边距（用于 title/image 所在 stack）。
+    /// Content insets (applied to the internal title/image stack).
     public let contentInsets: NSDirectionalEdgeInsets
-    /// 是否裁剪子视图。`nil` 时自动策略：有阴影则不裁剪，无阴影则裁剪。
+    /// Whether to clip subviews. When `nil`, uses an automatic strategy:
+    /// with shadow: do not clip; without shadow: clip.
     public let clipsToBounds: Bool?
 
     public init(
@@ -66,7 +67,7 @@ public extension FKButton {
     public nonisolated(unsafe) static let `default` = Appearance()
   }
   
-  /// 与 `Appearance` 配套的 layer 阴影参数。
+  /// Shadow parameters paired with `Appearance`.
   struct Shadow: Equatable, Sendable {
     public let color: UIColor
     public let opacity: Float
@@ -86,11 +87,11 @@ public extension FKButton {
     }
   }
 
-  /// 圆角策略，映射到 `FKButton.layer.cornerRadius` / `maskedCorners`。
+  /// Corner strategy mapped to `FKButton.layer.cornerRadius` / `maskedCorners`.
   ///
-  /// - `none`：不显示圆角。
-  /// - `fixed(CGFloat)`：固定圆角半径（point）。
-  /// - `capsule`：胶囊圆角：根据当前 `bounds` 计算为 `min(width, height) / 2`。
+  /// - `none`: no rounded corners.
+  /// - `fixed(CGFloat)`: fixed corner radius in points.
+  /// - `capsule`: capsule corners computed as `min(width, height) / 2`.
   enum Corner: Equatable, Sendable {
     case none
     case fixed(CGFloat)

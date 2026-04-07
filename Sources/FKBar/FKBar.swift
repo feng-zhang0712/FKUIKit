@@ -1,7 +1,7 @@
 //
 // FKBar.swift
 //
-// 横向可滚动条目条：支持 `FKButton`、系统 `UIButton` 与自定义视图等条目模式。
+// Horizontal scrollable item bar supporting `FKButton`, system `UIButton`, and custom item views.
 //
 
 import UIKit
@@ -10,21 +10,25 @@ import FKUIKitCore
 
 // MARK: - Delegate
 
-/// 条目选中、高亮与重建时的回调；默认实现为空或 `true`，按需覆写。
+/// Callbacks for item selection, highlighting, and rebuilding.
+/// Default implementations are empty or return `true` (override as needed).
 @MainActor
 public protocol FKBarDelegate: AnyObject {
-  /// 返回 `false` 可拦截即将发生的选中。
+  /// Return `false` to intercept an imminent selection.
   func bar(_ bar: FKBar, shouldSelect item: FKBar.Item, at index: Int) -> Bool
-  /// 选中即将变化时调用（仍可能发生后续取消）。
+  /// Called when selection is about to change (may be canceled later).
   func bar(_ bar: FKBar, willSelect incomingItem: FKBar.Item, at incomingIndex: Int, from currentItem: FKBar.Item, at currentIndex: Int)
-  /// 选中已提交；`sender` 为条目对应可交互视图。
+  /// Called after selection is committed.
+  /// `sender` is the interactive view for the selected item.
   func bar(_ bar: FKBar, didSelect sender: UIView, for item: FKBar.Item, at index: Int)
   func bar(_ bar: FKBar, didDeselect sender: UIView, for item: FKBar.Item, at index: Int)
-  /// 是否允许对条目做高亮/准备外观；`prepare` 前会先询问。
+  /// Whether to allow highlighting / appearance preparation for an item.
+  /// `prepare` is called only when `shouldHighlight` returns `true`.
   func bar(_ bar: FKBar, shouldHighlight item: FKBar.Item, at index: Int) -> Bool
-  /// 在 `shouldHighlight` 为 `true` 时调用，用于统一刷新选中/常态外观。
+  /// Called when `shouldHighlight` is `true` to refresh selected/normal appearances consistently.
   func bar(_ bar: FKBar, prepare sender: UIView, for item: FKBar.Item, at index: Int)
-  /// `reloadItems` 完成后调用，参数为规范化后的条目数组（至多一个 `isSelected == true`）。
+  /// Called after `reloadItems` completes.
+  /// The parameter is the normalized item array (at most one `isSelected == true`).
   func bar(_ bar: FKBar, didReloadItems items: [FKBar.Item])
 }
 
@@ -40,15 +44,17 @@ public extension FKBarDelegate {
 
 // MARK: - Bar
 
-/// 内部使用 `UIScrollView` + `UIStackView` 承载条目；配置见 `Configuration` 关联属性。
+/// Uses `UIScrollView` + `UIStackView` internally to host items.
+/// Configuration is available via `Configuration`.
 open class FKBar: UIView {
   
   public weak var delegate: FKBarDelegate?
   
-  /// 当前已由 `reloadItems` 加载的条目（只读快照）。
+  /// Items loaded by `reloadItems` (read-only snapshot).
   public var loadedItems: [Item] { items }
   
-  /// 当前选中条目的下标；无选中时为 `nil`（供 `FKBarPresentation` 等组合组件判断选中态）。
+  /// The index of the currently selected item, or `nil` when none is selected.
+  /// Useful for composite components like `FKBarPresentation`.
   public private(set) var selectedIndex: Int?
   
   private let scrollView = UIScrollView()
@@ -92,7 +98,9 @@ open class FKBar: UIView {
       scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
 
-      // 横向：内容由 stackView 宽度决定；纵向：内容高度与可视区域一致（不纵向滚动），stack 在可视区内垂直居中。
+      // Horizontal: layout width is driven by `stackView`.
+      // Vertical: content height follows the visible area (no vertical scrolling),
+      // and `stackView` is centered vertically within the visible area.
       stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
       stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
       stackView.centerYAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerYAnchor),
@@ -104,7 +112,7 @@ open class FKBar: UIView {
   }
 
   open override var intrinsicContentSize: CGSize {
-    // 让外部在没有显式 height 约束时能拿到高度。
+    // Provide a height even when there is no explicit height constraint.
     let width: CGFloat
     if bounds.width > 0 {
       width = bounds.width
@@ -126,7 +134,8 @@ open class FKBar: UIView {
 
   // MARK: - Public
 
-  /// 用新数组替换当前条目并重建子视图；多个 `isSelected` 时仅保留第一个为选中。
+  /// Replace current items with a new array and rebuild subviews.
+  /// When multiple items are marked `isSelected`, only the first one is kept as selected.
   public func reloadItems(_ items: [Item], animated: Bool = false) {
     isHandlingSelection = true
     defer { isHandlingSelection = false }
@@ -169,7 +178,8 @@ open class FKBar: UIView {
     delegate?.bar(self, didReloadItems: normalized)
   }
   
-  /// 以编程方式选中与 `id` 匹配的条目（会走与点击一致的选中逻辑与回调）。
+  /// Programmatically select the item whose `id` matches.
+  /// This uses the same selection logic and callbacks as a tap.
   public func selectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
     guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
       completion?()
@@ -188,7 +198,8 @@ open class FKBar: UIView {
     completion?()
   }
   
-  /// 按 `id` 取消选中：仅当该条目当前为选中态时生效（与 `selectionBehavior` 无关）。
+  /// Deselect by `id`.
+  /// Effective only when the item is currently selected (independent of `selectionBehavior`).
   public func deselectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
     guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
       completion?()
@@ -197,7 +208,8 @@ open class FKBar: UIView {
     deselectIndex(idx, animated: animated, completion: completion)
   }
 
-  /// 取消指定下标的选中态：仅当该下标当前为选中项时生效。
+  /// Deselect a given index.
+  /// Effective only when that index is currently selected.
   public func deselectIndex(_ index: Int, animated: Bool = true, completion: VoidHandler? = nil) {
     guard index >= 0, index < items.count else {
       completion?()
@@ -222,19 +234,21 @@ open class FKBar: UIView {
     completion?()
   }
   
-  /// 写入关联配置并应用；`animated` 与 `completion` 传给 `applyBarConfiguration`。
+  /// Stores and applies associated configuration.
+  /// `animated` and `completion` are forwarded to `applyBarConfiguration`.
   public func setConfiguration(_ configuration: Configuration, animated: Bool = false, completion: (() -> Void)? = nil) {
     self.configuration = configuration
     applyBarConfiguration(animated: animated, completion: completion)
     invalidateIntrinsicContentSize()
   }
   
-  /// 供 delegate / 外部调试获取条目对应的“源视图”（UIButton / FKButton / custom wrapper）。
+  /// Returns the "source view" for a given item.
+  /// (e.g. `UIButton`, `FKButton`, or a custom wrapper).
   public func sourceView(forItemAt index: Int) -> UIView? {
     sourceViewsByIndex[safe: index]
   }
 
-  /// 供 delegate 在 `didSelect` 中统一刷新视觉。
+  /// Invoked by delegates to refresh visuals after `didSelect`.
   public func refreshPreparedAppearance() {
     guard let delegate else { return }
     for (idx, item) in items.enumerated() {
@@ -249,7 +263,7 @@ open class FKBar: UIView {
   // MARK: - Private
   
   private func makeView(for item: Item, at index: Int) -> UIView {
-    // 先做无障碍（delegate 的 prepare 可能会覆盖，但不会伤害基础信息）。
+    // Setup accessibility first (delegate's prepare may override, but base info stays intact).
     func applyAccessibility(_ view: UIView) {
       if let label = item.accessibilityLabel { view.accessibilityLabel = label }
       if let hint = item.accessibilityHint { view.accessibilityHint = hint }
@@ -302,8 +316,8 @@ open class FKBar: UIView {
   }
 
   private func applyLayoutConstraints(from layout: Item.Layout, to view: UIView) {
-    // 本轮 bar 只声明性的把宽高类约束应用到条目外层 wrapper/控件；
-    // wrapperInsets 只用于 custom wrapper 内部布局。
+    // This bar applies fixed-size constraints to the item wrapper/control.
+    // `wrapperInsets` is used only inside the custom wrapper layout.
     if let fixedWidth = layout.fixedWidth {
       view.widthAnchor.constraint(equalToConstant: fixedWidth).isActive = true
     }
@@ -396,7 +410,8 @@ open class FKBar: UIView {
     commitProposedSelection(at: index, proposed: proposed, sender: sender, animated: animated)
   }
 
-  /// 提交 `proposed` 选中态并走与点击一致的回调链（`actionHandler` → delegate 门禁 → 应用状态 → `didDeselect`/`didSelect` → 滚动）。
+  /// Commit the proposed selection state and run the same callback chain as a tap
+  /// (`actionHandler` → delegate gate → apply state → `didDeselect`/`didSelect` → scroll).
   private func commitProposedSelection(at index: Int, proposed: Item, sender: UIView, animated: Bool) {
     let tappedItem = items[index]
     let previousSelectedIndex = selectedIndex
@@ -434,7 +449,7 @@ open class FKBar: UIView {
     if let delegate {
       let newSelectedIndex = selectedIndex
 
-      // 先回调 deselect（如果选中项变化了）。
+      // Call didDeselect first (if the selected item changes).
       if let prevIndex = previousSelectedIndex, prevIndex != newSelectedIndex {
         if let prevSender = sourceViewsByIndex[safe: prevIndex] {
           delegate.bar(
@@ -446,7 +461,7 @@ open class FKBar: UIView {
         }
       }
 
-      // 再回调 select（仅当“点击项最终处于 selected”）。
+      // Then call didSelect (only when the tapped item ends up being selected).
       if items[index].isSelected {
         delegate.bar(self, didSelect: sender, for: items[index], at: index)
       }

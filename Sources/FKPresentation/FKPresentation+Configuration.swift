@@ -1,23 +1,25 @@
 //
 // FKPresentation+Configuration.swift
 //
-// 锚点弹出层的外观、布局、遮罩、动画与重定位等声明式配置。
+// Declarative configuration for an anchored overlay/panel: appearance, layout, mask,
+// animations, and repositioning.
 //
 
 import UIKit
 
 public extension FKPresentation {
-  /// 顶层聚合；各子 struct 均有 `.default`。
+  /// Top-level aggregation; each nested struct provides a `.default`.
   struct Configuration {
     // MARK: Appearance
 
-    /// 控制 Presentation 内容壳层阴影在轮廓上的分布（通过 `CALayer.shadowPath` 近似；非四周模式时为沿边的窄条路径）。
+    /// Controls how the panel content chrome shadow is distributed along the outline
+    /// (approximated via `CALayer.shadowPath`; non-rounded-all-edges uses a narrow edge strip).
     public enum ShadowEdgeStyle: Equatable, Sendable {
-      /// 随垂直锚点：在源视图下方弹出时阴影集中在底边，在上方弹出时集中在顶边。
+      /// Follows the vertical anchor: bottom shadow when presented below, top shadow when presented above.
       case followsPresentation
-      /// 沿整块圆角矩形外轮廓四周（常规卡片阴影）。
+      /// Shadow around the entire rounded rectangle outline (standard card shadow).
       case omnidirectional
-      /// 仅在指定边上集中阴影；可组合多条边，例如 `.top`、`.top.union(.bottom)`。
+      /// Shadow only on specified edges; you can combine edges (e.g. `.top`, `.top.union(.bottom)`).
       case edges(UIRectEdge)
     }
 
@@ -26,7 +28,8 @@ public extension FKPresentation {
       public var opacity: Float
       public var offset: CGSize
       public var radius: CGFloat
-      /// 阴影在边缘上的分布方式；`omnidirectional` 与未配置 `shadowPath` 时的整块阴影一致。
+      /// How the shadow is distributed along edges.
+      /// `omnidirectional` matches the full shadow when `shadowPath` is not explicitly configured.
       public var edgeStyle: ShadowEdgeStyle
 
       public init(
@@ -44,7 +47,7 @@ public extension FKPresentation {
       }
     }
 
-    /// 浮层容器（chrome）背景、圆角、边框与阴影。
+    /// Appearance for the panel chrome (background, corners, border, and shadow).
     public struct Appearance {
       public var backgroundColor: UIColor
       public var alpha: CGFloat
@@ -56,12 +59,12 @@ public extension FKPresentation {
       public var borderWidth: CGFloat
       public var borderColor: UIColor
 
-      /// 阴影配置；`nil` 表示不显示阴影。
+      /// Shadow configuration; `nil` disables shadow.
       public var shadow: Shadow?
 
-      /// 是否裁剪子视图；`nil` 时采用策略：
-      /// - 有阴影：不裁剪
-      /// - 无阴影：裁剪
+      /// Whether to clip subviews. When `nil`, uses:
+      /// - Has shadow: do not clip
+      /// - No shadow: clip
       public var clipsToBounds: Bool?
 
       public init(
@@ -93,19 +96,19 @@ public extension FKPresentation {
     }
 
     // MARK: Content
-    /// 用户内容相对 chrome 的内边距与高度相关约束。
+    /// Constraints related to user content padding and height (relative to chrome).
     public struct Content {
-      /// 内容的内边距（用户内容相对 presentation 内容区域的 padding）。
+      /// Content padding (applies as the inset inside the presentation content area).
       public var containerInsets: NSDirectionalEdgeInsets
 
-      /// 当用户传入 UIViewController，但其 view 没有背景色时，这里给一个兜底背景。
+      /// Fallback background when embedding a `UIViewController` whose view has no background color.
       public var fallbackBackgroundColor: UIColor
 
-      /// 若想显式指定高度（优先级高于 AutoLayout 计算）。
-      /// `nil` 表示由 intrinsic / preferredSize / fitting 计算。
+      /// Explicit height override (higher priority than Auto Layout calculation).
+      /// `nil` means computed from intrinsic / preferredSize / fitting.
       public var preferredHeight: CGFloat?
 
-      /// 高度的上限（用于适配可视区域；`nil` 表示不额外限制，使用可用区域计算兜底）。
+      /// Upper bound for height (used to adapt to visible area). `nil` means no extra limit.
       public var maxHeight: CGFloat?
 
       public init(
@@ -124,7 +127,7 @@ public extension FKPresentation {
     }
 
     // MARK: Layout/Position
-    /// 相对 `sourceView` / `sourceRect` 的摆放、宽度与垂直翻转策略。
+    /// Placement, width, and vertical flip strategy relative to `sourceView` / `sourceRect`.
     public struct Layout {
       public enum HorizontalAlignment {
         case leading
@@ -133,20 +136,20 @@ public extension FKPresentation {
       }
 
       public enum WidthMode {
-        /// 与 `sourceView` 宽度一致。
+        /// Match the `sourceView` width.
         case matchSourceWidth
-        /// 固定宽度（point）。
+        /// Fixed width in points.
         case custom(CGFloat)
-        /// 在可用宽度内按内容 fitting 并 clamp。
+        /// Fit to content within available width and clamp.
         case fitWithinContainer
-        /// 在 safe area 与 inset 内尽量铺满可用宽度。
+        /// Prefer filling available width within safe area and insets.
         case fullWidth
       }
 
-      /// sourceView 下方到 presentation 顶部的间距。
+      /// Vertical spacing from the bottom of `sourceView` to the top of the presentation.
       public var verticalSpacing: CGFloat
 
-      /// presentation 在水平方向相对 sourceView 的对齐方式。
+      /// Horizontal alignment of the presentation relative to `sourceView`.
       public var horizontalAlignment: HorizontalAlignment
 
       public var widthMode: WidthMode
@@ -157,9 +160,9 @@ public extension FKPresentation {
       public var maxHeight: CGFloat?
       public var clampToSafeArea: Bool
 
-      /// `true` 时优先在锚点下方展示。
+      /// When `true`, prefer showing below the anchor.
       public var preferBelowSource: Bool
-      /// `true` 时当下方空间不足可翻转到锚点上方。
+      /// When `true`, flip above the anchor when there isn't enough space below.
       public var allowFlipToAbove: Bool
 
       public init(
@@ -188,7 +191,7 @@ public extension FKPresentation {
     }
 
     // MARK: Mask/Interaction
-    /// 全屏或半屏遮罩及其点击关闭行为。
+    /// Full-screen or half-screen mask and its tap-to-dismiss behavior.
     public struct Mask {
       public var enabled: Bool
       public var backgroundColor: UIColor
@@ -197,7 +200,7 @@ public extension FKPresentation {
       public var tapToDismissEnabled: Bool
       public var passthroughViews: [UIView]
 
-      /// 视觉覆盖策略：仅覆盖 sourceView 下方区域。
+      /// Mask coverage strategy: cover only the region below `sourceView`.
       public var coveragePolicy: CoveragePolicy
 
       public enum CoveragePolicy {
@@ -223,11 +226,12 @@ public extension FKPresentation {
       public nonisolated(unsafe) static let `default` = Mask()
     }
 
-    /// 展示/消失过程中与用户交互、旋转重定位相关的策略。
+    /// Strategies related to user interaction and repositioning during show/dismiss.
     public struct Interaction {
-      /// 重定位（例如旋转）过程中是否允许通过遮罩 dismiss。
+      /// Whether dismissing via the mask is allowed during repositioning (e.g. rotation).
       public var allowDismissingDuringReposition: Bool
-      /// 动画时是否允许用户交互（默认允许以保持系统体验；但如需更严格可以关）。
+      /// Whether user interaction is allowed during animation.
+      /// Default is enabled to preserve a system-like experience.
       public var isUserInteractionEnabledDuringAnimation: Bool
 
       public init(
@@ -242,7 +246,7 @@ public extension FKPresentation {
     }
 
     // MARK: Animation
-    /// 展示与消失的分段动画参数；遵守 Reduce Motion。
+    /// Phase-based animation parameters for show and dismiss. Respects Reduce Motion.
     public struct Animation {
       public struct Phase {
         public var duration: TimeInterval
@@ -250,12 +254,12 @@ public extension FKPresentation {
         public var alphaFrom: CGFloat
         public var alphaTo: CGFloat
 
-        /// 位移（仅 transform；不改高度）
+        /// Translation (transform only; does not change height).
         public var translation: CGVector
-        /// 缩放（仅 transform；不改高度）
+        /// Scale (transform only; does not change height).
         public var scale: CGFloat
 
-        /// 是否使用 spring 动画（高阶效果；Reduce Motion 会降级）。
+        /// Whether to use spring animations (advanced effect; Reduce Motion downgrades it).
         public var useSpring: Bool
 
         public init(
@@ -278,9 +282,9 @@ public extension FKPresentation {
       }
 
       public enum ReduceMotionBehavior {
-        /// 直接去掉 transform，使用极短时长 alpha。
+        /// Remove transform entirely and use a very short alpha-only transition.
         case immediateNoTransform
-        /// 缩短时长并尽量保留 alpha。
+        /// Shorten the duration while trying to keep alpha transition.
         case shortDuration
       }
 
@@ -302,7 +306,7 @@ public extension FKPresentation {
     }
 
     // MARK: Reposition
-    /// 屏幕旋转、`traitCollection` 变化时是否自动重算 frame。
+    /// Whether to automatically recompute the frame when the device rotates or `traitCollection` changes.
     public struct Reposition {
       public var enabled: Bool
       public var animationDuration: TimeInterval

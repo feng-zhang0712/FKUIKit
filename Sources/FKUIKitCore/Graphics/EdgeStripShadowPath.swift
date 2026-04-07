@@ -1,18 +1,20 @@
 //
 // EdgeStripShadowPath.swift
 //
-// 沿矩形指定边生成窄条 `CGPath`，用于 `CALayer.shadowPath`，近似「仅某些边投射阴影」。
+// Generates narrow strip `CGPath` segments along specified rectangle edges, used as `CALayer.shadowPath`,
+// approximating "shadows on only some edges".
 //
 
 import UIKit
 
 public enum EdgeStripShadowPath {
-  /// 在 `bounds` 内，沿 `edges` 指定的边生成拼接后的路径（每条边为一条窄矩形带）。
+  /// Generates a concatenated path along the specified `edges` within `bounds`.
+  /// Each edge contributes a narrow rectangular strip.
   /// - Parameters:
-  ///   - bounds: 通常为图层在自身坐标系下的 `bounds`。
-  ///   - edges: 需要参与阴影的边；可组合，例如 `.bottom`、`.top.union(.left)`。
-  ///   - shadowRadius: 与 `CALayer.shadowRadius` 对齐，用于估算条带厚度。
-  ///   - shadowOffset: 与 `CALayer.shadowOffset` 对齐，参与厚度估算。
+  ///   - bounds: Usually the layer's `bounds` in its own coordinate space.
+  ///   - edges: Edges that participate in shadowing; can be combined (e.g. `.bottom`, `.top.union(.left)`).
+  ///   - shadowRadius: Aligned with `CALayer.shadowRadius` for estimating strip thickness.
+  ///   - shadowOffset: Aligned with `CALayer.shadowOffset` for thickness estimation.
   public static func cgPath(
     in bounds: CGRect,
     edges: UIRectEdge,

@@ -1,18 +1,18 @@
 //
 // Types.swift
 //
-// 组件间共用的闭包类型别名，减少重复书写。
+// Shared closure typealiases across components to reduce repetition.
 //
 
 import Foundation
 
-/// 无参数、无返回值回调：用于完成通知、点击事件等场景。
+/// A callback with no parameters and no return value (completion, tap handling, etc.).
 public typealias VoidHandler = () -> Void
-/// 单值回调：用于把一个确定值抛给外部。
+/// A single-value callback.
 public typealias ValueHandler<Value> = (Value) -> Void
-/// 可空单值回调：用于值可能不存在（nil）的异步/事件场景。
+/// An optional single-value callback for cases where the value may be nil.
 public typealias OptionalValueHandler<Value> = (Value?) -> Void
-/// 错误回调：仅传递失败原因。
+/// Error callback (passes only the failure reason).
 public typealias ErrorHandler = (Error) -> Void
-/// 结果回调：统一承载成功值或失败错误。
+/// Result callback carrying either a success value or a failure error.
 public typealias ResultHandler<Value> = (Result<Value, Error>) -> Void

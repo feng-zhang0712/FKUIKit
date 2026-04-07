@@ -1,34 +1,37 @@
 //
 // FKButton.swift
 //
-// 自绘布局的按钮控件：多状态标题/副标题/多槽位图片/自定义视图，以及圆角、阴影、边框等。
+// Custom-layout button supporting multi-state title/subtitle, multi-slot images, and custom views.
+// Also provides corners, shadow, and border styling.
 //
 
 import UIKit
 
-/// 基于 `UIControl` 状态机的按钮；内容通过 `setTitle`、`setImage`、`setAppearance` 等按 `UIControl.State` 注册。
+/// A `UIControl` state-driven button.
+/// Register content via `setTitle`, `setImage`, `setAppearance`, etc. for `UIControl.State`.
 ///
-/// 子类化时可重写 `layoutSubviews`、`intrinsicContentSize`、`point(inside:with:)` 等（已标为 `open`）。
+/// Subclasses may override `layoutSubviews`, `intrinsicContentSize`, `point(inside:with:)`, etc. (`open`).
 open class FKButton: UIControl {
   private typealias StateKey = UInt
   private typealias StatefulValues<T> = [StateKey: T]
   
-  /// 按钮内容的排布轴（影响图片与标题的排列方式）。
+  /// The layout axis for the button content (affects how image and title are arranged).
   ///
-  /// - `horizontal`：水平方向排列。
-  /// - `vertical`：垂直方向排列。
+  /// - `horizontal`: laid out horizontally.
+  /// - `vertical`: laid out vertically.
   ///
-  /// 在 `.textAndImage` 下决定图文相对排布；其它 `content.kind` 下影响较小或无效。
+  /// Under `.textAndImage`, it determines relative placement of text and image.
+  /// Other `content.kind` values have smaller or no effect.
   public enum Axis {
     case horizontal
     case vertical
   }
   
-  /// 图片槽位（`setImage` / `setLeadingImage` / `setTrailingImage` 的语义）。
+  /// Image slots (semantics for `setImage` / `setLeadingImage` / `setTrailingImage`).
   ///
-  /// - `center`：图片居中槽位（仅在 `.imageOnly` 或 `.textAndImage` 局部需要时使用）。
-  /// - `leading`：与标题相邻的“前置”图片槽位（在不同 `axis` 下会对应不同的物理方向）。
-  /// - `trailing`：与标题相邻的“后置”图片槽位（在不同 `axis` 下会对应不同的物理方向）。
+  /// - `center`: centered image slot (used only when needed by `.imageOnly` or some `.textAndImage` cases).
+  /// - `leading`: image slot placed adjacent to the title on the leading side (maps to different physical directions across `axis`).
+  /// - `trailing`: image slot placed adjacent to the title on the trailing side (maps to different physical directions across `axis`).
   public enum ImageSlot {
     case center
     case leading
@@ -51,18 +54,19 @@ open class FKButton: UIControl {
   
   private let stackView = UIStackView()
 
-  /// 仅在 `content.kind` 为 `.textOnly` / `.textAndImage` 时创建（通过 title 容器加入层级）；
-  /// 切换到 `.imageOnly` / `.custom` 时通过 `releaseTitleLabel()` 回收。
+  /// Created only when `content.kind` is `.textOnly` / `.textAndImage` (added via the title container).
+  /// When switching to `.imageOnly` / `.custom`, it is released via `releaseTitleLabel()`.
   public private(set) var titleLabel: UILabel?
   
-  /// 在 `titleLabel` 下方展示的“副标题”标签。
-  /// 布局方式：subtitle 永远使用约束贴在 `titleLabel` 下方。
+  /// Subtitle label shown below `titleLabel`.
+  /// Layout: subtitle is always constrained beneath `titleLabel`.
   public private(set) var subtitleLabel: UILabel?
   
-  /// 标题容器（subtitle 永远在 title 下方）。
+  /// Title container (subtitle is always below the title).
   private var titleContainerView: UIView?
   
-  /// 仅在需要对应槽位时创建；`clearImageSlot(_:)` / `releaseAllImageSlots()` 回收。
+  /// Created only when the corresponding slot is needed.
+  /// Recovered via `clearImageSlot(_:)` / `releaseAllImageSlots()`.
   public private(set) var imageView: UIImageView?
   public private(set) var leadingImageView: UIImageView?
   public private(set) var trailingImageView: UIImageView?
@@ -76,7 +80,8 @@ open class FKButton: UIControl {
   private var subtitleTrailingConstraint: NSLayoutConstraint?
   private var subtitleBottomConstraint: NSLayoutConstraint?
 
-  /// 仅在 `Content.Kind.custom` 时创建；`releaseCustomContentHost()` 回收。
+  /// Created only for `Content.Kind.custom`.
+  /// Released via `releaseCustomContentHost()`.
   private var customContentHost: FKButtonCustomContentHostView?
   private var embeddedCustomContentView: UIView?
 
@@ -86,7 +91,8 @@ open class FKButton: UIControl {
   private var subtitleByState: StatefulValues<Text> = [:]
   private var customContentByState: StatefulValues<CustomContent> = [:]
 
-  /// 按槽位存状态数据；不预分配空字典，与「视图按需创建」一致，仅在首次 `setImage` 时写入。
+  /// Store state data per slot.
+  /// No pre-allocation (consistent with on-demand view creation); written on the first `setImage`.
   private var imagesBySlotAndState: [ImageSlot: StatefulValues<Image>] = [:]
   
   private var imageConstraints: [ObjectIdentifier: [NSLayoutConstraint]] = [:]
@@ -150,7 +156,8 @@ open class FKButton: UIControl {
   
   // MARK: - Public — Appearance
 
-  /// 注册指定状态下的外观；当前状态匹配时会立即应用。
+  /// Register an appearance for the given state.
+  /// If the current state matches, it is applied immediately.
   public func setAppearance(_ appearance: Appearance, for state: UIControl.State) {
     appearanceByState[state.rawValue] = appearance
     applyAppearanceForCurrentState()
@@ -162,7 +169,8 @@ open class FKButton: UIControl {
 
   // MARK: - Public — Text
 
-  /// 注册主标题文案；`nil` 清除该状态。
+  /// Register the main title.
+  /// Use `nil` to clear this state.
   public func setTitle(_ text: Text?, for state: UIControl.State) {
     if let text {
       titleByState[state.rawValue] = text
@@ -176,7 +184,8 @@ open class FKButton: UIControl {
     titleByState[state.rawValue]
   }
   
-  /// 注册副标题；`nil` 清除该状态。
+  /// Register the subtitle.
+  /// Use `nil` to clear this state.
   public func setSubtitle(_ text: Text?, for state: UIControl.State) {
     if let text {
       subtitleByState[state.rawValue] = text
@@ -192,32 +201,33 @@ open class FKButton: UIControl {
 
   // MARK: - Public — Images
 
-  /// 设置居中槽位图片（`.center`）。
+  /// Set the centered image slot (`.center`).
   public func setImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .center)
     applyImagesForCurrentState()
   }
   
-  /// 设置前置侧图片槽（相对标题的 leading，随 `axis` 与布局方向映射到具体几何位置）。
+  /// Set the leading-side image slot (relative to the title's leading side,
+  /// mapped to concrete geometry based on `axis` and layout direction).
   public func setLeadingImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .leading)
     applyImagesForCurrentState()
   }
   
-  /// 设置后置侧图片槽。
+  /// Set the trailing-side image slot.
   public func setTrailingImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .trailing)
     applyImagesForCurrentState()
   }
   
-  /// 读取已注册的槽位图片。
+  /// Read the registered image for a given slot/state pair.
   public func image(for state: UIControl.State, slot: ImageSlot) -> Image? {
     imagesBySlotAndState[slot]?[state.rawValue]
   }
 
   // MARK: - Public — Custom content
 
-  /// 需 `content.kind == .custom`；`nil` 清除该状态。
+  /// Requires `content.kind == .custom`. Use `nil` to clear this state.
   public func setCustomContent(_ content: CustomContent?, for state: UIControl.State) {
     if let content {
       customContentByState[state.rawValue] = content
@@ -303,7 +313,7 @@ open class FKButton: UIControl {
     }
   }
 
-  // MARK: - Title & Subtitle lifecycle (按需创建 / 及时回收)
+  // MARK: - Title & Subtitle lifecycle (lazy creation / timely cleanup)
 
   private func makeTitleLabel() -> UILabel {
     let label = UILabel()
@@ -322,7 +332,7 @@ open class FKButton: UIControl {
 
   private func releaseTitleLabel() {
     guard let label = titleLabel else { return }
-    // 先清理副标题，避免内部约束残留。
+    // Clear the subtitle first to avoid leaving behind internal constraints.
     releaseSubtitleLabel()
     titleContainerView?.removeFromSuperview()
     titleContainerView = nil
@@ -394,7 +404,8 @@ open class FKButton: UIControl {
     }
     label.translatesAutoresizingMaskIntoConstraints = false
     
-    // subtitle 加入后：title 底部不再直接贴 container bottom，而是由 subtitle 承接。
+    // When the subtitle is added, the title's bottom is no longer pinned directly to the container;
+    // it is connected through the subtitle.
     titleLabelBottomConstraintToContainer?.isActive = false
     
     let leading = label.leadingAnchor.constraint(equalTo: container.leadingAnchor)
@@ -427,11 +438,12 @@ open class FKButton: UIControl {
     label.attributedText = nil
     subtitleLabel = nil
     
-    // subtitle 销毁后：重新启用 title 作为 container 底部锚点
+    // After the subtitle is released, re-enable the title as the container's bottom anchor.
     titleLabelBottomConstraintToContainer?.isActive = true
   }
 
-  /// 按当前解析后的 `Text.contentInsets` 更新标题容器内约束（含主标题与副标题间距：`title.bottom + subtitle.top`）。
+  /// Update constraints inside the title container based on the resolved `Text.contentInsets`,
+  /// including spacing between title and subtitle (`title.bottom + subtitle.top`).
   private func updateTitleContainerLayoutConstraints() {
     guard let container = titleContainerView,
           let titleL = titleLabel,
@@ -694,7 +706,8 @@ open class FKButton: UIControl {
     let element = resolveCustomContent()
     let newView = element?.view
 
-    // 当前仅单槽「纯自定义」布局；`spacingToAdjacentContent` 预留给未来图文混排扩展。
+    // Only a single "pure custom" content slot for now.
+    // `spacingToAdjacentContent` is reserved for future mixed text/image layouts.
     stackView.spacing = element?.spacingToAdjacentContent ?? 0
 
     let host = customContentHostIfNeeded()
@@ -722,7 +735,7 @@ open class FKButton: UIControl {
   }
 
   private var stateResolutionOrder: [UIControl.State] {
-    // 解析顺序：disabled → selected → highlighted → normal
+    // State resolution order: disabled → selected → highlighted → normal.
     if !isEnabled { return [.disabled, .normal] }
     if isSelected { return [.selected, .normal] }
     if isHighlighted { return [.highlighted, .normal] }
@@ -920,7 +933,7 @@ open class FKButton: UIControl {
 
 // MARK: - Custom content sizing
 
-/// 自定义内容宿主：单个子视图贴边填充，向 `UIStackView` 上报 fitting / intrinsic 尺寸。
+/// Custom content host: a single subview pinned to fill, reporting fitting/intrinsic size to `UIStackView`.
 private final class FKButtonCustomContentHostView: UIView {
   override init(frame: CGRect) {
     super.init(frame: frame)

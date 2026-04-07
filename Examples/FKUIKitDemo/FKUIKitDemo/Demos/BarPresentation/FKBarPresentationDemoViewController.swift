@@ -2,7 +2,7 @@
 //  FKBarPresentationDemoViewController.swift
 //  FKUIKitDemo
 //
-//  演示 `FKBarPresentation`：`FKBar` 选中条目后自锚点弹出 `FKPresentation`。
+//  Demo for `FKBarPresentation`: select an item in `FKBar` to present an anchored `FKPresentation`.
 //
 
 import UIKit
@@ -11,7 +11,7 @@ import FKBar
 import FKBarPresentation
 import FKPresentation
 
-/// 演示 `FKBarPresentation`：条 + 浮层联动、闭包 / DataSource 两种内容来源、遮罩与 delegate 日志。
+/// Demo for `FKBarPresentation`: bar + panel, closure vs data source content, mask behavior, and callback logs.
 final class FKBarPresentationDemoViewController: UIViewController {
 
   private let barPresentation = FKBarPresentation()
@@ -23,7 +23,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
 
   private var contentMode: ContentMode = .closure
 
-  /// Demo 日志：只读可滚动，避免长文本导致 `UILabel` 无限增长进而越点越慢。
+  /// Demo logs: read-only & scrollable to avoid unbounded growth and slowdowns.
   private let logTextView: UITextView = {
     let tv = UITextView()
     tv.isEditable = false
@@ -34,7 +34,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
     tv.font = .preferredFont(forTextStyle: .footnote)
     tv.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
     tv.textContainer.lineFragmentPadding = 0
-    tv.text = "日志："
+    tv.text = "Log:"
     tv.translatesAutoresizingMaskIntoConstraints = false
     return tv
   }()
@@ -43,7 +43,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
 
   private let passthroughButton: UIButton = {
     var config = UIButton.Configuration.filled()
-    config.title = "Passthrough（遮罩下仍可点）"
+    config.title = "Passthrough (tap-through on mask)"
     config.cornerStyle = .medium
     config.baseBackgroundColor = .systemGray5
     config.baseForegroundColor = .label
@@ -51,7 +51,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
     return UIButton(configuration: config)
   }()
 
-  private let modeSegment = UISegmentedControl(items: ["闭包内容", "DataSource"])
+  private let modeSegment = UISegmentedControl(items: ["Closure", "DataSource"])
   private let maskDismissSwitch = UISwitch()
   private let shadowSwitch = UISwitch()
   private let allowFlipSwitch = UISwitch()
@@ -135,7 +135,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
       return FKBar.Item(id: id, mode: .button(config), isSelected: false, selectionBehavior: .toggle)
     }
 
-    /// `FKBar.Item.Mode.fkButton`：`FKButton` 胶囊样式。
+    /// `FKBar.Item.Mode.fkButton`: `FKButton` capsule style.
     func fkCapsuleTab(_ id: String, title: String) -> FKBar.Item {
       var spec = FKBar.Item.FKButtonSpec()
       spec.content = FKButton.Content(kind: .textOnly)
@@ -166,7 +166,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
       return FKBar.Item(id: id, mode: .fkButton(spec), isSelected: false, selectionBehavior: .toggle)
     }
 
-    /// `FKButton`：标题 + **右侧**朝上的小箭头（`chevron.up`，尾随图槽）。
+    /// `FKButton`: title + a trailing up chevron (`chevron.up`).
     func fkTabWithTrailingUpArrow(_ id: String, title: String) -> FKBar.Item {
       var spec = FKBar.Item.FKButtonSpec()
       spec.content = FKButton.Content(kind: .textAndImage(.trailing))
@@ -211,7 +211,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
       return FKBar.Item(id: id, mode: .fkButton(spec), isSelected: false, selectionBehavior: .toggle)
     }
 
-    /// `FKBar.Item.Mode.customView`：自绘标签（Bar 外包 wrapper 并挂点击手势）。
+    /// `FKBar.Item.Mode.customView`: a custom chip view (wrapped by the bar with a tap gesture).
     func customChipTab(_ id: String, title: String) -> FKBar.Item {
       let label = UILabel()
       label.text = title
@@ -245,21 +245,21 @@ final class FKBarPresentationDemoViewController: UIViewController {
       textTab("tab-a", title: "Alpha"),
       textTab("tab-b", title: "Beta"),
       textTab("tab-c", title: "Gamma"),
-      fkCapsuleTab("tab-fk1", title: "FK·甲"),
-      fkCapsuleTab("tab-fk2", title: "FK·乙"),
-      fkTabWithTrailingUpArrow("tab-fk-up", title: "FK·箭头"),
-      customChipTab("tab-custom1", title: "自定义"),
+      fkCapsuleTab("tab-fk1", title: "FK·A"),
+      fkCapsuleTab("tab-fk2", title: "FK·B"),
+      fkTabWithTrailingUpArrow("tab-fk-up", title: "FK·Chevron"),
+      customChipTab("tab-custom1", title: "Custom"),
       customChipTab("tab-custom2", title: "Chip"),
     ]
     barPresentation.reloadBarItems(items, animated: false)
-    // 先全部未选中，再程序化选中首项，避免 `.toggle` 下「已选中再 select」被当成取消。
+    // Start from all-unselected, then programmatically select the first item.
     barPresentation.bar.selectIndex(0, animated: false)
   }
 
-  // MARK: - 浮层内容
+  // MARK: - Panel content
 
   private func makePanelContent(for index: Int, item: FKBar.Item) -> UIView {
-    let title = "条目 #\(index)\nid: \(String(item.id.prefix(6)))…\n\n可改选其他 Tab 或点遮罩关闭。"
+    let title = "Item #\(index)\nid: \(String(item.id.prefix(6)))…\n\nSelect another tab or tap the mask to dismiss."
 
     let container = UIView()
     container.backgroundColor = .white
@@ -293,7 +293,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
     return container
   }
 
-  // MARK: - 配置
+  // MARK: - Configuration
 
   private func applyPresentationConfiguration() {
     var barCfg = FKBar.Configuration.default
@@ -364,7 +364,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
   @objc private func onModeChanged(_ sender: UISegmentedControl) {
     contentMode = ContentMode(rawValue: sender.selectedSegmentIndex) ?? .closure
     syncDataSourceBinding()
-    appendLog("内容来源 → \(contentMode == .closure ? "闭包" : "DataSource")")
+    appendLog("content source → \(contentMode == .closure ? "closure" : "dataSource")")
   }
 
   @objc private func onConfigChanged() {
@@ -372,7 +372,7 @@ final class FKBarPresentationDemoViewController: UIViewController {
   }
 
   @objc private func onPassthroughTapped() {
-    appendLog("Passthrough 按钮被点击（遮罩未拦截）")
+    appendLog("passthrough button tapped (mask did not intercept)")
   }
 
   private func makeControlPanel() -> UIView {
@@ -385,25 +385,25 @@ final class FKBarPresentationDemoViewController: UIViewController {
     tip.numberOfLines = 0
     tip.font = .preferredFont(forTextStyle: .footnote)
     tip.textColor = .tertiaryLabel
-    tip.text = "说明：浮层锚定为当前选中的条目标签，进入页面后会自动选中首项并弹出浮层。"
+    tip.text = "Notes: The panel is anchored to the currently selected item. On first load, the first item is selected and the panel is shown."
 
     stack.addArrangedSubview(tip)
     stack.addArrangedSubview(modeSegment)
-    stack.addArrangedSubview(makeToggleRow(title: "遮罩点击关闭", switchView: maskDismissSwitch))
-    stack.addArrangedSubview(makeToggleRow(title: "浮层阴影", switchView: shadowSwitch))
-    stack.addArrangedSubview(makeToggleRow(title: "允许翻到锚点上方", switchView: allowFlipSwitch))
-    stack.addArrangedSubview(makeToggleRow(title: "固定浮层高度（滑块）", switchView: preferredHeightSwitch))
-    stack.addArrangedSubview(makeSliderRow(title: "高度", slider: heightSlider))
+    stack.addArrangedSubview(makeToggleRow(title: "Tap mask to dismiss", switchView: maskDismissSwitch))
+    stack.addArrangedSubview(makeToggleRow(title: "Panel shadow", switchView: shadowSwitch))
+    stack.addArrangedSubview(makeToggleRow(title: "Allow flipping above anchor", switchView: allowFlipSwitch))
+    stack.addArrangedSubview(makeToggleRow(title: "Fixed panel height (slider)", switchView: preferredHeightSwitch))
+    stack.addArrangedSubview(makeSliderRow(title: "Height", slider: heightSlider))
     stack.addArrangedSubview(passthroughButton)
 
-    let dismissBtn = makeFilledButton(title: "代码关闭浮层", action: #selector(onDismissPanel))
+    let dismissBtn = makeFilledButton(title: "Dismiss panel (code)", action: #selector(onDismissPanel))
     stack.addArrangedSubview(dismissBtn)
 
-    let reloadBtn = makeFilledButton(title: "重置 Bar 条目", action: #selector(onReloadBar))
+    let reloadBtn = makeFilledButton(title: "Reload bar items", action: #selector(onReloadBar))
     stack.addArrangedSubview(reloadBtn)
 
     stack.addArrangedSubview(logTextView)
-    // 将日志区域限制在固定高度内，保证 panel 布局稳定、避免长文本继续撑大 UI。
+    // Keep the log area at a fixed height to avoid UI growth from long text.
     logTextView.heightAnchor.constraint(equalToConstant: 160).isActive = true
     return stack
   }
@@ -448,12 +448,12 @@ final class FKBarPresentationDemoViewController: UIViewController {
 
   @objc private func onDismissPanel() {
     barPresentation.dismissPresentation(animated: true, completion: nil)
-    appendLog("调用 dismissPresentation(animated:)")
+    appendLog("dismissPresentation(animated:) called")
   }
 
   @objc private func onReloadBar() {
     reloadBarItems()
-    appendLog("reloadBarItems（Alpha 默认选中）")
+    appendLog("reloadBarItems (Alpha selected by default)")
   }
 
   private func appendLog(_ line: String) {
@@ -461,13 +461,13 @@ final class FKBarPresentationDemoViewController: UIViewController {
     let entry = "\n[\(stamp)] \(line)"
     logTextView.textStorage.append(NSAttributedString(string: entry))
 
-    // 裁剪旧内容，避免文本无限增长导致的性能退化。
+    // Trim old content to avoid performance degradation from unbounded growth.
     if logTextView.textStorage.length > maxLogCharacters {
       let excess = logTextView.textStorage.length - maxLogCharacters
       logTextView.textStorage.deleteCharacters(in: NSRange(location: 0, length: excess))
     }
 
-    // 尽量保持滚动位置在末尾。
+    // Keep the scroll position near the bottom.
     let bottom = max(logTextView.textStorage.length - 1, 0)
     logTextView.scrollRangeToVisible(NSRange(location: bottom, length: 1))
   }
@@ -504,7 +504,7 @@ extension FKBarPresentationDemoViewController: FKBarPresentationDelegate {
   }
 }
 
-// MARK: - FKBarDelegate（转发演示）
+// MARK: - FKBarDelegate (forwarding demo)
 
 extension FKBarPresentationDemoViewController: FKBarDelegate {
   func bar(_ bar: FKBar, didSelect sender: UIView, for item: FKBar.Item, at index: Int) {

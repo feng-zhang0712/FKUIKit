@@ -1,32 +1,33 @@
 //
 // FKButton+Elements.swift
 //
-// 标题、副标题、图片槽、自定义内容等 **值类型** 模型，与 `setTitle` / `setImage` 等状态 API 配合使用。
+// Value-type models for titles, subtitles, image slots, and custom content.
 //
 
 import UIKit
 
 public extension FKButton {
-  /// 标题或副标题的展示参数，由内部 `UILabel` 承载；通过 `setTitle(_:for:)` / `setSubtitle(_:for:)` 按状态注册。
+  /// Title/subtitle display parameters rendered by an internal `UILabel`.
+  /// Register per state via `setTitle(_:for:)` / `setSubtitle(_:for:)`.
   ///
-  /// 相对系统 `UIButton`：把字体、段落、阴影、无障碍等收拢在一处，便于与 `content.kind`、`axis` 及状态机一致更新。
+  /// Compared to `UIButton`: keep font, paragraph styling, shadow, and accessibility in one place.
   struct Text {
-    /// 纯文本；若 `attributedText != nil` 则优先使用富文本。
+    /// Plain text. When `attributedText != nil`, rich text takes precedence.
     public var text: String?
     public var attributedText: NSAttributedString?
 
-    /// 非富文本时的字体与颜色。
+    /// Font and color used for non-attributed text.
     public var font: UIFont
     public var color: UIColor
 
     public var alignment: NSTextAlignment
-    /// `0` 表示不限制行数。
+    /// `0` means no line limit.
     public var numberOfLines: Int
     public var lineBreakMode: NSLineBreakMode
 
-    /// 字距/tracking，单位 point。
+    /// Tracking (kerning), in points.
     public var kerning: CGFloat
-    /// `0` 表示默认行高。
+    /// `0` means default line height.
     public var lineHeight: CGFloat
     public var lineSpacing: CGFloat
 
@@ -40,11 +41,11 @@ public extension FKButton {
     public var uppercased: Bool
     public var lowercased: Bool
 
-    /// `nil` 时可回退为朗读 `text`。
+    /// Used for accessibility; falls back to `text` when `nil`.
     public var accessibilityLabel: String?
     public var accessibilityHint: String?
 
-    /// 标题或副标题在标题容器内的方向性内边距。
+    /// Directional insets for the title/subtitle inside its container.
     public var contentInsets: NSDirectionalEdgeInsets
 
     public init(
@@ -94,9 +95,10 @@ public extension FKButton {
     public nonisolated(unsafe) static let `default` = Text()
   }
   
-  /// 图片槽展示参数，内部由 `UIImageView` 承载；通过 `setImage` / `setLeadingImage` / `setTrailingImage` 按状态注册。
+  /// Display parameters for an image slot (hosted by `UIImageView`).
+  /// Register per state via `setImage` / `setLeadingImage` / `setTrailingImage`.
   struct Image {
-    /// 优先使用 `image`；为 `nil` 时可回退 `systemName`（SF Symbol）。
+    /// Prefer `image`. When `image` is nil, fall back to `systemName` (SF Symbol).
     public var image: UIImage?
     public var systemName: String?
 
@@ -104,7 +106,7 @@ public extension FKButton {
     public var symbolConfiguration: UIImage.SymbolConfiguration?
     public var flipsForRightToLeftLayoutDirection: Bool
 
-    /// `nil` 时使用控件 `tintColor`。
+    /// When nil, uses the control's `tintColor`.
     public var tintColor: UIColor?
     public var alpha: CGFloat
 
@@ -117,12 +119,12 @@ public extension FKButton {
 
     public var spacingToTitle: CGFloat
     public var contentInsets: NSDirectionalEdgeInsets
-    /// 扩大可点区域，单位同 `UIEdgeInsets` 正值语义。
+    /// Expands tappable area (same sign semantics as `UIEdgeInsets`).
     public var hitTestOutsets: UIEdgeInsets
 
     public var accessibilityLabel: String?
     public var accessibilityHint: String?
-    /// UI 测试等场景的定位标识。
+    /// Accessibility/testing identifier.
     public var accessibilityIdentifier: String?
 
     public init(
@@ -168,14 +170,16 @@ public extension FKButton {
     public nonisolated(unsafe) static let `default` = Image()
   }
   
-  /// 将自定义 `UIView` 作为主内容时使用；需将 `content.kind` 设为 `.custom`，并用 `setCustomContent(_:for:)` 按状态注册。
+  /// Use when providing a custom `UIView` as the main content.
+  /// Set `content.kind` to `.custom` and register via `setCustomContent(_:for:)`.
   ///
-  /// 不在此重复包装 `view` 上应由调用方设置的属性（如 `alpha`、`backgroundColor`、`tint`、约束、无障碍等），以免覆盖外部配置。尺寸请用 Auto Layout 或 `intrinsicContentSize`。
+  /// This does not wrap properties that should be set by the caller (e.g. alpha, backgroundColor, tint, constraints).
+  /// Size should be handled via Auto Layout or `intrinsicContentSize`.
   struct CustomContent {
-    /// `nil` 表示该状态下无自定义内容。
+    /// `nil` means no custom content for this state.
     public var view: UIView?
 
-    /// 与同轴相邻内容的间距，语义对齐 `Image.spacingToTitle`；当前仅单自定义视图布局时通常无视觉效果，预留给图文混排扩展。
+    /// Spacing to adjacent content (semantic alignment with `Image.spacingToTitle`).
     public var spacingToAdjacentContent: CGFloat
 
     public init(view: UIView? = nil, spacingToAdjacentContent: CGFloat = 6) {

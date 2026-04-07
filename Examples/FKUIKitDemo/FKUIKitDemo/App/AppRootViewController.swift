@@ -5,7 +5,7 @@
 
 import UIKit
 
-/// 应用根导航：承载「组件演示」列表，子页面由各 `Demos` 下的 ViewController 提供。
+/// App root navigation controller for demo pages under `Demos/`.
 final class AppRootViewController: UINavigationController {
 
   init() {
@@ -14,7 +14,7 @@ final class AppRootViewController: UINavigationController {
     applySystemNavigationBarAppearance()
   }
 
-  /// 使用与系统设置页类似的 **不透明** 导航栏背景（浅色下为白/灰白，深色模式随 `systemBackground`）。
+  /// Uses an opaque navigation bar background, similar to the Settings app.
   private func applySystemNavigationBarAppearance() {
     let appearance = UINavigationBarAppearance()
     appearance.configureWithOpaqueBackground()

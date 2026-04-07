@@ -1,7 +1,8 @@
 //
 // FKPresentation.swift
 //
-// 非 `UIPresentationController` 的锚点浮层：遮罩、动画、安全区与重定位由配置驱动。
+// Anchored overlay/panel (not `UIPresentationController`): mask, animation, safe-area handling,
+// and repositioning are driven by configuration.
 //
 
 import UIKit
@@ -9,9 +10,10 @@ import FKUIKitCore
 
 @MainActor
 public protocol FKPresentationDataSource: AnyObject {
-  /// 可选首选尺寸；`nil` 时使用 intrinsic / fitting / 可用区域计算。
+  /// Optional preferred size. When `nil`, the size is computed from intrinsic/fitting/safe-area.
   func presentationPreferredSize(_ presentation: FKPresentation) -> CGSize?
-  /// 由数据源提供内容视图；若在 `show(..., content:)` 已传入 `UIView`/`UIViewController` 则不会调用。
+  /// Content root view provided by the data source.
+  /// When `show(..., content:)` already supplies a `UIView`/`UIViewController`, this is not called.
   func presentationContentView(_ presentation: FKPresentation) -> UIView?
 }
 
@@ -20,10 +22,11 @@ public extension FKPresentationDataSource {
   func presentationContentView(_ presentation: FKPresentation) -> UIView? { nil }
 }
 
-/// 展示生命周期、关闭门禁与重定位钩子。
+/// Presentation lifecycle, dismissal gating, and repositioning hooks.
 @MainActor
 public protocol FKPresentationDelegate: AnyObject {
-  /// 浮层已加入层级且 frame 将算好或已算好之前调用（具体时机以当前实现为准）。
+  /// Called after the panel is added to the hierarchy and before (or right after) `frame` is finalized.
+  /// The exact timing depends on the current implementation.
   func presentationWillPresent(_ presentation: FKPresentation)
   func presentationDidPresent(_ presentation: FKPresentation)
 
@@ -31,7 +34,7 @@ public protocol FKPresentationDelegate: AnyObject {
   func presentationWillDismiss(_ presentation: FKPresentation)
   func presentationDidDismiss(_ presentation: FKPresentation)
 
-  /// 重定位前可改写 `sourceRect` 与 `sourceView`（in-out）。
+  /// Before repositioning, you may rewrite `sourceRect` and `sourceView` (in-out).
   func presentation(_ presentation: FKPresentation, willRepositionTo rect: inout CGRect, in view: inout UIView)
 }
 
@@ -44,17 +47,18 @@ public extension FKPresentationDelegate {
   func presentation(_ presentation: FKPresentation, willRepositionTo rect: inout CGRect, in view: inout UIView) {}
 }
 
-/// 协调遮罩、内容容器与动画；`show` / `dismiss` 为唯一对外状态迁移入口。
+/// Coordinates mask, content container, and animations.
+/// `show` / `dismiss` are the only public state transitions.
 @MainActor
 public final class FKPresentation {
   // MARK: Public API
   public weak var delegate: FKPresentationDelegate?
   public weak var dataSource: FKPresentationDataSource?
 
-  /// 展示过程中修改通常会触发重算布局与外观（视实现而定）。
+  /// Changes during presentation typically trigger re-layout and appearance updates (implementation-dependent).
   public var configuration: Configuration = .default
 
-  /// 当前是否处于展示状态（含动画进行中，以内部标志为准）。
+  /// Whether the panel is currently presented (includes animation in-flight; driven by internal state).
   public private(set) var isPresented: Bool = false
 
   // MARK: Content holders
@@ -68,15 +72,17 @@ public final class FKPresentation {
   // MARK: Anchor
   private weak var sourceView: UIView?
   private var sourceRect: CGRect = .zero
-  /// 当前布局解析后的垂直锚点方向，与 `configuration.layout`（如 `preferBelowSource`、`allowFlipToAbove`）及可用空间共同决定。
-  /// 影响：Presentation 的 Y 坐标、上下可用高度、入场/退场 `transform`，以及 `ShadowEdgeStyle.followsPresentation` 时阴影落在顶边还是底边。
+  /// Resolved vertical anchor direction (above/below) derived from `configuration.layout`
+  /// (e.g. `preferBelowSource`, `allowFlipToAbove`) and available space.
+  /// Affects: the panel Y position, available height, show/dismiss transforms,
+  /// and which edge the shadow follows when `ShadowEdgeStyle.followsPresentation` is enabled.
   private var preferredAnchorVertical: AnchorVertical = .below
 
-  /// Presentation 相对源矩形（`sourceRect`）的垂直摆放结果：在源下方或源上方。
+  /// Vertical placement relative to the source rect: below or above.
   private enum AnchorVertical {
-    /// Presentation 接在源底边以下（常规下拉式）。
+    /// Panel is placed below the source (typical dropdown behavior).
     case below
-    /// Presentation 接在源顶边以上（空间不足时翻转到上方等场景）。
+    /// Panel is placed above the source (flipped when there isn't enough room).
     case above
   }
 
@@ -100,7 +106,7 @@ public final class FKPresentation {
 
   // MARK: Show
 
-  /// 在 `container`（默认自动查找）中自 `sourceView` 锚定展示 `content`。
+  /// Present `content` anchored to `sourceView` inside `container` (auto-resolved when nil).
   public func show(
     from sourceView: UIView,
     sourceRect: CGRect? = nil,
@@ -119,7 +125,7 @@ public final class FKPresentation {
     )
   }
 
-  /// 嵌入 `UIViewController`（会参与生命周期：`addChild` 等由内部处理）。
+  /// Present a `UIViewController` as embedded content (internal handling includes `addChild`, etc.).
   public func show(
     from sourceView: UIView,
     sourceRect: CGRect? = nil,
@@ -159,7 +165,8 @@ public final class FKPresentation {
     // Keep the source view visually above the presentation.
     // This makes the presentation look "embedded" into the anchor bottom edge.
     bringSourceViewAbovePresentation()
-    // 内容由 `prepareForLayout` → `applyAppearance` → `ensureContentInsetWrapper` → `embedContent` 嵌入 wrapper，避免重复嵌入 chrome。
+    // Content is embedded via `prepareForLayout` → `applyAppearance` → `ensureContentInsetWrapper` → `embedContent`
+    // to avoid duplicate chrome embedding.
     prepareForLayout()
 
     // Compute & apply final frame BEFORE animation (height already decided).
@@ -213,7 +220,7 @@ public final class FKPresentation {
 
   // MARK: Dismiss
 
-  /// 移除遮罩与内容；若未展示则直接调用 `completion`。
+  /// Remove the mask and content. If not presented, call `completion` immediately.
   public func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
     guard isPresented else { completion?(); return }
 
@@ -422,7 +429,7 @@ public final class FKPresentation {
     let presentationFrame = CGRect(x: x, y: y, width: chromeWidth, height: chromeHeight).integral
 
     // chrome frame is inset by contentInsets; currently chrome itself is full presentation size,
-    // 用户内容经 `contentInsetWrapper` 约束在 chrome 内（见 `ensureContentInsetWrapper`）。
+    // User content is constrained within chrome via `contentInsetWrapper` (see `ensureContentInsetWrapper`).
     // But we still need chrome frame because for animation we keep container frame fixed.
     let chromeFrame = CGRect(origin: .zero, size: presentationFrame.size)
 
@@ -641,11 +648,11 @@ public final class FKPresentation {
       layer.shadowPath = nil
     }
 
-    // 通过 inset wrapper 落实 `configuration.content.containerInsets`。
+    // Apply `configuration.content.containerInsets` via the inset wrapper.
     ensureContentInsetWrapper()
   }
 
-  /// 根据 `shadow.edgeStyle` 与当前 `bounds` / 锚点更新 `contentChromeView` 的 `shadowPath`。
+  /// Update `contentChromeView`'s `shadowPath` based on `shadow.edgeStyle` and current bounds/anchor.
   private func updateChromeShadowPath() {
     guard let chrome = contentChromeView,
           let shadow = configuration.appearance.shadow
@@ -738,7 +745,8 @@ public final class FKPresentation {
     embedContent(into: wrapper)
   }
 
-  /// 将当前 `content` 嵌入指定宿主；目前仅用于 `contentInsetWrapper`。
+  /// Embed the current `content` into the given host.
+  /// Currently used for `contentInsetWrapper` only.
   private func embedContent(into hostView: UIView) {
     if let oldVC = embeddedContentViewController {
       oldVC.willMove(toParent: nil)

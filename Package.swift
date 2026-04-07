@@ -16,9 +16,8 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "FKBar",
-      dependencies: ["FKButton", "FKUIKitCore"],
-      path: "Sources/FKBar"
+      name: "FKUIKitCore",
+      path: "Sources/FKUIKitCore"
     ),
     .target(
       name: "FKButton",
@@ -26,9 +25,9 @@ let package = Package(
       path: "Sources/FKButton"
     ),
     .target(
-      name: "FKBarPresentation",
-      dependencies: ["FKBar", "FKPresentation", "FKUIKitCore"],
-      path: "Sources/FKBarPresentation"
+      name: "FKBar",
+      dependencies: ["FKButton", "FKUIKitCore"],
+      path: "Sources/FKBar"
     ),
     .target(
       name: "FKPresentation",
@@ -36,8 +35,9 @@ let package = Package(
       path: "Sources/FKPresentation"
     ),
     .target(
-      name: "FKUIKitCore",
-      path: "Sources/FKUIKitCore"
+      name: "FKBarPresentation",
+      dependencies: ["FKBar", "FKPresentation", "FKUIKitCore"],
+      path: "Sources/FKBarPresentation"
     ),
   ],
   swiftLanguageModes: [.v6]

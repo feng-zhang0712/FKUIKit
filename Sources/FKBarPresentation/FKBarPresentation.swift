@@ -1,9 +1,10 @@
 //
 // FKBarPresentation.swift
 //
-// 组合控件：`FKBar` + `FKPresentation`。
-// 配置见 `Configuration`；`presentationContent` / `presentationViewController` 优先于 `dataSource`；
-// `barDelegate` 与 `presentation*` 在内部处理之后额外转发。
+// Composite component: `FKBar` + `FKPresentation`.
+// See `Configuration` for settings.
+// `presentationContent` / `presentationViewController` take precedence over `dataSource`.
+// `barDelegate` and `presentation*` callbacks are forwarded after internal handling.
 //
 
 import UIKit
@@ -13,17 +14,19 @@ import FKUIKitCore
 
 // MARK: - Delegate / DataSource
 
-/// 组合件级生命周期与展示门禁（细粒度动画/遮罩仍可用 `presentationDelegate` 接到 `FKPresentation`）。
+/// Composite-level lifecycle callbacks and presentation gating.
+/// For fine-grained animation/mask callbacks, use `presentationDelegate` (from `FKPresentation`).
 public protocol FKBarPresentationDelegate: AnyObject {
-  /// 某条目已选中，即将按配置尝试展示浮层；返回 `false` 可拦截。
+  /// Called when an item is selected and the panel is about to be presented.
+  /// Return `false` to prevent presentation.
   func barPresentation(_ barPresentation: FKBarPresentation, shouldPresentFor item: FKBar.Item, at index: Int) -> Bool
-  /// 浮层即将出现（`FKPresentation` 已走 `show` 流程）。
+  /// The panel is about to appear (`FKPresentation.show` has been triggered).
   func barPresentation(_ barPresentation: FKBarPresentation, willPresentFor item: FKBar.Item, at index: Int)
-  /// 浮层已出现。
+  /// The panel has appeared.
   func barPresentation(_ barPresentation: FKBarPresentation, didPresentFor item: FKBar.Item, at index: Int)
-  /// 浮层即将消失（含点遮罩、改选、代码关闭等）。
+  /// The panel is about to be dismissed (mask tap, selection change, programmatic dismiss, etc.).
   func barPresentation(_ barPresentation: FKBarPresentation, willDismissPresentation reason: FKBarPresentation.PresentationDismissReason)
-  /// 浮层已消失。
+  /// The panel has been dismissed.
   func barPresentation(_ barPresentation: FKBarPresentation, didDismissPresentation reason: FKBarPresentation.PresentationDismissReason)
 }
 
@@ -35,13 +38,14 @@ public extension FKBarPresentationDelegate {
   func barPresentation(_ barPresentation: FKBarPresentation, didDismissPresentation reason: FKBarPresentation.PresentationDismissReason) {}
 }
 
-/// 按条目提供浮层内容或首选尺寸；与闭包 `presentationContent` / `presentationViewController` 并存时闭包优先。
+/// Provides panel content / preferred size per item.
+/// When both are present, closures `presentationContent` / `presentationViewController` take precedence over `dataSource`.
 public protocol FKBarPresentationDataSource: AnyObject {
-  /// 可选覆盖浮层首选尺寸。
+  /// Optionally override the preferred size.
   func barPresentation(_ barPresentation: FKBarPresentation, preferredPresentationSizeForItemAt index: Int) -> CGSize?
-  /// 返回浮层根视图；与 `presentationViewControllerForItemAt` 二选一即可。
+  /// Return the content root view. Provide either this or `presentationViewControllerForItemAt`.
   func barPresentation(_ barPresentation: FKBarPresentation, presentationViewForItemAt index: Int) -> UIView?
-  /// 返回嵌入浮层的视图控制器。
+  /// Return the embedded content view controller.
   func barPresentation(_ barPresentation: FKBarPresentation, presentationViewControllerForItemAt index: Int) -> UIViewController?
 }
 
@@ -53,17 +57,18 @@ public extension FKBarPresentationDataSource {
 
 // MARK: - FKBarPresentation
 
-/// 横向条与锚点浮层的组合；浮层关闭时若仍选中「本次展示对应条目」可按 `Configuration.behavior` 同步取消选中。
+/// A `FKBar` + anchored panel composite.
+/// When the panel is dismissed, it may synchronize the bar selection according to `Configuration.behavior`.
 open class FKBarPresentation: UIView {
 
-  /// 横向条目条。
+  /// The bar.
   public let bar: FKBar = {
     let b = FKBar(frame: .zero)
     b.translatesAutoresizingMaskIntoConstraints = false
     return b
   }()
 
-  /// 底层浮层引擎；可改 `configuration`、或挂接 `delegate`/`dataSource`（与 `FKBarPresentation` 侧转发并存）。
+  /// Underlying panel engine. You may set its `configuration` or attach its `delegate` / `dataSource`.
   public var panel: FKPresentation { embeddedPresentation }
 
   private let embeddedPresentation: FKPresentation
@@ -71,25 +76,25 @@ open class FKBarPresentation: UIView {
   public weak var delegate: FKBarPresentationDelegate?
   public weak var dataSource: FKBarPresentationDataSource?
 
-  /// 额外接收 `FKBarDelegate` 回调（在 `FKBarPresentation` 处理选中/浮层之后转发）。
+  /// An additional `FKBarDelegate` receiver (forwarded after `FKBarPresentation` internal handling).
   public weak var barDelegate: FKBarDelegate? {
     didSet { barProxy.forward = barDelegate }
   }
 
-  /// 额外接收 `FKPresentationDelegate`（与 `FKBarPresentationDelegate` 并存）。
+  /// An additional `FKPresentationDelegate` receiver (coexists with `FKBarPresentationDelegate`).
   public weak var presentationDelegate: FKPresentationDelegate? {
     didSet { panelDelegateProxy.forward = presentationDelegate }
   }
 
-  /// 额外接收 `FKPresentationDataSource`（尺寸等；内容仍以 `show` 注入为准）。
+  /// An additional `FKPresentationDataSource` receiver (e.g. sizing).
   public weak var presentationDataSource: FKPresentationDataSource? {
     didSet { panelDataSourceProxy.forward = presentationDataSource }
   }
 
-  /// 为某条目提供浮层 `UIView`；非 `nil` 时优先生效。
+  /// Provides a content `UIView` per item. When non-nil, takes precedence.
   public var presentationContent: ((FKBarPresentation, Int, FKBar.Item) -> UIView?)?
 
-  /// 为某条目提供浮层 `UIViewController`；若 `presentationContent` 已为非 `nil` 则不会调用。
+  /// Provides a content `UIViewController` per item. Not called when `presentationContent` returns non-nil.
   public var presentationViewController: ((FKBarPresentation, Int, FKBar.Item) -> UIViewController?)?
 
   public var configuration: Configuration = .default {
@@ -100,10 +105,10 @@ open class FKBarPresentation: UIView {
   private let panelDelegateProxy = PanelDelegateProxy()
   private let panelDataSourceProxy = PanelDataSourceProxy()
 
-  /// 当前展示所对应的条目上下文；无浮层时为 `nil`。
+  /// The currently presented item context, or `nil` when not presented.
   public private(set) var presentationContext: (index: Int, item: FKBar.Item)?
 
-  /// 浮层是否正在展示（透传 `FKPresentation.isPresented`）。
+  /// Whether the panel is presented (mirrors `FKPresentation.isPresented`).
   public var isPresentationPresented: Bool { embeddedPresentation.isPresented }
 
   private var scheduledDismissReason: FKBarPresentation.PresentationDismissReason?
@@ -142,18 +147,18 @@ open class FKBarPresentation: UIView {
     applyConfiguration(animated: false, completion: nil)
   }
 
-  /// 将 `configuration.bar` / `configuration.presentation` 应用到子组件。
+  /// Applies `configuration.bar` / `configuration.presentation` to child components.
   public func applyConfiguration(animated: Bool = false, completion: VoidHandler? = nil) {
     bar.setConfiguration(configuration.bar, animated: animated, completion: completion)
     embeddedPresentation.configuration = configuration.presentation
   }
 
-  /// 等价于 `bar.reloadItems`。
+  /// Equivalent to `bar.reloadItems`.
   public func reloadBarItems(_ items: [FKBar.Item], animated: Bool = false) {
     bar.reloadItems(items, animated: animated)
   }
 
-  /// 关闭当前浮层（不影响 Bar 选中态）。
+  /// Dismisses the current panel (does not change bar selection).
   public func dismissPresentation(animated: Bool = true, completion: VoidHandler? = nil) {
     guard embeddedPresentation.isPresented else {
       completion?()
@@ -176,7 +181,7 @@ open class FKBarPresentation: UIView {
     }
 
     guard let host = configuration.presentationHost.resolve(from: self), host.bounds.width > 0 else {
-      assertionFailure("FKBarPresentation: 无法解析 presentationHost，请检查是否已加入视图层级或改用 `.explicit`。")
+      assertionFailure("FKBarPresentation: failed to resolve presentationHost. Ensure it is in the view hierarchy or use `.explicit`.")
       return
     }
 
@@ -249,10 +254,11 @@ open class FKBarPresentation: UIView {
     presentationContext = nil
   }
 
-  /// 浮层已关闭且并非「Bar 上已改选其他项」时，取消与本次浮层对应的条目选中并走 Bar 的完整重置（`deselectIndex` → 外观 / `prepare`）。
+  /// If the panel is dismissed and the bar selection hasn't changed to another item,
+  /// deselect the item that triggered the panel and let `FKBar` run its full reset path.
   fileprivate func synchronizeBarSelectionAfterPresentationDismissed() {
     guard let idx = presentationContext?.index else { return }
-    // 仅当当前选中项仍是「弹出该浮层」的那一项时才取消选中，避免改选条目时误动新选中态。
+    // Only deselect if the current selection still matches the presenting item.
     guard bar.selectedIndex == idx else { return }
     bar.deselectIndex(idx, animated: false, completion: nil)
   }

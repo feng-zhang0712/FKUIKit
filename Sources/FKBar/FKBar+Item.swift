@@ -1,7 +1,8 @@
 //
 // FKBar+Item.swift
 //
-// 横向条中的单个条目：展示模式（`FKButton` / 系统按钮 / 自定义视图）、选中行为与布局声明。
+// A single item inside a horizontal bar: mode (`FKButton` / `UIButton` / custom view),
+// selection behavior, and layout declarations.
 //
 
 import UIKit
@@ -9,27 +10,28 @@ import FKButton
 
 public extension FKBar {
   struct Item: Identifiable, Equatable, Hashable {
-    /// 点击回调：bar 触发后把“被点击的条目值”（包含 `id`/`mode`/当前 `isSelected` 等）回传。
+    /// Tap callback: returns the tapped item value (including `id` / `mode` / current `isSelected`, etc.).
     public typealias ActionHandler = (FKBar.Item) -> Void
 
-    /// 选中后滚动条使目标条目对齐的方式；具体滚动由 `FKBar` 与 `Configuration.selectionScroll` 实现。
+    /// Scrolling alignment when an item is selected.
+    /// Actual scrolling is implemented by `FKBar` and `Configuration.selectionScroll`.
     public enum ScrollAlignment {
       case leading
       case center
       case trailing
     }
 
-    /// 再次点击已选中条目时的选中态变化策略。
+    /// Selection-state change strategy when tapping an already-selected item.
     public enum SelectionBehavior {
-      /// 已选中则取消选中，否则选中。
+      /// Toggle selected state.
       case toggle
-      /// 始终维持选中，不因再次点击取消。
+      /// Always keep selected.
       case alwaysSelect
-      /// 不改变 `isSelected`，仍触发 `actionHandler` / delegate。
+      /// Do not change `isSelected`; still triggers `actionHandler` / delegate.
       case none
     }
 
-    /// `mode == .customView` 时常用；也可由 `FKBarDelegate` 自行绘制而忽略。
+    /// Commonly used for `mode == .customView`; may be ignored if `FKBarDelegate` draws custom appearance.
     public struct CustomViewWrapperStyle {
       public var cornerRadius: CGFloat?
       public var cornerCurve: CALayerCornerCurve?
@@ -60,11 +62,11 @@ public extension FKBar {
       }
     }
 
-    /// 条目外层尺寸、边距与命中区等的声明式配置，由 `FKBar` 映射到内部 wrapper 约束。
+    /// Declarative configuration for item outer size, insets, and hit-test insets, mapped to internal wrapper constraints by `FKBar`.
     public struct Layout {
-      /// 固定宽度；`nil` 表示使用内容的 intrinsicContentSize / 系统布局计算。
+      /// Fixed width. `nil` uses intrinsicContentSize / system layout calculation.
       public var fixedWidth: CGFloat?
-      /// 固定高度；`nil` 表示使用内容的 intrinsicContentSize / 系统布局计算。
+      /// Fixed height. `nil` uses intrinsicContentSize / system layout calculation.
       public var fixedHeight: CGFloat?
 
       public var minWidth: CGFloat?
@@ -72,13 +74,13 @@ public extension FKBar {
       public var minHeight: CGFloat?
       public var maxHeight: CGFloat?
 
-      /// 条目外层的补偿/边距（由 bar 映射到 wrapper 约束或额外容器）。
+      /// Outer wrapper insets for the item (mapped by `FKBar` into wrapper constraints or extra containers).
       public var wrapperInsets: NSDirectionalEdgeInsets
 
-      /// 扩大点击命中区域（由 bar 映射到 wrapper 事件/手势/命中测试）。
+      /// Hit-test expansion insets (mapped by `FKBar` into wrapper hit-testing/gestures).
       public var hitTestInsets: UIEdgeInsets
 
-      /// 条目滚动对齐的默认配置。
+      /// Default scrolling alignment.
       public var scrollAlignment: ScrollAlignment
 
       public init(
@@ -104,7 +106,7 @@ public extension FKBar {
       }
     }
 
-    /// 基于 `FKButton` 的条目：`reloadItems` 时由 `FKBar` 将字典中的状态配置应用到新建的按钮上。
+    /// An item based on `FKButton`: when `reloadItems` runs, `FKBar` applies per-state appearance/content into newly created buttons.
     public struct FKButtonSpec {
       public var content: FKButton.Content
       public var axis: FKButton.Axis
@@ -116,7 +118,7 @@ public extension FKBar {
       public var subtitleByState: [StateKey: FKButton.Text]
       public var customContentByState: [StateKey: FKButton.CustomContent]
 
-      /// 按 `ImageSlot` 分槽存储各状态下的 `Image`。
+    /// Stores images per `ImageSlot` and per state.
       public var imageBySlotAndState: [FKButton.ImageSlot: [StateKey: FKButton.Image]]
 
       public init(
@@ -137,7 +139,7 @@ public extension FKBar {
         self.imageBySlotAndState = imageBySlotAndState
       }
 
-      /// 写入外观配置（支持 `.normal / .selected / .highlighted / .disabled` 等）。
+      /// Writes appearance configuration (supports `.normal / .selected / .highlighted / .disabled`, etc.).
       public mutating func setAppearance(_ appearance: FKButton.Appearance, for state: UIControl.State) {
         appearanceByState[state.rawValue] = appearance
       }
@@ -181,7 +183,7 @@ public extension FKBar {
         imageBySlotAndState[slot] = map
       }
 
-      /// 将当前 spec 写入已有 `FKButton`（供外部或测试复用；常规路径由 `FKBar` 在创建条目时调用）。
+      /// Applies this spec to an existing `FKButton` (for reuse/testing; the normal path is called by `FKBar` when creating items).
       @MainActor
       public func apply(to button: FKButton) {
         button.content = content
@@ -215,12 +217,12 @@ public extension FKBar {
       }
     }
 
-    /// 条目的视图实现方式。
+    /// How this item is rendered.
     public enum Mode {
       case fkButton(FKButtonSpec)
-      /// 使用 `UIButton.Configuration` 构建系统按钮。
+      /// Build a system button using `UIButton.Configuration`.
       case button(UIButton.Configuration)
-      /// 完全自定义视图；`FKBar` 用 wrapper 包装并处理选中/点击。
+      /// Fully custom view; `FKBar` wraps it and handles selection/taps.
       case customView(UIView)
     }
 
@@ -234,14 +236,14 @@ public extension FKBar {
 
     public var actionHandler: ActionHandler?
 
-    /// 预留：多组互斥或分组选中策略等扩展场景。
+    /// Reserved for extension scenarios (e.g. multiple mutually-exclusive groups).
     public var selectionGroupID: String?
 
     public var customViewWrapperStyle: CustomViewWrapperStyle?
 
     public var layout: Layout
 
-    /// 写入对应 wrapper / 按钮的无障碍属性。
+    /// Writes accessibility attributes to the underlying wrapper/button.
     public var accessibilityLabel: String?
     public var accessibilityHint: String?
     public var accessibilityIdentifier: String?
