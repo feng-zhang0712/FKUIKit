@@ -1,20 +1,20 @@
 //
-//  FKPopoverDemoViewController.swift
+//  FKBarPresentationDemoViewController.swift
 //  FKUIKitDemo
 //
-//  演示 `FKPopover`：`FKBar` 选中条目后自锚点弹出 `FKPresentation`（与 `UIPopoverPresentationController` 无关）。
+//  演示 `FKBarPresentation`：`FKBar` 选中条目后自锚点弹出 `FKPresentation`。
 //
 
 import UIKit
 import FKButton
 import FKBar
-import FKPopover
+import FKBarPresentation
 import FKPresentation
 
-/// 演示 `FKPopover`：条 + 浮层联动、闭包 / DataSource 两种内容来源、遮罩与 delegate 日志。
-final class FKPopoverDemoViewController: UIViewController {
+/// 演示 `FKBarPresentation`：条 + 浮层联动、闭包 / DataSource 两种内容来源、遮罩与 delegate 日志。
+final class FKBarPresentationDemoViewController: UIViewController {
 
-  private let fkPopover = FKPopover()
+  private let barPresentation = FKBarPresentation()
 
   private enum ContentMode: Int {
     case closure = 0
@@ -28,7 +28,7 @@ final class FKPopoverDemoViewController: UIViewController {
     label.numberOfLines = 0
     label.font = .preferredFont(forTextStyle: .footnote)
     label.textColor = .secondaryLabel
-    label.text = "日志：选中条目后展示浮层；此处记录 FKPopover / Bar 回调。"
+    label.text = "日志：选中条目后展示浮层；此处记录 FKBarPresentation / Bar 回调。"
     return label
   }()
 
@@ -58,15 +58,15 @@ final class FKPopoverDemoViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "FKPopover"
+    title = "FKBarPresentation"
     view.backgroundColor = .systemBackground
 
-    fkPopover.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(fkPopover)
+    barPresentation.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(barPresentation)
 
-    fkPopover.delegate = self
-    fkPopover.barDelegate = self
-    fkPopover.presentationContent = { [weak self] _, index, item in
+    barPresentation.delegate = self
+    barPresentation.barDelegate = self
+    barPresentation.presentationContent = { [weak self] _, index, item in
       guard let self, self.contentMode == .closure else { return nil }
       return self.makePanelContent(for: index, item: item)
     }
@@ -92,19 +92,19 @@ final class FKPopoverDemoViewController: UIViewController {
 
     let guide = view.safeAreaLayoutGuide
     NSLayoutConstraint.activate([
-      fkPopover.topAnchor.constraint(equalTo: guide.topAnchor),
-      fkPopover.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      fkPopover.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      barPresentation.topAnchor.constraint(equalTo: guide.topAnchor),
+      barPresentation.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      barPresentation.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-      panel.topAnchor.constraint(equalTo: fkPopover.bottomAnchor, constant: 16),
+      panel.topAnchor.constraint(equalTo: barPresentation.bottomAnchor, constant: 16),
       panel.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 16),
       panel.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -16),
       panel.bottomAnchor.constraint(lessThanOrEqualTo: guide.bottomAnchor, constant: -16),
     ])
 
-    fkPopover.backgroundColor = .white
-    fkPopover.bar.backgroundColor = .white
-    applyPopoverConfiguration()
+    barPresentation.backgroundColor = .white
+    barPresentation.bar.backgroundColor = .white
+    applyPresentationConfiguration()
     reloadBarItems()
   }
 
@@ -242,9 +242,9 @@ final class FKPopoverDemoViewController: UIViewController {
       customChipTab("tab-custom1", title: "自定义"),
       customChipTab("tab-custom2", title: "Chip"),
     ]
-    fkPopover.reloadBarItems(items, animated: false)
+    barPresentation.reloadBarItems(items, animated: false)
     // 先全部未选中，再程序化选中首项，避免 `.toggle` 下「已选中再 select」被当成取消。
-    fkPopover.bar.selectIndex(0, animated: false)
+    barPresentation.bar.selectIndex(0, animated: false)
   }
 
   // MARK: - 浮层内容
@@ -286,7 +286,7 @@ final class FKPopoverDemoViewController: UIViewController {
 
   // MARK: - 配置
 
-  private func applyPopoverConfiguration() {
+  private func applyPresentationConfiguration() {
     var barCfg = FKBar.Configuration.default
     barCfg.itemSpacing = 8
     barCfg.contentInsets = .init(top: 10, leading: 12, bottom: 10, trailing: 12)
@@ -323,7 +323,7 @@ final class FKPopoverDemoViewController: UIViewController {
       pres.appearance.shadow = nil
     }
 
-    fkPopover.configuration = FKPopover.Configuration(
+    barPresentation.configuration = FKBarPresentation.Configuration(
       bar: barCfg,
       presentation: pres,
       behavior: .init(
@@ -341,14 +341,14 @@ final class FKPopoverDemoViewController: UIViewController {
   private func syncDataSourceBinding() {
     switch contentMode {
     case .closure:
-      fkPopover.dataSource = nil
-      fkPopover.presentationContent = { [weak self] _, index, item in
+      barPresentation.dataSource = nil
+      barPresentation.presentationContent = { [weak self] _, index, item in
         guard let self else { return nil }
         return self.makePanelContent(for: index, item: item)
       }
     case .dataSource:
-      fkPopover.presentationContent = nil
-      fkPopover.dataSource = self
+      barPresentation.presentationContent = nil
+      barPresentation.dataSource = self
     }
   }
 
@@ -359,7 +359,7 @@ final class FKPopoverDemoViewController: UIViewController {
   }
 
   @objc private func onConfigChanged() {
-    applyPopoverConfiguration()
+    applyPresentationConfiguration()
   }
 
   @objc private func onPassthroughTapped() {
@@ -376,7 +376,7 @@ final class FKPopoverDemoViewController: UIViewController {
     tip.numberOfLines = 0
     tip.font = .preferredFont(forTextStyle: .footnote)
     tip.textColor = .tertiaryLabel
-    tip.text = "说明：浮层锚定为当前选中的条目标签；与 UIPopover 无关。进入页面后会自动选中首项并弹出浮层。"
+    tip.text = "说明：浮层锚定为当前选中的条目标签，进入页面后会自动选中首项并弹出浮层。"
 
     stack.addArrangedSubview(tip)
     stack.addArrangedSubview(modeSegment)
@@ -437,7 +437,7 @@ final class FKPopoverDemoViewController: UIViewController {
   }
 
   @objc private func onDismissPanel() {
-    fkPopover.dismissPresentation(animated: true, completion: nil)
+    barPresentation.dismissPresentation(animated: true, completion: nil)
     appendLog("调用 dismissPresentation(animated:)")
   }
 
@@ -459,34 +459,34 @@ final class FKPopoverDemoViewController: UIViewController {
   }()
 }
 
-// MARK: - FKPopoverDelegate
+// MARK: - FKBarPresentationDelegate
 
-extension FKPopoverDemoViewController: FKPopoverDelegate {
-  func popover(_ popover: FKPopover, shouldPresentFor item: FKBar.Item, at index: Int) -> Bool {
+extension FKBarPresentationDemoViewController: FKBarPresentationDelegate {
+  func barPresentation(_ barPresentation: FKBarPresentation, shouldPresentFor item: FKBar.Item, at index: Int) -> Bool {
     appendLog("shouldPresent index=\(index) id=\(String(item.id.prefix(6)))… → true")
     return true
   }
 
-  func popover(_ popover: FKPopover, willPresentFor item: FKBar.Item, at index: Int) {
+  func barPresentation(_ barPresentation: FKBarPresentation, willPresentFor item: FKBar.Item, at index: Int) {
     appendLog("willPresent index=\(index)")
   }
 
-  func popover(_ popover: FKPopover, didPresentFor item: FKBar.Item, at index: Int) {
+  func barPresentation(_ barPresentation: FKBarPresentation, didPresentFor item: FKBar.Item, at index: Int) {
     appendLog("didPresent index=\(index)")
   }
 
-  func popover(_ popover: FKPopover, willDismissPresentation reason: FKPopover.PresentationDismissReason) {
+  func barPresentation(_ barPresentation: FKBarPresentation, willDismissPresentation reason: FKBarPresentation.PresentationDismissReason) {
     appendLog("willDismiss reason=\(reason)")
   }
 
-  func popover(_ popover: FKPopover, didDismissPresentation reason: FKPopover.PresentationDismissReason) {
+  func barPresentation(_ barPresentation: FKBarPresentation, didDismissPresentation reason: FKBarPresentation.PresentationDismissReason) {
     appendLog("didDismiss reason=\(reason)")
   }
 }
 
 // MARK: - FKBarDelegate（转发演示）
 
-extension FKPopoverDemoViewController: FKBarDelegate {
+extension FKBarPresentationDemoViewController: FKBarDelegate {
   func bar(_ bar: FKBar, didSelect sender: UIView, for item: FKBar.Item, at index: Int) {
     appendLog("bar.didSelect index=\(index)")
   }
@@ -496,12 +496,12 @@ extension FKPopoverDemoViewController: FKBarDelegate {
   }
 }
 
-// MARK: - FKPopoverDataSource
+// MARK: - FKBarPresentationDataSource
 
-extension FKPopoverDemoViewController: FKPopoverDataSource {
-  func popover(_ popover: FKPopover, presentationViewForItemAt index: Int) -> UIView? {
+extension FKBarPresentationDemoViewController: FKBarPresentationDataSource {
+  func barPresentation(_ barPresentation: FKBarPresentation, presentationViewForItemAt index: Int) -> UIView? {
     guard contentMode == .dataSource else { return nil }
-    guard let item = popover.bar.loadedItems[safe: index] else { return nil }
+    guard let item = barPresentation.bar.loadedItems[safe: index] else { return nil }
     return makePanelContent(for: index, item: item)
   }
 }

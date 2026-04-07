@@ -165,7 +165,7 @@ open class FKBarPresentation: UIView {
     }
   }
 
-  // MARK: - Internal（Bar 代理触发）
+  // MARK: - Bar
 
   fileprivate func onBarDidSelect(sender: UIView, item: FKBar.Item, at index: Int) {
     guard configuration.behavior.presentsOnSelection else { return }
@@ -260,7 +260,7 @@ open class FKBarPresentation: UIView {
   }
 }
 
-// MARK: - PresentationHost 解析
+// MARK: - PresentationHost resolve
 
 private extension FKBarPresentation.Configuration.PresentationHost {
   @MainActor
@@ -278,7 +278,7 @@ private extension FKBarPresentation.Configuration.PresentationHost {
   }
 }
 
-// MARK: - Bar 代理多路转发
+// MARK: - FKBarDelegate
 
 private final class BarDelegateProxy: FKBarDelegate {
   weak var owner: FKBarPresentation?
@@ -321,7 +321,7 @@ private final class BarDelegateProxy: FKBarDelegate {
   }
 }
 
-// MARK: - FKPresentation Delegate 转发
+// MARK: - FKPresentationDelegate
 
 private final class PanelDelegateProxy: FKPresentationDelegate {
   weak var owner: FKBarPresentation?
@@ -381,7 +381,7 @@ private final class PanelDelegateProxy: FKPresentationDelegate {
   }
 }
 
-// MARK: - FKPresentation DataSource 转发
+// MARK: - FKPresentationDataSource
 
 private final class PanelDataSourceProxy: FKPresentationDataSource {
   weak var owner: FKBarPresentation?

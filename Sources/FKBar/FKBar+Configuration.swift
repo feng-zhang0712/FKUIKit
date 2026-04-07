@@ -144,6 +144,9 @@ public extension FKBar {
     /// 选中后滚动策略。
     public var selectionScroll: SelectionScroll
 
+    /// 是否应用内置的选中态/禁用态兜底视觉（背景色、前景色、alpha）。
+    public var usesDefaultSelectionAppearance: Bool
+
     public var stackViewAlignment: UIStackView.Alignment
     public var stackViewDistribution: UIStackView.Distribution
 
@@ -156,6 +159,7 @@ public extension FKBar {
       enablesSelectionWhileScrollingDisabled: Bool = true,
       appearance: Appearance = .init(),
       selectionScroll: SelectionScroll = .init(),
+      usesDefaultSelectionAppearance: Bool = false,
       stackViewAlignment: UIStackView.Alignment = .center,
       stackViewDistribution: UIStackView.Distribution = .fill
     ) {
@@ -167,6 +171,7 @@ public extension FKBar {
       self.enablesSelectionWhileScrollingDisabled = enablesSelectionWhileScrollingDisabled
       self.appearance = appearance
       self.selectionScroll = selectionScroll
+      self.usesDefaultSelectionAppearance = usesDefaultSelectionAppearance
       self.stackViewAlignment = stackViewAlignment
       self.stackViewDistribution = stackViewDistribution
     }

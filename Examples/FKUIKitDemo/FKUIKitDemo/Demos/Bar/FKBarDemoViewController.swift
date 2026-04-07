@@ -149,8 +149,7 @@ final class FKBarDemoViewController: UIViewController {
     bar.configuration = FKBar.Configuration(
       itemSpacing: spacing,
       contentInsets: insets,
-      alwaysBounceHorizontal: true,
-      showsHorizontalScrollIndicator: true
+      alwaysBounceHorizontal: true
     )
   }
 
@@ -200,7 +199,8 @@ final class FKBarDemoViewController: UIViewController {
       spec.setAppearance(
         FKButton.Appearance(
           corner: .capsule,
-          backgroundColor: .secondarySystemFill
+          backgroundColor: .secondarySystemFill,
+          contentInsets: .init(top: 6, leading: 10, bottom: 6, trailing: 10)
         ),
         for: .normal
       )
@@ -209,7 +209,8 @@ final class FKBarDemoViewController: UIViewController {
           corner: .capsule,
           borderWidth: 1,
           borderColor: .systemOrange,
-          backgroundColor: UIColor.systemOrange.withAlphaComponent(0.12)
+          backgroundColor: UIColor.systemOrange.withAlphaComponent(0.12),
+          contentInsets: .init(top: 6, leading: 10, bottom: 6, trailing: 10)
         ),
         for: .selected
       )

@@ -73,17 +73,17 @@ open class FKBar: UIView {
   private func commonInit() {
     backgroundColor = .clear
 
-    scrollView.translatesAutoresizingMaskIntoConstraints = false
-    scrollView.showsVerticalScrollIndicator = false
-    scrollView.showsHorizontalScrollIndicator = false
     scrollView.alwaysBounceVertical = false
     scrollView.alwaysBounceHorizontal = false
+    scrollView.showsVerticalScrollIndicator = false
+    scrollView.showsHorizontalScrollIndicator = false
+    scrollView.translatesAutoresizingMaskIntoConstraints = false
     addSubview(scrollView)
 
-    stackView.translatesAutoresizingMaskIntoConstraints = false
     stackView.axis = .horizontal
     stackView.alignment = .center
     stackView.distribution = .fill
+    stackView.translatesAutoresizingMaskIntoConstraints = false
     scrollView.addSubview(stackView)
 
     NSLayoutConstraint.activate([
@@ -97,8 +97,7 @@ open class FKBar: UIView {
       stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
       stackView.centerYAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerYAnchor),
       stackView.topAnchor.constraint(greaterThanOrEqualTo: scrollView.contentLayoutGuide.topAnchor),
-      scrollView.contentLayoutGuide.bottomAnchor.constraint(greaterThanOrEqualTo: stackView.bottomAnchor),
-      scrollView.contentLayoutGuide.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor),
+      stackView.bottomAnchor.constraint(lessThanOrEqualTo: scrollView.contentLayoutGuide.bottomAnchor)
     ])
 
     applyBarConfiguration(animated: false, completion: nil)
@@ -125,7 +124,7 @@ open class FKBar: UIView {
     return CGSize(width: UIView.noIntrinsicMetric, height: fitted.height)
   }
 
-  // MARK: - Public API
+  // MARK: - Public
 
   /// 用新数组替换当前条目并重建子视图；多个 `isSelected` 时仅保留第一个为选中。
   public func reloadItems(_ items: [Item], animated: Bool = false) {
@@ -179,15 +178,6 @@ open class FKBar: UIView {
     selectIndex(idx, animated: animated, completion: completion)
   }
   
-  /// 按 `id` 取消选中：仅当该条目当前为选中态时生效（与 `selectionBehavior` 无关）。
-  public func deselectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
-    guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
-      completion?()
-      return
-    }
-    deselectIndex(idx, animated: animated, completion: completion)
-  }
-
   public func selectIndex(_ index: Int, animated: Bool = true, completion: VoidHandler? = nil) {
     guard index >= 0, index < items.count else {
       completion?()
@@ -196,6 +186,15 @@ open class FKBar: UIView {
 
     handleItemTap(at: index, sender: sourceViewsByIndex[safe: index], triggeredByTap: false, animated: animated)
     completion?()
+  }
+  
+  /// 按 `id` 取消选中：仅当该条目当前为选中态时生效（与 `selectionBehavior` 无关）。
+  public func deselectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
+    guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
+      completion?()
+      return
+    }
+    deselectIndex(idx, animated: animated, completion: completion)
   }
 
   /// 取消指定下标的选中态：仅当该下标当前为选中项时生效。
@@ -230,10 +229,6 @@ open class FKBar: UIView {
     invalidateIntrinsicContentSize()
   }
   
-  // MARK: - Private
-  
-  // MARK: - Handle click
-
   /// 供 delegate / 外部调试获取条目对应的“源视图”（UIButton / FKButton / custom wrapper）。
   public func sourceView(forItemAt index: Int) -> UIView? {
     sourceViewsByIndex[safe: index]
@@ -250,7 +245,9 @@ open class FKBar: UIView {
       }
     }
   }
-
+  
+  // MARK: - Private
+  
   private func makeView(for item: Item, at index: Int) -> UIView {
     // 先做无障碍（delegate 的 prepare 可能会覆盖，但不会伤害基础信息）。
     func applyAccessibility(_ view: UIView) {
@@ -328,6 +325,8 @@ open class FKBar: UIView {
   }
 
   private func updateSelectionAppearance(selectedIndex: Int? = nil) {
+    let usesDefaultSelectionAppearance = configuration.usesDefaultSelectionAppearance
+
     for idx in items.indices {
       let item = items[idx]
       guard let sender = sourceViewsByIndex[safe: idx] else { continue }
@@ -338,24 +337,28 @@ open class FKBar: UIView {
       if let control = sender as? UIControl {
         control.isSelected = item.isSelected
         control.isEnabled = item.isEnabled
-
-        if let uiButton = sender as? UIButton,
-           var cfg = uiButton.configuration {
-          // Fallback visual when delegate.prepare is not provided:
-          // selected uses a soft blue background, and disabled reduces alpha.
-          cfg.background.backgroundColor = item.isSelected
-            ? UIColor.systemBlue.withAlphaComponent(0.16)
-            : .clear
-          cfg.baseForegroundColor = item.isEnabled ? .label : .secondaryLabel
-          uiButton.configuration = cfg
-          uiButton.alpha = item.isEnabled ? 1.0 : 0.45
-        }
-      } else {
-        // For pure UIView wrapper: delegate prepare will handle alpha/background if needed.
-        sender.alpha = item.isEnabled ? (item.isSelected ? 1.0 : 0.88) : 0.45
+        
+        if usesDefaultSelectionAppearance {
+          if let uiButton = sender as? UIButton,
+             var cfg = uiButton.configuration {
+            // Fallback visual when delegate.prepare is not provided:
+            // selected uses a soft blue background, and disabled reduces alpha.
+            cfg.background.backgroundColor = item.isSelected
+              ? UIColor.systemBlue.withAlphaComponent(0.16)
+              : .clear
+            cfg.baseForegroundColor = item.isEnabled ? .label : .secondaryLabel
+            uiButton.configuration = cfg
+            uiButton.alpha = item.isEnabled ? 1.0 : 0.45
+          } else {
+            // For pure UIView wrapper: delegate prepare will handle alpha/background if needed.
+            sender.alpha = item.isEnabled ? (item.isSelected ? 1.0 : 0.88) : 0.45
+          }
+        }    
       }
     }
   }
+  
+  // MARK: - Handle click
 
   private func handleItemTap(
     at index: Int,

@@ -48,7 +48,7 @@ public extension FKButton {
       borderColor: UIColor = .clear,
       backgroundColor: UIColor = .clear,
       alpha: CGFloat = 1.0,
-      contentInsets: NSDirectionalEdgeInsets = .zero,
+      contentInsets: NSDirectionalEdgeInsets = .init(top: 7, leading: 12, bottom: 7, trailing: 12),
       clipsToBounds: Bool? = nil
     ) {
       self.corner = corner

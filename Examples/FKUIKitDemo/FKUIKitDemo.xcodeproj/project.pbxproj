@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		01A98A3A2F81582100CA1794 /* FKBar in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A392F81582100CA1794 /* FKBar */; };
 		01A98A3C2F81582100CA1794 /* FKButton in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A3B2F81582100CA1794 /* FKButton */; };
-		01A98A3E2F81582100CA1794 /* FKPopover in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A3D2F81582100CA1794 /* FKPopover */; };
+		01A98A3E2F81582100CA1794 /* FKBarPresentation in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A3D2F81582100CA1794 /* FKBarPresentation */; };
 		01A98A402F81582100CA1794 /* FKPresentation in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A3F2F81582100CA1794 /* FKPresentation */; };
 		01A98A422F81582100CA1794 /* FKUIKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = 01A98A412F81582100CA1794 /* FKUIKitCore */; };
 /* End PBXBuildFile section */
@@ -47,7 +47,7 @@
 				01A98A3A2F81582100CA1794 /* FKBar in Frameworks */,
 				01A98A422F81582100CA1794 /* FKUIKitCore in Frameworks */,
 				01A98A3C2F81582100CA1794 /* FKButton in Frameworks */,
-				01A98A3E2F81582100CA1794 /* FKPopover in Frameworks */,
+				01A98A3E2F81582100CA1794 /* FKBarPresentation in Frameworks */,
 				01A98A402F81582100CA1794 /* FKPresentation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -93,7 +93,7 @@
 			packageProductDependencies = (
 				01A98A392F81582100CA1794 /* FKBar */,
 				01A98A3B2F81582100CA1794 /* FKButton */,
-				01A98A3D2F81582100CA1794 /* FKPopover */,
+				01A98A3D2F81582100CA1794 /* FKBarPresentation */,
 				01A98A3F2F81582100CA1794 /* FKPresentation */,
 				01A98A412F81582100CA1794 /* FKUIKitCore */,
 			);
@@ -377,9 +377,9 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = FKButton;
 		};
-		01A98A3D2F81582100CA1794 /* FKPopover */ = {
+		01A98A3D2F81582100CA1794 /* FKBarPresentation */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = FKPopover;
+			productName = FKBarPresentation;
 		};
 		01A98A3F2F81582100CA1794 /* FKPresentation */ = {
 			isa = XCSwiftPackageProductDependency;

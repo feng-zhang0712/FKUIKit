@@ -67,11 +67,14 @@ open class FKButton: UIControl {
   public private(set) var leadingImageView: UIImageView?
   public private(set) var trailingImageView: UIImageView?
 
-  
+  private var titleLabelTopConstraint: NSLayoutConstraint?
+  private var titleLabelLeadingConstraint: NSLayoutConstraint?
+  private var titleLabelTrailingConstraint: NSLayoutConstraint?
   private var titleLabelBottomConstraintToContainer: NSLayoutConstraint?
   private var subtitleTopConstraint: NSLayoutConstraint?
+  private var subtitleLeadingConstraint: NSLayoutConstraint?
+  private var subtitleTrailingConstraint: NSLayoutConstraint?
   private var subtitleBottomConstraint: NSLayoutConstraint?
-  private let subtitleVerticalSpacing: CGFloat = 2
 
   /// 仅在 `Content.Kind.custom` 时创建；`releaseCustomContentHost()` 回收。
   private var customContentHost: FKButtonCustomContentHostView?
@@ -323,8 +326,13 @@ open class FKButton: UIControl {
     releaseSubtitleLabel()
     titleContainerView?.removeFromSuperview()
     titleContainerView = nil
+    titleLabelTopConstraint = nil
+    titleLabelLeadingConstraint = nil
+    titleLabelTrailingConstraint = nil
     titleLabelBottomConstraintToContainer = nil
     subtitleTopConstraint = nil
+    subtitleLeadingConstraint = nil
+    subtitleTrailingConstraint = nil
     subtitleBottomConstraint = nil
     label.removeFromSuperview()
     label.text = nil
@@ -344,11 +352,14 @@ open class FKButton: UIControl {
       container.addSubview(label)
     }
     label.translatesAutoresizingMaskIntoConstraints = false
-    
+
     let top = label.topAnchor.constraint(equalTo: container.topAnchor)
     let leading = label.leadingAnchor.constraint(equalTo: container.leadingAnchor)
     let trailing = label.trailingAnchor.constraint(equalTo: container.trailingAnchor)
-    let bottom = label.bottomAnchor.constraint(equalTo: container.bottomAnchor) // subtitle 不存在时使用
+    let bottom = label.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+    titleLabelTopConstraint = top
+    titleLabelLeadingConstraint = leading
+    titleLabelTrailingConstraint = trailing
     titleLabelBottomConstraintToContainer = bottom
     NSLayoutConstraint.activate([top, leading, trailing, bottom])
     return container
@@ -388,12 +399,14 @@ open class FKButton: UIControl {
     
     let leading = label.leadingAnchor.constraint(equalTo: container.leadingAnchor)
     let trailing = label.trailingAnchor.constraint(equalTo: container.trailingAnchor)
-    let top = label.topAnchor.constraint(equalTo: titleLabelIfNeeded().bottomAnchor, constant: subtitleVerticalSpacing)
+    let top = label.topAnchor.constraint(equalTo: titleLabelIfNeeded().bottomAnchor)
     let bottom = label.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-    
+
+    subtitleLeadingConstraint = leading
+    subtitleTrailingConstraint = trailing
     subtitleTopConstraint = top
     subtitleBottomConstraint = bottom
-    
+
     NSLayoutConstraint.activate([leading, trailing, top, bottom])
     return label
   }
@@ -401,8 +414,12 @@ open class FKButton: UIControl {
   private func releaseSubtitleLabel() {
     guard let label = subtitleLabel else { return }
     subtitleTopConstraint?.isActive = false
+    subtitleLeadingConstraint?.isActive = false
+    subtitleTrailingConstraint?.isActive = false
     subtitleBottomConstraint?.isActive = false
     subtitleTopConstraint = nil
+    subtitleLeadingConstraint = nil
+    subtitleTrailingConstraint = nil
     subtitleBottomConstraint = nil
     
     label.removeFromSuperview()
@@ -412,6 +429,37 @@ open class FKButton: UIControl {
     
     // subtitle 销毁后：重新启用 title 作为 container 底部锚点
     titleLabelBottomConstraintToContainer?.isActive = true
+  }
+
+  /// 按当前解析后的 `Text.contentInsets` 更新标题容器内约束（含主标题与副标题间距：`title.bottom + subtitle.top`）。
+  private func updateTitleContainerLayoutConstraints() {
+    guard let container = titleContainerView,
+          let titleL = titleLabel,
+          titleL.superview === container
+    else { return }
+
+    let titleText = resolveTitleElement()
+    let ti = titleText.contentInsets
+    titleLabelTopConstraint?.constant = ti.top
+    titleLabelLeadingConstraint?.constant = ti.leading
+    titleLabelTrailingConstraint?.constant = -ti.trailing
+
+    if let subtitleL = subtitleLabel,
+       subtitleL.superview === container,
+       let subText = resolveSubtitleElement(),
+       subtitleHasRenderableContent(subText) {
+      let si = subText.contentInsets
+      titleLabelBottomConstraintToContainer?.isActive = false
+      subtitleTopConstraint?.constant = ti.bottom + si.top
+      subtitleLeadingConstraint?.constant = si.leading
+      subtitleTrailingConstraint?.constant = -si.trailing
+      subtitleBottomConstraint?.constant = -si.bottom
+    } else {
+      titleLabelBottomConstraintToContainer?.isActive = true
+      titleLabelBottomConstraintToContainer?.constant = -ti.bottom
+    }
+
+    invalidateIntrinsicContentSize()
   }
 
   private func imageViewIfNeeded(for slot: ImageSlot) -> UIImageView {
@@ -559,6 +607,7 @@ open class FKButton: UIControl {
       let title = resolveTitleElement()
       applyTitle(title)
       applySubtitleForCurrentState()
+      updateTitleContainerLayoutConstraints()
     case .imageOnly:
       releaseTitleLabel()
       releaseSubtitleLabel()

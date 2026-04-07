@@ -44,6 +44,9 @@ public extension FKButton {
     public var accessibilityLabel: String?
     public var accessibilityHint: String?
 
+    /// 标题或副标题在标题容器内的方向性内边距。
+    public var contentInsets: NSDirectionalEdgeInsets
+
     public init(
       text: String? = nil,
       attributedText: NSAttributedString? = nil,
@@ -63,7 +66,8 @@ public extension FKButton {
       uppercased: Bool = false,
       lowercased: Bool = false,
       accessibilityLabel: String? = nil,
-      accessibilityHint: String? = nil
+      accessibilityHint: String? = nil,
+      contentInsets: NSDirectionalEdgeInsets = .zero
     ) {
       self.text = text
       self.attributedText = attributedText
@@ -84,6 +88,7 @@ public extension FKButton {
       self.lowercased = lowercased
       self.accessibilityLabel = accessibilityLabel
       self.accessibilityHint = accessibilityHint
+      self.contentInsets = contentInsets
     }
 
     public nonisolated(unsafe) static let `default` = Text()

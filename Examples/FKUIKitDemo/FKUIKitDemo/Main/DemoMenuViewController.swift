@@ -31,9 +31,9 @@ final class DemoMenuViewController: UITableViewController {
       make: { FKPresentationDemoViewController() }
     ),
     MenuItem(
-      title: "FKPopover",
+      title: "FKBarPresentation",
       subtitle: "Bar + 浮层组合",
-      make: { FKPopoverDemoViewController() }
+      make: { FKBarPresentationDemoViewController() }
     ),
   ]
 
