@@ -37,19 +37,27 @@ open class FKButton: UIControl {
     case leading
     case trailing
   }
+
+  /// Resolves state lookup candidates for stateful maps.
+  /// Return order must be from high to low priority.
+  public typealias StateResolutionProvider = (_ isEnabled: Bool, _ isSelected: Bool, _ isHighlighted: Bool) -> [UIControl.State]
   
+  /// Content composition model. Updating this rebinds internal subviews immediately.
   public var content: FKButton.Content {
     didSet {
-      applyContentLayout()
-      applyTextForCurrentState()
-      applyImagesForCurrentState()
-      applyCustomContentForCurrentState()
-      applyAppearanceForCurrentState()
+      requestVisualRefresh(rebuildContentLayout: true)
     }
   }
   
+  /// Layout axis for the internal `UIStackView`.
   public var axis: Axis = .horizontal {
     didSet { applyAxis() }
+  }
+
+  /// Optional custom provider for state resolution order.
+  /// When `nil`, the default order is used: disabled -> selected -> highlighted -> normal.
+  public var stateResolutionProvider: StateResolutionProvider? {
+    didSet { requestVisualRefresh() }
   }
   
   private let stackView = UIStackView()
@@ -101,25 +109,34 @@ open class FKButton: UIControl {
   private var leadingConstraint: NSLayoutConstraint?
   private var trailingConstraint: NSLayoutConstraint?
   private var bottomConstraint: NSLayoutConstraint?
+  private var batchUpdateDepth = 0
+  private var needsVisualRefresh = false
+  private var needsContentLayoutRefresh = false
+
+  private static let paddedImageCache = NSCache<NSString, UIImage>()
   
+  /// Creates a button with default content (`.textOnly`).
   public init() {
     self.content = .default
     super.init(frame: .zero)
     commonInit()
   }
   
+  /// Creates a button with a custom frame and default content (`.textOnly`).
   public override init(frame: CGRect) {
     self.content = .default
     super.init(frame: frame)
     commonInit()
   }
   
+  /// Creates a button with an initial content model.
   public init(content: FKButton.Content) {
-    self.content = .default
+    self.content = content
     super.init(frame: .zero)
     commonInit()
   }
   
+  /// Storyboard/XIB initializer.
   public required init?(coder: NSCoder) {
     self.content = .default
     super.init(coder: coder)
@@ -160,11 +177,93 @@ open class FKButton: UIControl {
   /// If the current state matches, it is applied immediately.
   public func setAppearance(_ appearance: Appearance, for state: UIControl.State) {
     appearanceByState[state.rawValue] = appearance
-    applyAppearanceForCurrentState()
+    requestVisualRefresh()
   }
   
+  /// Reads the registered appearance for an exact state key.
   public func appearance(for state: UIControl.State) -> Appearance? {
     appearanceByState[state.rawValue]
+  }
+
+  /// Apply an appearance bundle for normal/selected/highlighted/disabled.
+  public func setAppearances(_ appearances: StateAppearances) {
+    performBatchUpdates {
+      setAppearance(appearances.normal, for: .normal)
+      setAppearance(appearances.selected, for: .selected)
+      setAppearance(appearances.highlighted, for: .highlighted)
+      setAppearance(appearances.disabled, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register title values for common states in one call.
+  public func setTitles(normal: Text?, selected: Text? = nil, highlighted: Text? = nil, disabled: Text? = nil) {
+    performBatchUpdates {
+      setTitle(normal, for: .normal)
+      setTitle(selected ?? normal, for: .selected)
+      setTitle(highlighted ?? selected ?? normal, for: .highlighted)
+      setTitle(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register subtitle values for common states in one call.
+  public func setSubtitles(normal: Text?, selected: Text? = nil, highlighted: Text? = nil, disabled: Text? = nil) {
+    performBatchUpdates {
+      setSubtitle(normal, for: .normal)
+      setSubtitle(selected ?? normal, for: .selected)
+      setSubtitle(highlighted ?? selected ?? normal, for: .highlighted)
+      setSubtitle(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register center-image values for common states in one call.
+  public func setImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+    performBatchUpdates {
+      setImage(normal, for: .normal)
+      setImage(selected ?? normal, for: .selected)
+      setImage(highlighted ?? selected ?? normal, for: .highlighted)
+      setImage(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register leading-image values for common states in one call.
+  public func setLeadingImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+    performBatchUpdates {
+      setLeadingImage(normal, for: .normal)
+      setLeadingImage(selected ?? normal, for: .selected)
+      setLeadingImage(highlighted ?? selected ?? normal, for: .highlighted)
+      setLeadingImage(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register trailing-image values for common states in one call.
+  public func setTrailingImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+    performBatchUpdates {
+      setTrailingImage(normal, for: .normal)
+      setTrailingImage(selected ?? normal, for: .selected)
+      setTrailingImage(highlighted ?? selected ?? normal, for: .highlighted)
+      setTrailingImage(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Convenience API to register custom-content values for common states in one call.
+  public func setCustomContents(normal: CustomContent?, selected: CustomContent? = nil, highlighted: CustomContent? = nil, disabled: CustomContent? = nil) {
+    performBatchUpdates {
+      setCustomContent(normal, for: .normal)
+      setCustomContent(selected ?? normal, for: .selected)
+      setCustomContent(highlighted ?? selected ?? normal, for: .highlighted)
+      setCustomContent(disabled ?? normal, for: .disabled)
+    }
+  }
+
+  /// Applies multiple stateful updates and refreshes rendering once.
+  public func performBatchUpdates(_ updates: () -> Void) {
+    batchUpdateDepth += 1
+    updates()
+    batchUpdateDepth -= 1
+    if batchUpdateDepth == 0, needsVisualRefresh {
+      needsVisualRefresh = false
+      flushPendingRefresh()
+    }
   }
 
   // MARK: - Public — Text
@@ -177,9 +276,10 @@ open class FKButton: UIControl {
     } else {
       titleByState.removeValue(forKey: state.rawValue)
     }
-    applyTextForCurrentState()
+    requestVisualRefresh()
   }
   
+  /// Reads the registered title for an exact state key.
   public func title(for state: UIControl.State) -> Text? {
     titleByState[state.rawValue]
   }
@@ -192,9 +292,10 @@ open class FKButton: UIControl {
     } else {
       subtitleByState.removeValue(forKey: state.rawValue)
     }
-    applyTextForCurrentState()
+    requestVisualRefresh()
   }
   
+  /// Reads the registered subtitle for an exact state key.
   public func subtitle(for state: UIControl.State) -> Text? {
     subtitleByState[state.rawValue]
   }
@@ -204,20 +305,20 @@ open class FKButton: UIControl {
   /// Set the centered image slot (`.center`).
   public func setImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .center)
-    applyImagesForCurrentState()
+    requestVisualRefresh()
   }
   
   /// Set the leading-side image slot (relative to the title's leading side,
   /// mapped to concrete geometry based on `axis` and layout direction).
   public func setLeadingImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .leading)
-    applyImagesForCurrentState()
+    requestVisualRefresh()
   }
   
   /// Set the trailing-side image slot.
   public func setTrailingImage(_ image: Image?, for state: UIControl.State) {
     setImage(image, for: state, slot: .trailing)
-    applyImagesForCurrentState()
+    requestVisualRefresh()
   }
   
   /// Read the registered image for a given slot/state pair.
@@ -234,15 +335,17 @@ open class FKButton: UIControl {
     } else {
       customContentByState.removeValue(forKey: state.rawValue)
     }
-    applyCustomContentForCurrentState()
+    requestVisualRefresh()
   }
 
+  /// Reads the registered custom content for an exact state key.
   public func customContent(for state: UIControl.State) -> CustomContent? {
     customContentByState[state.rawValue]
   }
   
   // MARK: - Layout
   
+  /// Intrinsic size based on resolved content plus `Appearance.contentInsets`.
   open override var intrinsicContentSize: CGSize {
     let appearance = resolveAppearance()
     let insets = appearance.contentInsets
@@ -260,44 +363,43 @@ open class FKButton: UIControl {
     )
   }
   
+  /// Keeps corner radius and shadow path in sync with current bounds.
   open override func layoutSubviews() {
     super.layoutSubviews()
-    applyCornerMetrics(using: resolveAppearance())
+    let appearance = resolveAppearance()
+    applyCornerMetrics(using: appearance)
+    updateShadowPath(using: appearance)
   }
   
+  /// Expands hit-testing using appearance and active image outsets.
   open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-    bounds.insetBy(dx: 0, dy: -6).contains(point)
+    expandedBounds(from: resolvedHitTestOutsets()).contains(point)
   }
   
   // MARK: - State
   
   open override var isEnabled: Bool {
     didSet {
-      applyTextForCurrentState()
-      applyImagesForCurrentState()
-      applyCustomContentForCurrentState()
-      applyAppearanceForCurrentState()
+      requestVisualRefresh()
     }
   }
   
   open override var isSelected: Bool {
     didSet {
-      applyTextForCurrentState()
-      applyImagesForCurrentState()
-      applyCustomContentForCurrentState()
-      applyAppearanceForCurrentState()
+      requestVisualRefresh()
       accessibilityTraits = isSelected ? [.button, .selected] : .button
     }
   }
   
   open override var isHighlighted: Bool {
     didSet {
-      applyTextForCurrentState()
-      applyImagesForCurrentState()
-      applyCustomContentForCurrentState()
-      applyAppearanceForCurrentState()
+      requestVisualRefresh()
+      let appearance = resolveAppearance()
       UIView.animate(withDuration: 0.12) {
-        self.alpha = self.isHighlighted ? 0.88 : 1
+        self.alpha = self.resolvedAlpha(for: appearance)
+        self.transform = self.isHighlighted
+        ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
+        : .identity
       }
     }
   }
@@ -313,6 +415,28 @@ open class FKButton: UIControl {
     }
   }
 
+  private func requestVisualRefresh(rebuildContentLayout: Bool = false) {
+    if rebuildContentLayout {
+      needsContentLayoutRefresh = true
+    }
+    if batchUpdateDepth > 0 {
+      needsVisualRefresh = true
+      return
+    }
+    flushPendingRefresh()
+  }
+
+  private func flushPendingRefresh() {
+    if needsContentLayoutRefresh {
+      applyContentLayout()
+      needsContentLayoutRefresh = false
+    }
+    applyTextForCurrentState()
+    applyImagesForCurrentState()
+    applyCustomContentForCurrentState()
+    applyAppearanceForCurrentState()
+  }
+  
   // MARK: - Title & Subtitle lifecycle (lazy creation / timely cleanup)
 
   private func makeTitleLabel() -> UILabel {
@@ -374,8 +498,6 @@ open class FKButton: UIControl {
     NSLayoutConstraint.activate([top, leading, trailing, bottom])
     return container
   }
-
-  // MARK: - Subviews
   
   private func makeImageView() -> UIImageView {
     let imgView = UIImageView()
@@ -413,12 +535,12 @@ open class FKButton: UIControl {
     let top = label.topAnchor.constraint(equalTo: titleLabelIfNeeded().bottomAnchor)
     let bottom = label.bottomAnchor.constraint(equalTo: container.bottomAnchor)
 
+    subtitleTopConstraint = top
     subtitleLeadingConstraint = leading
     subtitleTrailingConstraint = trailing
-    subtitleTopConstraint = top
     subtitleBottomConstraint = bottom
 
-    NSLayoutConstraint.activate([leading, trailing, top, bottom])
+    NSLayoutConstraint.activate([top, leading, trailing, bottom])
     return label
   }
 
@@ -535,9 +657,7 @@ open class FKButton: UIControl {
   }
   
   private func applyContentLayout() {
-    stackView.arrangedSubviews.forEach {
-      $0.removeFromSuperview()
-    }
+    stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
     
     switch content.kind {
     case .textOnly:
@@ -567,12 +687,16 @@ open class FKButton: UIControl {
   private func applyAppearanceForCurrentState() {
     let appearance = resolveAppearance()
 
-    alpha = appearance.alpha
+    alpha = resolvedAlpha(for: appearance)
+    transform = isHighlighted
+      ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
+      : .identity
     backgroundColor = appearance.backgroundColor
-    layer.borderWidth = appearance.borderWidth
-    layer.borderColor = appearance.borderColor.cgColor
-    layer.cornerCurve = appearance.cornerCurve
-    layer.maskedCorners = appearance.maskedCorners
+    layer.borderWidth = appearance.border.width
+    layer.borderColor = appearance.border.color.cgColor
+    layer.cornerCurve = appearance.cornerStyle.curve
+    layer.maskedCorners = appearance.cornerStyle.maskedCorners
+    applyCornerMetrics(using: appearance)
     
     if let shadow = appearance.shadow {
       layer.shadowOffset = shadow.offset
@@ -580,8 +704,10 @@ open class FKButton: UIControl {
       layer.shadowOpacity = shadow.opacity
       layer.shadowColor = shadow.color.cgColor
       layer.masksToBounds = false
+      updateShadowPath(using: appearance)
     } else {
       layer.shadowOpacity = 0
+      layer.shadowPath = nil
       layer.masksToBounds = true
     }
     
@@ -591,13 +717,11 @@ open class FKButton: UIControl {
     trailingConstraint?.constant = -insets.trailing
     bottomConstraint?.constant = -insets.bottom
     
-    applyCornerMetrics(using: appearance)
-    
     invalidateIntrinsicContentSize()
   }
   
   private func applyCornerMetrics(using appearance: Appearance) {
-    switch appearance.corner {
+    switch appearance.cornerStyle.corner {
     case .none:
       layer.cornerRadius = 0
     case let .fixed(radius):
@@ -610,6 +734,65 @@ open class FKButton: UIControl {
       self.clipsToBounds = clipsToBounds
     } else {
       self.clipsToBounds = (appearance.shadow == nil)
+    }
+  }
+
+  /// Rebuilds `layer.shadowPath` from current bounds and corner settings when enabled.
+  private func updateShadowPath(using appearance: Appearance) {
+    guard appearance.shadow != nil, appearance.shadowPathStrategy == .automatic else {
+      layer.shadowPath = nil
+      return
+    }
+    layer.shadowPath = UIBezierPath(
+      roundedRect: bounds,
+      byRoundingCorners: appearance.cornerStyle.maskedCorners.uiRectCorner,
+      cornerRadii: CGSize(width: layer.cornerRadius, height: layer.cornerRadius)
+    ).cgPath
+  }
+
+  private func resolvedAlpha(for appearance: Appearance) -> CGFloat {
+    guard isHighlighted, isEnabled else { return appearance.alpha }
+    return appearance.alpha * appearance.interaction.pressedAlpha
+  }
+
+  private func expandedBounds(from outsets: UIEdgeInsets) -> CGRect {
+    bounds.inset(by: UIEdgeInsets(top: -outsets.top, left: -outsets.left, bottom: -outsets.bottom, right: -outsets.right))
+  }
+
+  /// Combines button-level hit-test outsets with active image-slot outsets.
+  private func resolvedHitTestOutsets() -> UIEdgeInsets {
+    let appearanceOutsets = resolveAppearance().interaction.hitTestOutsets
+    let imageOutsets = activeImageElements().reduce(UIEdgeInsets.zero) { current, element in
+      UIEdgeInsets(
+        top: max(current.top, element.hitTestOutsets.top),
+        left: max(current.left, element.hitTestOutsets.left),
+        bottom: max(current.bottom, element.hitTestOutsets.bottom),
+        right: max(current.right, element.hitTestOutsets.right)
+      )
+    }
+    return UIEdgeInsets(
+      top: appearanceOutsets.top + imageOutsets.top,
+      left: appearanceOutsets.left + imageOutsets.left,
+      bottom: appearanceOutsets.bottom + imageOutsets.bottom,
+      right: appearanceOutsets.right + imageOutsets.right
+    )
+  }
+
+  private func activeImageElements() -> [Image] {
+    switch content.kind {
+    case .imageOnly:
+      return [resolveImageElement(for: .center)].compactMap { $0 }
+    case let .textAndImage(alignment):
+      switch alignment {
+      case .leading:
+        return [resolveImageElement(for: .leading)].compactMap { $0 }
+      case .trailing:
+        return [resolveImageElement(for: .trailing)].compactMap { $0 }
+      case .bothSides:
+        return [resolveImageElement(for: .leading), resolveImageElement(for: .trailing)].compactMap { $0 }
+      }
+    case .textOnly, .custom:
+      return []
     }
   }
   
@@ -735,7 +918,9 @@ open class FKButton: UIControl {
   }
 
   private var stateResolutionOrder: [UIControl.State] {
-    // State resolution order: disabled → selected → highlighted → normal.
+    if let provider = stateResolutionProvider {
+      return provider(isEnabled, isSelected, isHighlighted)
+    }
     if !isEnabled { return [.disabled, .normal] }
     if isSelected { return [.selected, .normal] }
     if isHighlighted { return [.highlighted, .normal] }
@@ -801,9 +986,7 @@ open class FKButton: UIControl {
       return
     }
 
-    var text = title.text ?? ""
-    if title.uppercased { text = text.uppercased() }
-    if title.lowercased { text = text.lowercased() }
+    let text = transformedText(from: title.text ?? "", by: title.textTransform)
 
     let paragraph = NSMutableParagraphStyle()
     paragraph.alignment = title.alignment
@@ -844,9 +1027,7 @@ open class FKButton: UIControl {
       return
     }
 
-    var text = subtitle.text ?? ""
-    if subtitle.uppercased { text = text.uppercased() }
-    if subtitle.lowercased { text = text.lowercased() }
+    let text = transformedText(from: subtitle.text ?? "", by: subtitle.textTransform)
 
     let paragraph = NSMutableParagraphStyle()
     paragraph.alignment = subtitle.alignment
@@ -891,12 +1072,16 @@ open class FKButton: UIControl {
     if let symbolConfiguration = element.symbolConfiguration {
       rendered = rendered?.applyingSymbolConfiguration(symbolConfiguration)
     }
+    rendered = rendered.flatMap { paddedImage(from: $0, contentInsets: element.contentInsets) }
 
     imageView.image = rendered
-    imageView.alpha = element.alpha
     imageView.tintColor = element.tintColor
-    imageView.contentMode = element.contentMode
+    imageView.contentMode = resolvedImageContentMode(for: element)
     imageView.semanticContentAttribute = element.flipsForRightToLeftLayoutDirection ? .unspecified : .forceLeftToRight
+    imageView.accessibilityLabel = element.accessibilityLabel
+    imageView.accessibilityHint = element.accessibilityHint
+    imageView.accessibilityIdentifier = element.accessibilityIdentifier
+    imageView.isAccessibilityElement = false
     imageView.isHidden = (rendered == nil)
     imageView.alpha = (rendered == nil) ? 0 : element.alpha
 
@@ -928,6 +1113,72 @@ open class FKButton: UIControl {
       NSLayoutConstraint.deactivate(constraints)
       imageConstraints[key] = nil
     }
+  }
+
+  private func transformedText(from text: String, by transform: Text.TextTransform) -> String {
+    switch transform {
+    case .none:
+      return text
+    case .uppercase:
+      return text.uppercased()
+    case .lowercase:
+      return text.lowercased()
+    }
+  }
+
+  /// Enforces aspect-preserving content mode when requested by `Image.preserveAspectRatio`.
+  private func resolvedImageContentMode(for element: Image) -> UIView.ContentMode {
+    guard element.preserveAspectRatio else { return element.contentMode }
+    switch element.contentMode {
+    case .scaleToFill:
+      return .scaleAspectFit
+    default:
+      return element.contentMode
+    }
+  }
+
+  /// Applies directional insets by rendering into a padded bitmap.
+  private func paddedImage(from image: UIImage, contentInsets: NSDirectionalEdgeInsets) -> UIImage {
+    guard contentInsets != .zero else { return image }
+    let directional = effectiveDirectionalInsets(contentInsets)
+    let cacheKey = "\(ObjectIdentifier(image).hashValue)-\(directional.top)-\(directional.left)-\(directional.bottom)-\(directional.right)-\(image.scale)" as NSString
+    if let cached = Self.paddedImageCache.object(forKey: cacheKey) {
+      return cached
+    }
+    let horizontal = directional.left + directional.right
+    let vertical = directional.top + directional.bottom
+    let size = CGSize(width: image.size.width + horizontal, height: image.size.height + vertical)
+    let format = UIGraphicsImageRendererFormat.default()
+    format.scale = image.scale
+    format.opaque = false
+    let renderer = UIGraphicsImageRenderer(size: size, format: format)
+    let padded = renderer.image { _ in
+      image.draw(at: CGPoint(x: directional.left, y: directional.top))
+    }
+    Self.paddedImageCache.setObject(padded, forKey: cacheKey)
+    return padded
+  }
+
+  /// Resolves directional insets into physical edges under current layout direction.
+  private func effectiveDirectionalInsets(_ insets: NSDirectionalEdgeInsets) -> UIEdgeInsets {
+    let isRTL = effectiveUserInterfaceLayoutDirection == .rightToLeft
+    return UIEdgeInsets(
+      top: max(0, insets.top),
+      left: max(0, isRTL ? insets.trailing : insets.leading),
+      bottom: max(0, insets.bottom),
+      right: max(0, isRTL ? insets.leading : insets.trailing)
+    )
+  }
+}
+
+private extension CACornerMask {
+  var uiRectCorner: UIRectCorner {
+    var corners: UIRectCorner = []
+    if contains(.layerMinXMinYCorner) { corners.insert(.topLeft) }
+    if contains(.layerMaxXMinYCorner) { corners.insert(.topRight) }
+    if contains(.layerMinXMaxYCorner) { corners.insert(.bottomLeft) }
+    if contains(.layerMaxXMaxYCorner) { corners.insert(.bottomRight) }
+    return corners
   }
 }
 

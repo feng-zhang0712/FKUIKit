@@ -150,11 +150,10 @@ private extension FKButtonDemoViewController {
     let insets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
     func makeAppearance(from spec: ButtonVisualSpec) -> FKButton.Appearance {
       FKButton.Appearance(
-        corner: corner,
-        shadow: spec.shadow,
-        borderWidth: borderWidth,
-        borderColor: spec.borderColor,
+        cornerStyle: .init(corner: corner),
+        border: .init(width: borderWidth, color: spec.borderColor),
         backgroundColor: spec.backgroundColor,
+        shadow: spec.shadow,
         contentInsets: insets
       )
     }

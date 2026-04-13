@@ -55,7 +55,17 @@ import UIKit
 import FKButton
 
 let button = FKButton()
-button.setTitle(.init(text: "OK"), for: .normal)
+button.content = .textAndImage(.leading)
+button.setTitles(
+  normal: .init(text: "OK"),
+  selected: .init(text: "Selected")
+)
+button.setAppearances(
+  .init(
+    normal: .filled(backgroundColor: .systemBlue),
+    selected: .outlined(borderColor: .systemBlue)
+  )
+)
 ```
 
 ### FKBarPresentation

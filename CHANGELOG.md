@@ -8,6 +8,25 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.3.0] - 2026-04-13
+
+### Breaking changes (FKButton)
+- `FKButton.Appearance` now uses `cornerStyle` and `border` instead of direct `corner` / `borderWidth` / `borderColor` initializer parameters.
+- `FKButton.Text` now uses `textTransform` (`none` / `uppercase` / `lowercase`) instead of `uppercased` / `lowercased`.
+
+### Added (FKButton)
+- Added batch update and convenience APIs: `performBatchUpdates`, `setTitles`, `setSubtitles`, `setImages`, `setLeadingImages`, `setTrailingImages`, and `setCustomContents`.
+- Added configurable state resolution with `stateResolutionProvider`.
+- Added rendered image padding cache for image content insets.
+
+### Changed (FKButton)
+- Improved internal refresh flow to avoid redundant content-layout rebuilds during state-only updates.
+- Unified accessibility behavior by keeping the main `FKButton` as the primary accessibility element.
+- Expanded and aligned API documentation across `FKButton`, `Appearance`, `Content`, and `Elements`.
+
+### Changed (Demo)
+- Updated `Examples/FKUIKitDemo` button, bar, and bar-presentation demos to the new `FKButton.Appearance` API.
+
 ## [0.2.3] - 2026-04-11
 
 ### Breaking changes (FKBar)
@@ -63,6 +82,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 <!-- Replace the links below with your repository URL when published -->
 [Unreleased]: #
+[0.3.0]: #
 [0.2.3]: #
 [0.2.2]: #
 [0.2.1]: #

@@ -12,6 +12,13 @@ public extension FKButton {
   ///
   /// Compared to `UIButton`: keep font, paragraph styling, shadow, and accessibility in one place.
   struct Text {
+    /// Text transform strategy for plain text rendering.
+    public enum TextTransform: Equatable, Sendable {
+      case none
+      case uppercase
+      case lowercase
+    }
+
     /// Plain text. When `attributedText != nil`, rich text takes precedence.
     public var text: String?
     public var attributedText: NSAttributedString?
@@ -38,8 +45,8 @@ public extension FKButton {
     public var shadowColor: UIColor?
     public var shadowOffset: CGSize
 
-    public var uppercased: Bool
-    public var lowercased: Bool
+    /// Applied only to plain text (`text`), ignored when `attributedText` is provided.
+    public var textTransform: TextTransform
 
     /// Used for accessibility; falls back to `text` when `nil`.
     public var accessibilityLabel: String?
@@ -64,8 +71,7 @@ public extension FKButton {
       allowsDefaultTighteningForTruncation: Bool = false,
       shadowColor: UIColor? = nil,
       shadowOffset: CGSize = .zero,
-      uppercased: Bool = false,
-      lowercased: Bool = false,
+      textTransform: TextTransform = .none,
       accessibilityLabel: String? = nil,
       accessibilityHint: String? = nil,
       contentInsets: NSDirectionalEdgeInsets = .zero
@@ -81,17 +87,17 @@ public extension FKButton {
       self.lineHeight = lineHeight
       self.lineSpacing = lineSpacing
       self.adjustsFontSizeToFitWidth = adjustsFontSizeToFitWidth
-      self.minimumScaleFactor = minimumScaleFactor
+      self.minimumScaleFactor = max(0, min(1, minimumScaleFactor))
       self.allowsDefaultTighteningForTruncation = allowsDefaultTighteningForTruncation
       self.shadowColor = shadowColor
       self.shadowOffset = shadowOffset
-      self.uppercased = uppercased
-      self.lowercased = lowercased
+      self.textTransform = textTransform
       self.accessibilityLabel = accessibilityLabel
       self.accessibilityHint = accessibilityHint
       self.contentInsets = contentInsets
     }
 
+    /// Baseline text configuration used as state fallback.
     public nonisolated(unsafe) static let `default` = Text()
   }
   
@@ -153,13 +159,13 @@ public extension FKButton {
       self.symbolConfiguration = symbolConfiguration
       self.flipsForRightToLeftLayoutDirection = flipsForRightToLeftLayoutDirection
       self.tintColor = tintColor
-      self.alpha = alpha
+      self.alpha = max(0, min(1, alpha))
       self.fixedSize = fixedSize
       self.minimumSize = minimumSize
       self.maximumSize = maximumSize
       self.preserveAspectRatio = preserveAspectRatio
       self.contentMode = contentMode
-      self.spacingToTitle = spacingToTitle
+      self.spacingToTitle = max(0, spacingToTitle)
       self.contentInsets = contentInsets
       self.hitTestOutsets = hitTestOutsets
       self.accessibilityLabel = accessibilityLabel
@@ -167,6 +173,7 @@ public extension FKButton {
       self.accessibilityIdentifier = accessibilityIdentifier
     }
 
+    /// Baseline image configuration used as state fallback.
     public nonisolated(unsafe) static let `default` = Image()
   }
   
@@ -184,9 +191,10 @@ public extension FKButton {
 
     public init(view: UIView? = nil, spacingToAdjacentContent: CGFloat = 6) {
       self.view = view
-      self.spacingToAdjacentContent = spacingToAdjacentContent
+      self.spacingToAdjacentContent = max(0, spacingToAdjacentContent)
     }
 
+    /// Baseline custom-content configuration used as state fallback.
     public nonisolated(unsafe) static let `default` = CustomContent()
   }
 

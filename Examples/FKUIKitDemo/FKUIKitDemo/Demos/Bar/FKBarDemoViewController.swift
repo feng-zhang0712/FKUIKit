@@ -198,7 +198,7 @@ final class FKBarDemoViewController: UIViewController {
       )
       spec.setAppearance(
         FKButton.Appearance(
-          corner: .capsule,
+          cornerStyle: .init(corner: .capsule),
           backgroundColor: .secondarySystemFill,
           contentInsets: .init(top: 6, leading: 10, bottom: 6, trailing: 10)
         ),
@@ -206,9 +206,8 @@ final class FKBarDemoViewController: UIViewController {
       )
       spec.setAppearance(
         FKButton.Appearance(
-          corner: .capsule,
-          borderWidth: 1,
-          borderColor: .systemOrange,
+          cornerStyle: .init(corner: .capsule),
+          border: .init(width: 1, color: .systemOrange),
           backgroundColor: UIColor.systemOrange.withAlphaComponent(0.12),
           contentInsets: .init(top: 6, leading: 10, bottom: 6, trailing: 10)
         ),
