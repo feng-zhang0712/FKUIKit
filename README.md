@@ -91,7 +91,13 @@ config.appearance.shadowPathStrategy = .automatic
 bar.setConfiguration(config)
 ```
 
-## Recent updates (0.5.0)
+## Recent updates (0.5.1)
+
+- `FKBar` now keeps the selected item correctly aligned after rotation and other bounds-size changes, with safer horizontal offset clamping in edge cases.
+- `FKPresentation` now keeps mask dimming intensity consistent across show/reposition/rotation by avoiding alpha double-application.
+- `FKPresentation` content measurement now uses a larger probe height to prevent transient Auto Layout warnings for stacked content with container insets.
+
+## Previous updates (0.5.0)
 
 - `FKBarPresentation.Configuration.Behavior` adds presets for common panel lifecycle strategies:
   - `.default`

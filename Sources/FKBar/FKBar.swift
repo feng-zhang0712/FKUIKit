@@ -74,6 +74,8 @@ open class FKBar: UIView {
 
   /// Cached overflow state for layouts that switch between “fill viewport” and “scroll intrinsic width”.
   private var lastHorizontalLayoutOverflowState: Bool?
+  /// Last laid out bounds size; used to detect rotation/size-class width changes.
+  private var lastLaidOutBoundsSize: CGSize = .zero
 
   public override init(frame: CGRect) {
     super.init(frame: frame)
@@ -121,12 +123,25 @@ open class FKBar: UIView {
   open override func layoutSubviews() {
     super.layoutSubviews()
     updateBarShadowPathIfNeeded()
-    guard configuration.arrangement != .leading else { return }
+
+    let currentSize = bounds.size
+    let sizeDidChange = currentSize != .zero && currentSize != lastLaidOutBoundsSize
+    lastLaidOutBoundsSize = currentSize
+
     guard scrollView.bounds.width > 0, !sourceViewsByIndex.isEmpty else { return }
 
-    let overflows = resolvedContentOverflowsViewport()
-    if let previous = lastHorizontalLayoutOverflowState, previous == overflows { return }
-    rebuildHorizontalLayoutConstraints(invalidateIntrinsic: true)
+    if configuration.arrangement != .leading {
+      let overflows = resolvedContentOverflowsViewport()
+      if lastHorizontalLayoutOverflowState != overflows {
+        rebuildHorizontalLayoutConstraints(invalidateIntrinsic: true)
+      }
+    }
+
+    // Keep the selected item aligned after rotations / size changes.
+    // This avoids carrying stale contentOffset into the new geometry.
+    if sizeDidChange {
+      scrollToSelectedIndexIfNeeded(animated: false)
+    }
   }
 
   open override var intrinsicContentSize: CGSize {
@@ -723,7 +738,7 @@ open class FKBar: UIView {
     }()
 
     let minX = -insets.left
-    let maxX = scrollView.contentSize.width - scrollView.bounds.width + insets.right
+    let maxX = max(minX, scrollView.contentSize.width - scrollView.bounds.width + insets.right)
     let clamped = min(max(xOffset, minX), maxX)
 
     let duration = configuration.selectionScroll.animation.duration

@@ -8,6 +8,17 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.5.1] - 2026-04-14
+
+### Fixed (FKBar)
+- Preserve selected-item alignment after bounds changes (for example, device rotation) by reapplying selection scroll positioning during layout updates.
+- Hardened horizontal offset clamping to avoid invalid scroll ranges when content becomes narrower than the viewport.
+
+### Fixed (FKPresentation)
+- Removed mask alpha double-application so dimming strength remains stable after show/reposition and rotation.
+- Reposition flow now updates mask geometry/color through a dedicated frame-refresh path instead of resetting mask visibility state.
+- Increased layout probe height during content measurement to avoid transient Auto Layout warnings when content uses stacked constraints with container insets.
+
 ## [0.5.0] - 2026-04-13
 
 ### Added (FKBarPresentation)
@@ -120,6 +131,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 <!-- Replace the links below with your repository URL when published -->
 [Unreleased]: #
+[0.5.1]: #
 [0.5.0]: #
 [0.4.0]: #
 [0.3.0]: #

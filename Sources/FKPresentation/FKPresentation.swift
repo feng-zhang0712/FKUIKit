@@ -101,6 +101,7 @@ public final class FKPresentation {
 
   // MARK: Internal flags
   private var isRepositioning: Bool = false
+  private let repositionCoordinator = FKPresentationRepositionCoordinator()
 
   public init() {}
 
@@ -210,7 +211,7 @@ public final class FKPresentation {
     } else {
       // Immediately set to identity/visible.
       presentationContainerView?.transform = .identity
-      maskView?.alpha = configuration.mask.enabled ? configuration.mask.alpha : 0
+      maskView?.alpha = configuration.mask.enabled ? 1 : 0
       delegate?.presentationDidPresent(self)
       completion?()
     }
@@ -269,8 +270,13 @@ public final class FKPresentation {
   ) {
     self.configuration = configuration
     applyAppearance()
-    guard isPresented else { completion?(); return }
-    recalculateAndReposition(animated: animated, completion: completion)
+    if isPresented {
+      removeRepositionObservers()
+      observeRepositionIfNeeded()
+      recalculateAndReposition(animated: animated, completion: completion)
+    } else {
+      completion?()
+    }
   }
 
   public func recalculateAndReposition(
@@ -279,34 +285,57 @@ public final class FKPresentation {
   ) {
     guard isPresented else { completion?(); return }
     guard let host = hostContainer else { completion?(); return }
+    guard presentationContainerView != nil, contentChromeView != nil else { completion?(); return }
+    
     isRepositioning = true
-    defer { isRepositioning = false }
 
-    // Ask delegate to adjust anchor before recomputing.
-    if var view = sourceView {
-      var rect = sourceRect
-      delegate?.presentation(self, willRepositionTo: &rect, in: &view)
-      sourceRect = rect
-      self.sourceView = view
-      directHostChild = findDirectChild(of: host, containing: view)
+    // Allow the delegate to swap the anchor view/rect before recalculating.
+    if let currentSource = sourceView {
+      var nextRect = sourceRect
+      var nextView: UIView = currentSource
+      delegate?.presentation(self, willRepositionTo: &nextRect, in: &nextView)
+      sourceRect = nextRect
+      sourceView = nextView
+      directHostChild = findDirectChild(of: host, containing: nextView)
     }
 
-    // Recompute final frame & apply (do not animate height changes).
-    let (presentationFrame, chromeFrame) = computeAndApplyFrames()
-    presentationContainerView?.frame = presentationFrame
-    contentChromeView?.frame = chromeFrame
-    // Ensure style and wrapper constraints remain consistent after size/anchor updates.
-    applyAppearance()
-    applyMaskInitial()
+    // Keep the source view visually above the presentation after hierarchy changes.
+    bringSourceViewAbovePresentation()
+    host.setNeedsLayout()
+    host.layoutIfNeeded()
 
-    if animated, configuration.reposition.animationDuration > 0 {
-      // Only animate subtle translation; final frame already applied.
-      let duration = configuration.reposition.animationDuration
-      UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
-        self.presentationContainerView?.transform = .identity
-      } completion: { _ in completion?() }
-    } else {
+    let reduced = UIAccessibility.isReduceMotionEnabled
+    let duration = (animated && !reduced) ? configuration.reposition.animationDuration : 0
+
+    let allowInteraction = configuration.interaction.isUserInteractionEnabledDuringAnimation
+    if !allowInteraction {
+      presentationContainerView?.isUserInteractionEnabled = false
+      maskView?.isUserInteractionEnabled = false
+    }
+
+    let finish = { [weak self] in
+      guard let self else { return }
+      self.isRepositioning = false
+      if !allowInteraction {
+        self.presentationContainerView?.isUserInteractionEnabled = true
+        self.maskView?.isUserInteractionEnabled = true
+      }
       completion?()
+    }
+
+    if duration > 0 {
+      UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+        self.prepareForLayout()
+        _ = self.computeAndApplyFrames()
+        self.applyMaskFrameForCurrentLayout(in: host)
+      } completion: { _ in
+        finish()
+      }
+    } else {
+      prepareForLayout()
+      _ = computeAndApplyFrames()
+      applyMaskFrameForCurrentLayout(in: host)
+      finish()
     }
   }
 
@@ -318,7 +347,7 @@ public final class FKPresentation {
     let mask = UIView()
     mask.translatesAutoresizingMaskIntoConstraints = false
     mask.backgroundColor = configuration.mask.backgroundColor.withAlphaComponent(configuration.mask.alpha)
-    mask.alpha = configuration.mask.enabled ? 0 : 0
+    mask.alpha = 0
     mask.isUserInteractionEnabled = configuration.mask.tapToDismissEnabled
 
     let tap = UITapGestureRecognizer(target: self, action: #selector(handleMaskTap(_:)))
@@ -403,12 +432,16 @@ public final class FKPresentation {
 
     // Layout user content for fitting (height already determined).
     // Ensure the inset wrapper gets the correct width before fitting.
-    presentationContainerView.frame = CGRect(x: 0, y: 0, width: containerChromeWidth, height: 1)
+    // Use a sufficiently large probe height to avoid transient unsatisfiable
+    // constraints (especially stacked content with spacing) during the probe pass.
+    let probeHeight = max(host.bounds.height, insets.top + insets.bottom + 1)
+    presentationContainerView.frame = CGRect(x: 0, y: 0, width: containerChromeWidth, height: probeHeight)
     chrome.frame = CGRect(origin: .zero, size: presentationContainerView.frame.size)
     host.layoutIfNeeded()
 
     let contentSize = resolveContentSize(maxHeight: maxHeight, targetWidth: containerChromeMaxContentWidth)
-    let resolvedHeight = configuration.content.preferredHeight ?? contentSize.height
+    let resolvedHeightCandidate = configuration.content.preferredHeight ?? contentSize.height
+    let resolvedHeight = maxHeight > 0 ? min(max(0, resolvedHeightCandidate), maxHeight) : max(0, resolvedHeightCandidate)
 
     let chromeHeight = resolvedHeight + insets.top + insets.bottom
     let chromeWidth = containerChromeWidth
@@ -581,10 +614,13 @@ public final class FKPresentation {
   // MARK: Mask
 
   private func applyMaskInitial() {
-    guard let host = hostContainer,
-          let source = sourceView,
-          let maskView
-    else { return }
+    guard let host = hostContainer, let maskView else { return }
+    applyMaskFrameForCurrentLayout(in: host)
+    maskView.alpha = 0
+  }
+
+  private func applyMaskFrameForCurrentLayout(in host: UIView) {
+    guard let source = sourceView, let maskView else { return }
 
     if !configuration.mask.enabled {
       maskView.isHidden = true
@@ -606,7 +642,8 @@ public final class FKPresentation {
     )
     maskView.frame = maskRect
     maskView.backgroundColor = configuration.mask.backgroundColor.withAlphaComponent(configuration.mask.alpha)
-    maskView.alpha = 0
+    // Keep view alpha as visibility toggle only; effective dimming comes from backgroundColor alpha.
+    maskView.alpha = 1
     maskView.isUserInteractionEnabled = configuration.mask.tapToDismissEnabled
   }
 
@@ -614,7 +651,7 @@ public final class FKPresentation {
     guard let maskView else { return }
     guard configuration.mask.tapToDismissEnabled else { return }
 
-    if isRepositioning, configuration.interaction.allowDismissingDuringReposition == false { return }
+    if isRepositioning, !configuration.interaction.allowDismissingDuringReposition { return }
 
     let point = recognizer.location(in: maskView)
 
@@ -905,31 +942,25 @@ public final class FKPresentation {
   }
 
   // MARK: Reposition observers
-  private var didRegisterObservers: Bool = false
-
   private func observeRepositionIfNeeded() {
-    guard configuration.reposition.enabled, !didRegisterObservers else { return }
-    didRegisterObservers = true
+    guard configuration.reposition.enabled else { return }
+    guard let host = hostContainer else { return }
 
-    if configuration.reposition.listenOrientationChanges {
-      NotificationCenter.default.addObserver(
-        self,
-        selector: #selector(handleRepositionRequest),
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil
-      )
+    repositionCoordinator.startObserving(
+      in: host,
+      listenLayoutChanges: configuration.reposition.listenOrientationChanges,
+      listenTraitChanges: configuration.reposition.listenTraitCollectionChanges
+    ) { [weak self] in
+      guard let self else { return }
+      guard self.isPresented else { return }
+      guard self.configuration.interaction.allowDismissingDuringReposition || !self.isRepositioning else { return }
+      let shouldAnimate = self.configuration.reposition.animationDuration > 0
+      self.recalculateAndReposition(animated: shouldAnimate, completion: nil)
     }
   }
 
   private func removeRepositionObservers() {
-    NotificationCenter.default.removeObserver(self)
-    didRegisterObservers = false
-  }
-
-  @objc private func handleRepositionRequest() {
-    guard isPresented else { return }
-    guard configuration.interaction.allowDismissingDuringReposition || !isRepositioning else { return }
-    recalculateAndReposition(animated: false, completion: nil)
+    repositionCoordinator.stopObserving()
   }
 
   // MARK: Helpers
