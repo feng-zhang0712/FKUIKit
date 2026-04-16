@@ -78,6 +78,24 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Refactored examples from `FKUIKitDemo` to `FKKitExamples`.
 - Polished component APIs in `FKButton` and `FKBarPresentation`.
 
+## Branching & Collaboration (Recommended)
+
+This repo follows a lightweight workflow to keep `main` stable while you iterate on new APIs/structure.
+
+Branch roles:
+
+- `main`: stable history. It only receives changes after they have been validated and merged from `develop`.
+- `develop`: the integration branch for ongoing development. All new work should start from here.
+- `feature/*`: short-lived branches for a specific feature/refactor. Create from `develop` and open a PR back to `develop`.
+- `bugfix/*`: short-lived branches for targeted bug fixes (no new features). Create from `develop` and open a PR back to `develop`.
+- `hotfix/*` (optional): very short-lived fixes that must be applied to `main` immediately. After the fix lands on `main`, also merge it back to `develop`.
+
+Collaboration tips:
+
+- Prefer small PRs focused on one goal (one feature or one refactor).
+- Keep your `feature/*` / `bugfix/*` branch up to date with `develop` before requesting a review.
+- Use clear PR titles (for example: `feat: add FKFilter chips view`, `fix: correct FKBar selection alignment`).
+
 ## Versioning
 
 This project follows SemVer. See `CHANGELOG.md` and git tags for releases.
