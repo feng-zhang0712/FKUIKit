@@ -8,6 +8,26 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.6.0] - 2026-04-16
+
+### Breaking changes
+- Package and repository direction has been unified under `FKKit`, replacing the previous `FKUIKit`-named repository layout.
+- SwiftPM products were consolidated to `FKUIKit` and `FKBusinessKit` as top-level deliverables.
+- Example project structure migrated from `FKUIKitDemo` to `FKKitExamples` with new app/bootstrap wiring and resource layout.
+
+### Added (FKBusinessKit)
+- New `FKBusinessKit` product and target with filter-focused business UI components.
+- Added filter module infrastructure including bar host/presentation, panel support, list/chips/course views, and demo data provider.
+- Added end-to-end filter demo entry points and host demo view controllers for practical integration reference.
+
+### Changed (Examples)
+- Reorganized demo app files and naming from "Demo" to "Examples" terminology across project and source structure.
+- Updated example menu flow and application entry composition for the new module layout.
+
+### Changed (FKUIKit)
+- Updated `FKBarPresentation` configuration path for the refactored package structure.
+- Refined `FKButton` appearance/content implementation details for better consistency with the new package organization.
+
 ## [0.5.1] - 2026-04-14
 
 ### Fixed (FKBar)
@@ -129,14 +149,14 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-<!-- Replace the links below with your repository URL when published -->
-[Unreleased]: #
-[0.5.1]: #
-[0.5.0]: #
-[0.4.0]: #
-[0.3.0]: #
-[0.2.3]: #
-[0.2.2]: #
-[0.2.1]: #
-[0.2.0]: #
-[0.1.0]: #
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/feng-zhang0712/FKKit/compare/0.5.1...0.6.0
+[0.5.1]: https://github.com/feng-zhang0712/FKKit/compare/0.5.0...0.5.1
+[0.5.0]: https://github.com/feng-zhang0712/FKKit/compare/0.4.0...0.5.0
+[0.4.0]: https://github.com/feng-zhang0712/FKKit/compare/0.3.0...0.4.0
+[0.3.0]: https://github.com/feng-zhang0712/FKKit/compare/0.2.3...0.3.0
+[0.2.3]: https://github.com/feng-zhang0712/FKKit/compare/0.2.2...0.2.3
+[0.2.2]: https://github.com/feng-zhang0712/FKKit/compare/0.2.1...0.2.2
+[0.2.1]: https://github.com/feng-zhang0712/FKKit/compare/0.2.0...0.2.1
+[0.2.0]: https://github.com/feng-zhang0712/FKKit/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/feng-zhang0712/FKKit/releases/tag/0.1.0

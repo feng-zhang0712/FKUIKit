@@ -1,44 +1,27 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.3
 
 import PackageDescription
 
 let package = Package(
-  name: "FKUIKit",
+  name: "FKKit",
   platforms: [
     .iOS(.v15),
   ],
   products: [
-    .library(name: "FKBar", targets: ["FKBar"]),
-    .library(name: "FKButton", targets: ["FKButton"]),
-    .library(name: "FKBarPresentation", targets: ["FKBarPresentation"]),
-    .library(name: "FKPresentation", targets: ["FKPresentation"]),
-    .library(name: "FKUIKitCore", targets: ["FKUIKitCore"]),
+    .library(name: "FKUIKit", targets: ["FKUIKit"]),
+    .library(name: "FKBusinessKit", targets: ["FKBusinessKit"]),
   ],
   targets: [
     .target(
-      name: "FKUIKitCore",
-      path: "Sources/FKUIKitCore"
+      name: "FKUIKit",
+      path: "Sources/FKUIKit"
     ),
     .target(
-      name: "FKButton",
-      dependencies: ["FKUIKitCore"],
-      path: "Sources/FKButton"
-    ),
-    .target(
-      name: "FKBar",
-      dependencies: ["FKButton", "FKUIKitCore"],
-      path: "Sources/FKBar"
-    ),
-    .target(
-      name: "FKPresentation",
-      dependencies: ["FKUIKitCore"],
-      path: "Sources/FKPresentation"
-    ),
-    .target(
-      name: "FKBarPresentation",
-      dependencies: ["FKBar", "FKPresentation", "FKUIKitCore"],
-      path: "Sources/FKBarPresentation"
+      name: "FKBusinessKit",
+      dependencies: ["FKUIKit"],
+      path: "Sources/FKBusinessKit"
     ),
   ],
   swiftLanguageModes: [.v6]
 )
+

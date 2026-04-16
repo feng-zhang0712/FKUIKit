@@ -1,12 +1,9 @@
-# FKUIKit
+# FKKit
 
-A lightweight UIKit component library for iOS:
+A modular UIKit component library for iOS.
 
-- `FKButton`: a state-driven UIControl button
-- `FKBar`: a horizontally scrolling item bar (tabs/chips/segmented-like)
-- `FKPresentation`: an anchored overlay/panel (not `UIPresentationController`)
-- `FKBarPresentation`: `FKBar` + `FKPresentation` as a single component
-- `FKUIKitCore`: shared utilities
+- `FKUIKit`: foundational UI components and presentation infrastructure
+- `FKBusinessKit`: business-oriented UI compositions built on top of `FKUIKit`
 
 ## Requirements
 
@@ -15,6 +12,10 @@ A lightweight UIKit component library for iOS:
 - Xcode (build with an iOS destination; `swift build` on macOS won’t work because of UIKit)
 
 ## Swift Package Manager
+
+Repository URL:
+
+`git@github.com:feng-zhang0712/FKKit.git`
 
 In Xcode:
 
@@ -26,20 +27,14 @@ In Xcode:
 
 | Product | Import | Notes |
 |---|---|---|
-| FKUIKitCore | `import FKUIKitCore` | shared types/utilities |
-| FKButton | `import FKButton` | button component |
-| FKBar | `import FKBar` | depends on `FKButton`, `FKUIKitCore` |
-| FKPresentation | `import FKPresentation` | anchored overlay/panel |
-| FKBarPresentation | `import FKBarPresentation` | depends on `FKBar`, `FKPresentation`, `FKUIKitCore` |
+| FKUIKit | `import FKUIKit` | core reusable UIKit components |
+| FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
 
 Dependency graph:
 
 ```text
-FKUIKitCore
-FKButton            → FKUIKitCore
-FKBar               → FKButton, FKUIKitCore
-FKPresentation      → FKUIKitCore
-FKBarPresentation   → FKBar, FKPresentation, FKUIKitCore
+FKUIKit
+FKBusinessKit   → FKUIKit
 ```
 
 ### Local package (development)
@@ -48,66 +43,40 @@ Use **Add Local…** and select the repository root (the folder that contains `P
 
 ## Quick start
 
-### FKButton
+### FKUIKit
 
 ```swift
 import UIKit
-import FKButton
-
-let button = FKButton()
-button.content = .textAndImage(.leading)
-button.setTitles(
-  normal: .init(text: "OK"),
-  selected: .init(text: "Selected")
-)
-button.setAppearances(
-  .init(
-    normal: .filled(backgroundColor: .systemBlue),
-    selected: .outlined(borderColor: .systemBlue)
-  )
-)
-```
-
-### FKBarPresentation
-
-```swift
-import FKBarPresentation
-
-let barPresentation = FKBarPresentation(frame: .zero)
-barPresentation.reloadBarItems([/* FKBar.Item */])
-```
-
-### FKBar
-
-```swift
-import FKBar
+import FKUIKit
 
 let bar = FKBar()
 var config = FKBar.Configuration.default
 config.itemSpacing = 8
-config.appearance.cornerStyle = .init(radius: 12, curve: .continuous)
-config.appearance.border = .init(width: 1, color: .separator)
-config.appearance.shadowPathStrategy = .automatic
 bar.setConfiguration(config)
 ```
 
-## Recent updates (0.5.1)
+### FKBusinessKit
 
-- `FKBar` now keeps the selected item correctly aligned after rotation and other bounds-size changes, with safer horizontal offset clamping in edge cases.
-- `FKPresentation` now keeps mask dimming intensity consistent across show/reposition/rotation by avoiding alpha double-application.
-- `FKPresentation` content measurement now uses a larger probe height to prevent transient Auto Layout warnings for stacked content with container insets.
+```swift
+import FKBusinessKit
 
-## Previous updates (0.5.0)
+let filterBar = FKFilterBarPresentation()
+let filterHost = FKFilterBarHost(filterBar: filterBar)
+```
 
-- `FKBarPresentation.Configuration.Behavior` adds presets for common panel lifecycle strategies:
-  - `.default`
-  - `.keepPanelOnSelectionChange`
-  - `.selectionDrivenDismiss`
-- Runtime `FKBarPresentation` config updates are now safer while presented (`applyConfiguration` forwards to `FKPresentation.updateConfiguration` when needed).
-- `FKPresentation` improves dynamic layout consistency:
-  - `content.containerInsets` changes can update an already presented panel.
-  - Trait-collection-driven repositioning is now effective when enabled.
-  - Show animation end alpha respects `appearance.alpha`.
+## Migration notes (from FKUIKit repo)
+
+- Repository has been renamed from `FKUIKit` to `FKKit`.
+- SwiftPM package name is now `FKKit`.
+- Products are consolidated to `FKUIKit` and `FKBusinessKit`.
+- Example app structure has been refactored to the new `FKKitExamples` layout.
+
+## Recent updates (0.6.0)
+
+- Introduced `FKBusinessKit` as a dedicated business component layer.
+- Added a full filter module (filter bar host/presentation, panel/list/chips/course generic views, and example app demos).
+- Refactored examples from `FKUIKitDemo` to `FKKitExamples`.
+- Polished component APIs in `FKButton` and `FKBarPresentation`.
 
 ## Versioning
 
