@@ -124,6 +124,19 @@ final class FKFilterTwoColumnGridHeaderView: UICollectionReusableView {
 }
 
 public final class FKFilterTwoColumnGridViewController: UIViewController {
+  public typealias LeftCellContentConfiguration = (
+    _ cell: UITableViewCell,
+    _ indexPath: IndexPath,
+    _ category: FKFilterTwoColumnModel.Category
+  ) -> Void
+
+  public typealias ItemCellContentConfiguration = (
+    _ cell: UICollectionViewCell,
+    _ indexPath: IndexPath,
+    _ item: FKFilterOptionItem,
+    _ section: FKFilterSection
+  ) -> Void
+
   /// Two-column panel controller: left category list (`UITableView`) + right grid (`UICollectionView`).
   ///
   /// This is the "course-like" layout:
@@ -179,6 +192,10 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
     public var allowsSelectingSectionHeader: Bool
     public var singleSelectionScope: SingleSelectionScope
     public var heightBehavior: FKFilterPanelHeightBehavior
+    /// Optional hook for left table cell customization.
+    public var configureLeftCell: LeftCellContentConfiguration?
+    /// Optional hook for right collection item customization.
+    public var configureItemCell: ItemCellContentConfiguration?
 
     public init(
       leftRowHeight: CGFloat = 46,
@@ -198,7 +215,9 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
       rightHeaderStyle: RightHeaderStyle = .init(),
       allowsSelectingSectionHeader: Bool = true,
       singleSelectionScope: SingleSelectionScope = .globalAcrossSections,
-      heightBehavior: FKFilterPanelHeightBehavior = .fixed(460)
+      heightBehavior: FKFilterPanelHeightBehavior = .fixed(460),
+      configureLeftCell: LeftCellContentConfiguration? = nil,
+      configureItemCell: ItemCellContentConfiguration? = nil
     ) {
       self.leftRowHeight = max(leftRowHeight, 40)
       self.leftColumnWidthRatio = max(0.2, min(leftColumnWidthRatio, 0.6))
@@ -215,6 +234,8 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
       self.allowsSelectingSectionHeader = allowsSelectingSectionHeader
       self.singleSelectionScope = singleSelectionScope
       self.heightBehavior = heightBehavior
+      self.configureLeftCell = configureLeftCell
+      self.configureItemCell = configureItemCell
     }
   }
 
@@ -384,8 +405,13 @@ extension FKFilterTwoColumnGridViewController: UITableViewDataSource, UITableVie
   }
 
   public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+    let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
     let category = model.categories[indexPath.row]
+    if let configureLeftCell = configuration.configureLeftCell {
+      configureLeftCell(cell, indexPath, category)
+      return cell
+    }
+
     cell.textLabel?.text = category.title
     cell.textLabel?.font = configuration.leftCellStyle.font
     cell.textLabel?.textAlignment = configuration.leftCellStyle.textAlignment
@@ -422,7 +448,13 @@ extension FKFilterTwoColumnGridViewController: UICollectionViewDataSource, UICol
   public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FKFilterTwoColumnGridCell.reuseID, for: indexPath)
     guard let gridCell = cell as? FKFilterTwoColumnGridCell else { return cell }
-    let item = rightSections()[indexPath.section].items[indexPath.item]
+    let section = rightSections()[indexPath.section]
+    let item = section.items[indexPath.item]
+    if let configureItemCell = configuration.configureItemCell {
+      configureItemCell(gridCell, indexPath, item, section)
+      return gridCell
+    }
+
     gridCell.apply(item: item, style: configuration.pillStyle)
     return gridCell
   }

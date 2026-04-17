@@ -13,6 +13,19 @@ import UIKit
 ///   - `.globalAcrossSections`: single selection clears other sections (useful for "course catalog" style)
 /// - Height controlled via `Configuration.heightBehavior`
 public final class FKFilterTwoColumnListViewController: UIViewController {
+  public typealias LeftCellContentConfiguration = (
+    _ cell: UITableViewCell,
+    _ indexPath: IndexPath,
+    _ category: FKFilterTwoColumnModel.Category
+  ) -> Void
+
+  public typealias RightCellContentConfiguration = (
+    _ cell: UITableViewCell,
+    _ indexPath: IndexPath,
+    _ item: FKFilterOptionItem,
+    _ section: FKFilterSection
+  ) -> Void
+
   public enum SingleSelectionScope {
     case withinSection
     case globalAcrossSections
@@ -56,6 +69,10 @@ public final class FKFilterTwoColumnListViewController: UIViewController {
     public var allowsSelectingSectionHeader: Bool
     public var singleSelectionScope: SingleSelectionScope
     public var heightBehavior: FKFilterPanelHeightBehavior
+    /// Optional hook for left table cell customization.
+    public var configureLeftCell: LeftCellContentConfiguration?
+    /// Optional hook for right table cell customization.
+    public var configureRightCell: RightCellContentConfiguration?
 
     public init(
       rowHeight: CGFloat = 44,
@@ -72,7 +89,9 @@ public final class FKFilterTwoColumnListViewController: UIViewController {
       rightSectionHeaderStyle: RightHeaderStyle = .init(),
       allowsSelectingSectionHeader: Bool = false,
       singleSelectionScope: SingleSelectionScope = .withinSection,
-      heightBehavior: FKFilterPanelHeightBehavior = .fixed(440)
+      heightBehavior: FKFilterPanelHeightBehavior = .fixed(440),
+      configureLeftCell: LeftCellContentConfiguration? = nil,
+      configureRightCell: RightCellContentConfiguration? = nil
     ) {
       self.rowHeight = rowHeight
       self.sectionHeaderHeight = sectionHeaderHeight
@@ -86,6 +105,8 @@ public final class FKFilterTwoColumnListViewController: UIViewController {
       self.allowsSelectingSectionHeader = allowsSelectingSectionHeader
       self.singleSelectionScope = singleSelectionScope
       self.heightBehavior = heightBehavior
+      self.configureLeftCell = configureLeftCell
+      self.configureRightCell = configureRightCell
     }
 
     public static var sectionHeaderSelectable: Configuration {
@@ -259,11 +280,17 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
   }
 
   public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+    let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
 
     if tableView === leftTable {
       let cat = model.categories[indexPath.row]
+      if let configureLeftCell = configuration.configureLeftCell {
+        configureLeftCell(cell, indexPath, cat)
+        return cell
+      }
+
       cell.textLabel?.text = cat.title
+      cell.detailTextLabel?.text = nil
       cell.textLabel?.font = configuration.leftCellStyle.font
       cell.textLabel?.textAlignment = configuration.leftCellStyle.textAlignment
       cell.textLabel?.textColor = cat.isSelected ? configuration.leftCellStyle.selectedTextColor : configuration.leftCellStyle.normalTextColor
@@ -276,11 +303,32 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
 
     let section = rightSections()[indexPath.section]
     let item = section.items[indexPath.row]
-    cell.textLabel?.text = item.title
+    if let configureRightCell = configuration.configureRightCell {
+      configureRightCell(cell, indexPath, item, section)
+      return cell
+    }
+
+    if let attributedTitle = item.attributedTitle {
+      cell.textLabel?.attributedText = NSAttributedString(attributedTitle)
+    } else {
+      cell.textLabel?.attributedText = nil
+      cell.textLabel?.text = item.title
+    }
     cell.textLabel?.font = configuration.rightCellStyle.font
     cell.textLabel?.textAlignment = configuration.rightCellStyle.textAlignment
+    if let attributedSubtitle = item.attributedSubtitle {
+      cell.detailTextLabel?.attributedText = NSAttributedString(attributedSubtitle)
+    } else {
+      cell.detailTextLabel?.attributedText = nil
+      cell.detailTextLabel?.text = item.subtitle
+      cell.detailTextLabel?.font = .preferredFont(forTextStyle: .caption1)
+      cell.detailTextLabel?.textColor = .secondaryLabel
+    }
     if !item.isEnabled {
       cell.textLabel?.textColor = configuration.rightCellStyle.disabledTextColor
+      if item.attributedSubtitle == nil {
+        cell.detailTextLabel?.textColor = .tertiaryLabel
+      }
     } else if item.isSelected {
       cell.textLabel?.textColor = configuration.rightCellStyle.selectedTextColor
     } else {

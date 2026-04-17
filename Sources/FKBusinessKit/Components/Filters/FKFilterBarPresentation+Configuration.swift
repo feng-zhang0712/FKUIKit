@@ -5,33 +5,51 @@ public extension FKFilterBarPresentation {
   /// Visual appearance for bar items (the clickable tabs).
   ///
   /// This is intentionally small and focused:
-  /// - Colors and fonts for the title
-  /// - Chevron size/spacing
+  /// - Colors/fonts/alignment for title + subtitle
+  /// - Spacing between title/subtitle and chevron
   ///
   /// Panel appearance (mask/corner radius/host, etc.) is configured via `Configuration.presentationConfiguration`.
   struct BarItemAppearance {
     public var normalTitleColor: UIColor
     public var selectedTitleColor: UIColor
+    public var normalSubtitleColor: UIColor
+    public var selectedSubtitleColor: UIColor
     public var normalChevronColor: UIColor
     public var selectedChevronColor: UIColor
     public var titleFont: UIFont
+    public var subtitleFont: UIFont
+    public var titleAlignment: NSTextAlignment
+    public var subtitleAlignment: NSTextAlignment
+    public var titleSubtitleSpacing: CGFloat
     public var chevronPointSize: CGFloat
     public var chevronSpacing: CGFloat
 
     public init(
       normalTitleColor: UIColor = .label,
       selectedTitleColor: UIColor = .systemRed,
+      normalSubtitleColor: UIColor = .secondaryLabel,
+      selectedSubtitleColor: UIColor = .systemRed,
       normalChevronColor: UIColor = .secondaryLabel,
       selectedChevronColor: UIColor = .systemRed,
       titleFont: UIFont = .preferredFont(forTextStyle: .subheadline),
+      subtitleFont: UIFont = .preferredFont(forTextStyle: .caption2),
+      titleAlignment: NSTextAlignment = .center,
+      subtitleAlignment: NSTextAlignment = .center,
+      titleSubtitleSpacing: CGFloat = 2,
       chevronPointSize: CGFloat = 11,
       chevronSpacing: CGFloat = 4
     ) {
       self.normalTitleColor = normalTitleColor
       self.selectedTitleColor = selectedTitleColor
+      self.normalSubtitleColor = normalSubtitleColor
+      self.selectedSubtitleColor = selectedSubtitleColor
       self.normalChevronColor = normalChevronColor
       self.selectedChevronColor = selectedChevronColor
       self.titleFont = titleFont
+      self.subtitleFont = subtitleFont
+      self.titleAlignment = titleAlignment
+      self.subtitleAlignment = subtitleAlignment
+      self.titleSubtitleSpacing = max(0, titleSubtitleSpacing)
       self.chevronPointSize = chevronPointSize
       self.chevronSpacing = chevronSpacing
     }

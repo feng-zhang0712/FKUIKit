@@ -11,25 +11,37 @@ import UIKit
 /// - Also forwards a concise selection event via `onSelectItem` (used by `FKFilterBarPresentation`)
 /// - Height is controlled by `Configuration.heightBehavior` (auto/capped/fixed/ratio)
 public final class FKFilterSingleListViewController: UITableViewController {
+  public typealias CellContentConfiguration = (
+    _ cell: UITableViewCell,
+    _ indexPath: IndexPath,
+    _ item: FKFilterOptionItem,
+    _ section: FKFilterSection
+  ) -> Void
+
   public struct Configuration {
     public var rowHeight: CGFloat
     public var separatorInset: UIEdgeInsets
     public var showsFooter: Bool
     public var cellStyle: FKFilterListCellStyle
     public var heightBehavior: FKFilterPanelHeightBehavior
+    /// Optional hook for per-cell customization.
+    /// Called after the default content/style has been applied.
+    public var configureCell: CellContentConfiguration?
 
     public init(
       rowHeight: CGFloat = 44,
       separatorInset: UIEdgeInsets = .init(top: 0, left: 16, bottom: 0, right: 16),
       showsFooter: Bool = false,
       cellStyle: FKFilterListCellStyle = .init(),
-      heightBehavior: FKFilterPanelHeightBehavior = .automatic(minimum: 44)
+      heightBehavior: FKFilterPanelHeightBehavior = .automatic(minimum: 44),
+      configureCell: CellContentConfiguration? = nil
     ) {
       self.rowHeight = rowHeight
       self.separatorInset = separatorInset
       self.showsFooter = showsFooter
       self.cellStyle = cellStyle
       self.heightBehavior = heightBehavior
+      self.configureCell = configureCell
     }
   }
 
@@ -81,13 +93,34 @@ public final class FKFilterSingleListViewController: UITableViewController {
   public override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { self.section.items.count }
 
   public override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+    let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
     let item = section.items[indexPath.row]
-    cell.textLabel?.text = item.title
+    if let configureCell = configuration.configureCell {
+      configureCell(cell, indexPath, item, section)
+      return cell
+    }
+
+    if let attributedTitle = item.attributedTitle {
+      cell.textLabel?.attributedText = NSAttributedString(attributedTitle)
+    } else {
+      cell.textLabel?.attributedText = nil
+      cell.textLabel?.text = item.title
+    }
     cell.textLabel?.textAlignment = configuration.cellStyle.textAlignment
     cell.textLabel?.font = configuration.cellStyle.font
+    if let attributedSubtitle = item.attributedSubtitle {
+      cell.detailTextLabel?.attributedText = NSAttributedString(attributedSubtitle)
+    } else {
+      cell.detailTextLabel?.attributedText = nil
+      cell.detailTextLabel?.text = item.subtitle
+      cell.detailTextLabel?.font = .preferredFont(forTextStyle: .caption1)
+      cell.detailTextLabel?.textColor = .secondaryLabel
+    }
     if !item.isEnabled {
       cell.textLabel?.textColor = configuration.cellStyle.disabledTextColor
+      if item.attributedSubtitle == nil {
+        cell.detailTextLabel?.textColor = .tertiaryLabel
+      }
     } else if item.isSelected {
       cell.textLabel?.textColor = configuration.cellStyle.selectedTextColor
     } else {

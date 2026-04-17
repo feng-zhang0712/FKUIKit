@@ -81,14 +81,30 @@ public final class FKFilterBarPresentation: UIView {
   public struct BarItemModel: Hashable, Sendable {
     public let id: FKFilterID
     public var title: String
+    public var subtitle: String?
+    /// Rich text title used when present; plain `title` acts as fallback.
+    public var attributedTitle: AttributedString?
+    /// Rich text subtitle used when present; plain `subtitle` acts as fallback.
+    public var attributedSubtitle: AttributedString?
     public var panelKind: PanelKind
     /// Per-item gate for multi-select. Default `false`: single-select only (one tap finishes and dismisses).
     /// Panel content still uses `FKFilterSection.selectionMode`; both must allow multiple for true multi-select.
     public var allowsMultipleSelection: Bool
 
-    public init(id: FKFilterID, title: String, panelKind: PanelKind, allowsMultipleSelection: Bool = false) {
+    public init(
+      id: FKFilterID,
+      title: String,
+      subtitle: String? = nil,
+      attributedTitle: AttributedString? = nil,
+      attributedSubtitle: AttributedString? = nil,
+      panelKind: PanelKind,
+      allowsMultipleSelection: Bool = false
+    ) {
       self.id = id
       self.title = title
+      self.subtitle = subtitle
+      self.attributedTitle = attributedTitle
+      self.attributedSubtitle = attributedSubtitle
       self.panelKind = panelKind
       self.allowsMultipleSelection = allowsMultipleSelection
     }
@@ -206,6 +222,7 @@ public final class FKFilterBarPresentation: UIView {
   public func updateBarTitle(_ title: String, for panelKind: PanelKind) {
     guard let idx = barModels.firstIndex(where: { $0.panelKind == panelKind }) else { return }
     barModels[idx].title = title
+    barModels[idx].attributedTitle = nil
     reloadBarTitles(keepSelectedIndex: barPresentation.bar.selectedIndex)
   }
 
@@ -217,13 +234,59 @@ public final class FKFilterBarPresentation: UIView {
     spec.axis = .horizontal
 
     spec.setTitle(
-      FKButton.Text(text: model.title, font: appearance.titleFont, color: appearance.normalTitleColor),
+      FKButton.Text(
+        text: model.title,
+        attributedText: model.attributedTitle.map(NSAttributedString.init),
+        font: appearance.titleFont,
+        color: appearance.normalTitleColor,
+        alignment: appearance.titleAlignment
+      ),
       for: .normal
     )
     spec.setTitle(
-      FKButton.Text(text: model.title, font: appearance.titleFont, color: appearance.selectedTitleColor),
+      FKButton.Text(
+        text: model.title,
+        attributedText: model.attributedTitle.map(NSAttributedString.init),
+        font: appearance.titleFont,
+        color: appearance.selectedTitleColor,
+        alignment: appearance.titleAlignment
+      ),
       for: .selected
     )
+    if model.subtitle != nil || model.attributedSubtitle != nil {
+      spec.setSubtitle(
+        FKButton.Text(
+          text: model.subtitle,
+          attributedText: model.attributedSubtitle.map(NSAttributedString.init),
+          font: appearance.subtitleFont,
+          color: appearance.normalSubtitleColor,
+          alignment: appearance.subtitleAlignment,
+          contentInsets: .init(
+            top: appearance.titleSubtitleSpacing,
+            leading: 0,
+            bottom: 0,
+            trailing: 0
+          )
+        ),
+        for: .normal
+      )
+      spec.setSubtitle(
+        FKButton.Text(
+          text: model.subtitle,
+          attributedText: model.attributedSubtitle.map(NSAttributedString.init),
+          font: appearance.subtitleFont,
+          color: appearance.selectedSubtitleColor,
+          alignment: appearance.subtitleAlignment,
+          contentInsets: .init(
+            top: appearance.titleSubtitleSpacing,
+            leading: 0,
+            bottom: 0,
+            trailing: 0
+          )
+        ),
+        for: .selected
+      )
+    }
 
     let downConfig = UIImage.SymbolConfiguration(pointSize: appearance.chevronPointSize, weight: .semibold)
     let down = FKButton.Image(

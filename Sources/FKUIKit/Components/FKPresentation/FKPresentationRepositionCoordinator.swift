@@ -5,11 +5,25 @@
 import UIKit
 
 @MainActor
+/// Coordinates automatic reposition requests for `FKPresentation`.
+///
+/// It installs a hidden `FKPresentationRepositionProbeView` in the host view,
+/// listens for layout/trait changes, and triggers a debounced reposition callback.
 final class FKPresentationRepositionCoordinator {
+  /// Probe currently attached to host. Weak to avoid ownership cycles.
   private weak var probeView: FKPresentationRepositionProbeView?
+  /// Coalescing flag to prevent multiple reposition callbacks in one runloop turn.
   private var isRepositionScheduled: Bool = false
+  /// Callback executed when a reposition should occur.
   private var onRepositionRequested: (() -> Void)?
 
+  /// Starts (or refreshes) host observation.
+  ///
+  /// - Parameters:
+  ///   - host: Container view that presentation is anchored against.
+  ///   - listenLayoutChanges: Whether host size/layout updates should trigger reposition.
+  ///   - listenTraitChanges: Whether host trait updates should trigger reposition.
+  ///   - onRepositionRequested: Called on main thread after coalescing.
   func startObserving(
     in host: UIView,
     listenLayoutChanges: Bool,
@@ -41,6 +55,7 @@ final class FKPresentationRepositionCoordinator {
     }
   }
 
+  /// Stops observation and clears pending callback state.
   func stopObserving() {
     probeView?.removeFromSuperview()
     probeView = nil
@@ -48,6 +63,10 @@ final class FKPresentationRepositionCoordinator {
     onRepositionRequested = nil
   }
 
+  /// Schedules a single reposition callback in next main-queue turn.
+  ///
+  /// This avoids repeated reposition calculations when multiple host updates
+  /// happen back-to-back within the same runloop cycle.
   private func scheduleReposition() {
     guard !isRepositionScheduled else { return }
     isRepositionScheduled = true

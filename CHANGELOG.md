@@ -8,6 +8,24 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.6.2] - 2026-04-17
+
+### Added (FKBusinessKit Filters)
+- Added subtitle support for filter bar items via `FKFilterBarPresentation.BarItemModel.subtitle`.
+- Added rich text support for filter bar and filter options using `AttributedString` (`attributedTitle` / `attributedSubtitle`).
+- Added optional cell customization hooks in filter panels so integrators can fully control table/grid cell rendering.
+
+### Changed (FKBusinessKit Filters)
+- Extended `FKFilterBarPresentation.BarItemAppearance` with subtitle styling and layout controls (`subtitle` colors/fonts, title/subtitle alignment, and title-subtitle spacing).
+- Updated default cell rendering in list-based panels to support title + subtitle content while preserving existing fallback behavior.
+- Changed custom cell hook semantics to explicit override mode: when a custom closure is provided, default cell configuration is skipped.
+
+### Changed (Examples)
+- Updated filter example bar items to demonstrate subtitle and attributed title/subtitle usage.
+
+### Docs (FKUIKit Presentation)
+- Added inline documentation to `FKPresentationRepositionProbeView` and `FKPresentationRepositionCoordinator` for host-observation and reposition scheduling behavior.
+
 ## [0.6.1] - 2026-04-17
 
 ### Added (FKBusinessKit Filters)
@@ -167,7 +185,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...HEAD
+[0.6.2]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/feng-zhang0712/FKKit/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/feng-zhang0712/FKKit/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/feng-zhang0712/FKKit/compare/0.5.0...0.5.1

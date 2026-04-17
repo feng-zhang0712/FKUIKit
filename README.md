@@ -71,12 +71,12 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
-## Recent updates (0.6.1)
+## Recent updates (0.6.2)
 
-- Added a deep refactor of `FKBusinessKit` Filters with clearer panel taxonomy and split controllers (`SingleList`, `TwoColumnList`, `TwoColumnGrid`).
-- Added `FKFilterPanelFactory` and configurable panel height strategies (`automatic`, `capped`, `fixed`, `screenFraction`) to reduce integration cost.
-- Added a reusable `FKFilterTwoColumnGridViewController` for course-like left-list + right-grid experiences.
-- Improved filter bar lifecycle APIs and component-level documentation for better integration and maintenance.
+- Added subtitle + attributed text support for filter bar items and filter options to cover richer business display requirements.
+- Added opt-in cell customization hooks for list and grid panels, with explicit "custom overrides default" behavior.
+- Extended filter bar appearance configuration with subtitle alignment and title/subtitle spacing controls.
+- Improved FKPresentation internals documentation for reposition probe/coordinator responsibilities and scheduling semantics.
 
 ## Branching & Collaboration (Recommended)
 

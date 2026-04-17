@@ -30,17 +30,28 @@ public enum FKFilterSelectionMode: Sendable {
 public struct FKFilterOptionItem: Hashable, Sendable {
   public let id: FKFilterID
   public var title: String
+  public var subtitle: String?
+  /// Rich text title used when present; plain `title` acts as fallback.
+  public var attributedTitle: AttributedString?
+  /// Rich text subtitle used when present; plain `subtitle` acts as fallback.
+  public var attributedSubtitle: AttributedString?
   public var isSelected: Bool
   public var isEnabled: Bool
 
   public init(
     id: FKFilterID,
     title: String,
+    subtitle: String? = nil,
+    attributedTitle: AttributedString? = nil,
+    attributedSubtitle: AttributedString? = nil,
     isSelected: Bool = false,
     isEnabled: Bool = true
   ) {
     self.id = id
     self.title = title
+    self.subtitle = subtitle
+    self.attributedTitle = attributedTitle
+    self.attributedSubtitle = attributedSubtitle
     self.isSelected = isSelected
     self.isEnabled = isEnabled
   }

@@ -104,12 +104,27 @@ final class FKFilterExampleViewController: UIViewController {
   }
 
   private func configureBarItems() {
+    var richTitle = AttributedString("全部课程")
+    richTitle.foregroundColor = .systemRed
+    richTitle.font = .preferredFont(forTextStyle: .subheadline)
+
+    var richSubtitle = AttributedString("推荐")
+    richSubtitle.foregroundColor = .systemOrange
+    richSubtitle.font = .preferredFont(forTextStyle: .caption2)
+
     filterBar.setItems([
       .init(id: .init(rawValue: "knowledge"), title: "知识目录", panelKind: .hierarchy),
-      .init(id: .init(rawValue: "all-courses"), title: "全部课程", panelKind: .dualHierarchy),
+      .init(
+        id: .init(rawValue: "all-courses"),
+        title: "全部课程",
+        subtitle: "精选",
+        attributedTitle: richTitle,
+        attributedSubtitle: richSubtitle,
+        panelKind: .dualHierarchy
+      ),
       .init(id: .init(rawValue: "type"), title: "全部", panelKind: .gridPrimary),
       .init(id: .init(rawValue: "platform"), title: "课程归属", panelKind: .gridSecondary),
-      .init(id: .init(rawValue: "tags"), title: "标签", panelKind: .tags),
+      .init(id: .init(rawValue: "tags"), title: "标签", subtitle: "可多选", panelKind: .tags),
       .init(id: .init(rawValue: "sort"), title: "最新", panelKind: .singleList),
     ])
   }
