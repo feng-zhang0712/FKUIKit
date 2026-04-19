@@ -1,6 +1,7 @@
 import UIKit
-import FKBusinessKit
+import FKCompositeKit
 
+/// Filter bar with a custom card body instead of a full-screen table.
 final class FKFilterCustomViewHostExampleViewController: UIViewController {
   private let provider: FKFilterExampleDataProviding = FKFilterExampleMockDataProvider()
   private let filterHost = FKFilterBarHost()

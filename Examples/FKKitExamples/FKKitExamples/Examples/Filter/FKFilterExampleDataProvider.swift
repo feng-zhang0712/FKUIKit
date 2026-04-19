@@ -1,7 +1,7 @@
 import Foundation
-import FKBusinessKit
+import FKCompositeKit
 
-/// Data provider to keep UI decoupled from server / storage.
+/// Data provider to keep UI decoupled from server / storage. Copy is English-only for the sample app.
 protocol FKFilterExampleDataProviding: Sendable {
   func fetchKnowledgeTwoColumnModel() async -> FKFilterTwoColumnModel
   func fetchCourseTwoColumnModel() async -> FKFilterTwoColumnModel

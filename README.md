@@ -3,7 +3,7 @@
 A modular UIKit component library for iOS.
 
 - `FKUIKit`: foundational UI components and presentation infrastructure
-- `FKBusinessKit`: business-oriented UI compositions built on top of `FKUIKit`
+- `FKCompositeKit`: composed UI modules built on top of `FKUIKit` (filters, networking helpers, etc.)
 
 ## Requirements
 
@@ -28,13 +28,13 @@ In Xcode:
 | Product | Import | Notes |
 |---|---|---|
 | FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
+| FKCompositeKit | `import FKCompositeKit` | composite components and utilities, depends on `FKUIKit` |
 
 Dependency graph:
 
 ```text
 FKUIKit
-FKBusinessKit   → FKUIKit
+FKCompositeKit   → FKUIKit
 ```
 
 ### Local package (development)
@@ -84,10 +84,10 @@ tableView.fk_addLoadMore { /* next page */ }
 // When done: tableView.fk_pullToRefresh?.endRefreshing()
 ```
 
-### FKBusinessKit
+### FKCompositeKit
 
 ```swift
-import FKBusinessKit
+import FKCompositeKit
 
 let filterBar = FKFilterBarPresentation()
 let filterHost = FKFilterBarHost(filterBar: filterBar)
@@ -97,13 +97,13 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 
 - Repository has been renamed from `FKUIKit` to `FKKit`.
 - SwiftPM package name is now `FKKit`.
-- Products are consolidated to `FKUIKit` and `FKBusinessKit`.
+- Products are consolidated to `FKUIKit` and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
-## Recent updates (0.10.0)
+## Recent updates (0.11.0)
 
-- **`FKRefresh`**: pull-to-refresh and load-more on `UIScrollView` / `UITableView` / `UICollectionView` (`fk_addPullToRefresh`, `fk_addLoadMore`), global defaults (`FKRefreshSettings`), built-in and custom indicators (`FKDefaultRefreshContentView`, `FKRefreshContentView`, GIF / hosted views). See `Sources/FKUIKit/Components/FKRefresh/` and `CHANGELOG.md`.
-- **Examples**: `FKRefreshExamplesHubViewController` and screens under `Examples/FKKitExamples/.../Refresh/`; main menu entry **FKRefresh**.
+- **`FKListKit`** (in `FKCompositeKit`): composition-based list plugin (**`FKListPlugin`**) that coordinates pagination (**`FKPageManager`**), list states (**`FKListStateManager`**), refresh/load-more, skeleton, and empty/error overlays for table/collection views.
+- **Examples**: `FKListKitTableExampleViewController` under `Examples/FKKitExamples/.../ListKit/` demonstrates initial skeleton, random mock data, empty/error scenarios, and a 3-page paging flow.
 
 ## Recent updates (0.9.1)
 
@@ -115,7 +115,7 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 
 - **`FKEmptyState`**: unified placeholders for **loading**, **empty**, and **error** (plus **content** to hide the overlay) on `UIView` / `UIScrollView`. Includes `FKEmptyStateModel`, `FKEmptyStatePhase`, preset **`FKEmptyStateScenario`**, optional custom middle view, keyboard-safe layout, and refresh-control-aware loading skip. See `Sources/FKUIKit/Components/FKEmptyState/`.
 - **Examples**: `FKEmptyStateExamplesHubViewController` and related screens under `Examples/FKKitExamples/.../EmptyState/`.
-- **Example app menu**: grouped by **FKUIKit** / **FKBusinessKit**, sorted A→Z within each section.
+- **Example app menu**: grouped by **FKUIKit** / **FKCompositeKit**, sorted A→Z within each section.
 
 ## Branching & Collaboration (Recommended)
 

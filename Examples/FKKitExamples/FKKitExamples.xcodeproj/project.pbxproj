@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0156C17A2F90961C008C5109 /* FKBusinessKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0156C1792F90961C008C5109 /* FKBusinessKit */; };
+		0156C17A2F90961C008C5109 /* FKCompositeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0156C1792F90961C008C5109 /* FKCompositeKit */; };
 		0156C17C2F90961C008C5109 /* FKUIKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0156C17B2F90961C008C5109 /* FKUIKit */; };
 /* End PBXBuildFile section */
 
@@ -29,7 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0156C17C2F90961C008C5109 /* FKUIKit in Frameworks */,
-				0156C17A2F90961C008C5109 /* FKBusinessKit in Frameworks */,
+				0156C17A2F90961C008C5109 /* FKCompositeKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,7 +72,7 @@
 			);
 			name = FKKitExamples;
 			packageProductDependencies = (
-				0156C1792F90961C008C5109 /* FKBusinessKit */,
+				0156C1792F90961C008C5109 /* FKCompositeKit */,
 				0156C17B2F90961C008C5109 /* FKUIKit */,
 			);
 			productName = FKKitExamples;
@@ -351,9 +351,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		0156C1792F90961C008C5109 /* FKBusinessKit */ = {
+		0156C1792F90961C008C5109 /* FKCompositeKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = FKBusinessKit;
+			productName = FKCompositeKit;
 		};
 		0156C17B2F90961C008C5109 /* FKUIKit */ = {
 			isa = XCSwiftPackageProductDependency;

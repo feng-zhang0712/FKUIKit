@@ -4,9 +4,9 @@
 //
 
 import UIKit
-import FKBusinessKit
+import FKCompositeKit
 
-/// Grouped example index: **FKUIKit** first, then **FKBusinessKit**; rows sorted alphabetically by title within each section.
+/// Grouped example index: **FKUIKit** first, then **FKCompositeKit**; rows sorted alphabetically by title within each section.
 final class ExampleMenuViewController: UITableViewController {
 
   // MARK: Types
@@ -19,12 +19,12 @@ final class ExampleMenuViewController: UITableViewController {
 
   private enum KitSection: Int, CaseIterable {
     case fkUIKit
-    case fkBusinessKit
+    case fkCompositeKit
 
     var headerTitle: String {
       switch self {
       case .fkUIKit: return "FKUIKit"
-      case .fkBusinessKit: return "FKBusinessKit"
+      case .fkCompositeKit: return "FKCompositeKit"
       }
     }
   }
@@ -75,12 +75,17 @@ final class ExampleMenuViewController: UITableViewController {
     ),
   ].sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
 
-  /// FKBusinessKit demos, A→Z by `title`.
-  private static let fkBusinessKitItems: [MenuItem] = [
+  /// FKCompositeKit demos, A→Z by `title`.
+  private static let fkCompositeKitItems: [MenuItem] = [
     MenuItem(
-      title: "Filter",
-      subtitle: "Business-like dropdown filters (top bar + panels)",
+      title: "FKFilter",
+      subtitle: "Composite dropdown filters (top bar + panels)",
       make: { FKFilterExampleViewController() }
+    ),
+    MenuItem(
+      title: "FKListKit",
+      subtitle: "Plugin list: refresh, paging, skeleton, empty/error",
+      make: { FKListKitTableExampleViewController() }
     ),
   ].sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
 
@@ -88,7 +93,7 @@ final class ExampleMenuViewController: UITableViewController {
     guard let kit = KitSection(rawValue: section) else { return [] }
     switch kit {
     case .fkUIKit: return Self.fkUIKitItems
-    case .fkBusinessKit: return Self.fkBusinessKitItems
+    case .fkCompositeKit: return Self.fkCompositeKitItems
     }
   }
 

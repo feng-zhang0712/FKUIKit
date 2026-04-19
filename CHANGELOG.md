@@ -8,6 +8,20 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.11.0] - 2026-04-19
+
+### Added (FKCompositeKit FKListKit)
+- **`FKListPlugin`**: composition-first list coordinator for `UITableView` / `UICollectionView` without base controller inheritance.
+- **Pagination + state orchestration** via **`FKPageManager`** and **`FKListStateManager`**: initial skeleton (optional), pull-to-refresh, load-more, empty/error overlays, and load-more failure UX.
+- **List state drivers** (`FKListStateUIDrivers`) for decoupled UI integration (empty state, skeleton host, primary surface, and refresh controls).
+
+### Added (Examples)
+- **`FKListKitTableExampleViewController`**: end-to-end mock demo (random data, empty, failures, 3-page paging, skeleton, empty/error overlays).
+
+### Changed
+- **Breaking**: Renamed SwiftPM product and target **`FKBusinessKit`** → **`FKCompositeKit`**. Update `Package.swift` / Xcode package dependencies, `import FKCompositeKit`, and the on-disk module path to `Sources/FKCompositeKit`.
+- **Breaking**: Moved Filters sources to `FKCompositeKit` (from the legacy `FKBusinessKit` path) to align with product naming.
+
 ## [0.10.0] - 2026-04-19
 
 ### Added (FKUIKit FKRefresh)
@@ -51,7 +65,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - **`fk_emptyStateAssertMainThread()`** guard on public entry points.
 
 ### Changed (Examples)
-- **`ExampleMenuViewController`**: table grouped by **FKUIKit** then **FKBusinessKit**; rows sorted alphabetically by title; **`insetGrouped`** style; navigation title **FKKit Examples**.
+- **`ExampleMenuViewController`**: table grouped by **FKUIKit** then **FKCompositeKit**; rows sorted alphabetically by title; **`insetGrouped`** style; navigation title **FKKit Examples**.
 - **`FKKitExamples`**: **`FKEmptyStateExamplesHubViewController`** and demos under **`Examples/EmptyState/`** (scenario gallery, phase switcher, interactive sandbox, retry→still-fails).
 
 ## [0.8.0] - 2026-04-19
@@ -96,12 +110,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ## [0.6.2] - 2026-04-17
 
-### Added (FKBusinessKit Filters)
+### Added (FKCompositeKit Filters)
 - Added subtitle support for filter bar items via `FKFilterBarPresentation.BarItemModel.subtitle`.
 - Added rich text support for filter bar and filter options using `AttributedString` (`attributedTitle` / `attributedSubtitle`).
 - Added optional cell customization hooks in filter panels so integrators can fully control table/grid cell rendering.
 
-### Changed (FKBusinessKit Filters)
+### Changed (FKCompositeKit Filters)
 - Extended `FKFilterBarPresentation.BarItemAppearance` with subtitle styling and layout controls (`subtitle` colors/fonts, title/subtitle alignment, and title-subtitle spacing).
 - Updated default cell rendering in list-based panels to support title + subtitle content while preserving existing fallback behavior.
 - Changed custom cell hook semantics to explicit override mode: when a custom closure is provided, default cell configuration is skipped.
@@ -114,13 +128,13 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ## [0.6.1] - 2026-04-17
 
-### Added (FKBusinessKit Filters)
+### Added (FKCompositeKit Filters)
 - Added configurable panel height behavior via `FKFilterPanelHeightBehavior` (`automatic` / `capped` / `fixed` / `screenFraction`) and integrated it across list/chips/two-column panels.
 - Added `FKFilterPanelFactory` to centralize panel construction and state wiring from lightweight data closures.
 - Added `FKFilterTwoColumnGridViewController` for left-list + right-grid course-like layouts with section header support.
 - Added richer filter bar lifecycle callbacks, including should-present and will-dismiss delegation.
 
-### Changed (FKBusinessKit Filters)
+### Changed (FKCompositeKit Filters)
 - Refactored and split filter panel controllers into focused files (`SingleList`, `TwoColumnList`, `TwoColumnGrid`) with clearer naming and responsibilities.
 - Generalized panel kind semantics and factory source naming (`twoColumnList` / `twoColumnGrid`) to reduce business-coupled terminology.
 - Unified reusable option-item styling with `FKFilterPillStyle` and kept backward compatibility through a deprecated `FKFilterChipStyle` typealias.
@@ -134,11 +148,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ### Breaking changes
 - Package and repository direction has been unified under `FKKit`, replacing the previous `FKUIKit`-named repository layout.
-- SwiftPM products were consolidated to `FKUIKit` and `FKBusinessKit` as top-level deliverables.
+- SwiftPM products were consolidated to `FKUIKit` and `FKCompositeKit` as top-level deliverables.
 - Example project structure migrated from `FKUIKitDemo` to `FKKitExamples` with new app/bootstrap wiring and resource layout.
 
-### Added (FKBusinessKit)
-- New `FKBusinessKit` product and target with filter-focused business UI components.
+### Added (FKCompositeKit)
+- New `FKCompositeKit` product and target with filter-focused business UI components.
 - Added filter module infrastructure including bar host/presentation, panel support, list/chips/course views, and demo data provider.
 - Added end-to-end filter demo entry points and host demo view controllers for practical integration reference.
 
@@ -271,7 +285,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.10.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...HEAD
+[0.11.0]: https://github.com/feng-zhang0712/FKKit/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/feng-zhang0712/FKKit/compare/0.9.1...0.10.0
 [0.9.1]: https://github.com/feng-zhang0712/FKKit/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/feng-zhang0712/FKKit/compare/0.8.0...0.9.0

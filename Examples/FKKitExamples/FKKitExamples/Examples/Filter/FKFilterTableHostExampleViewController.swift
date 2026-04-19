@@ -1,6 +1,7 @@
 import UIKit
-import FKBusinessKit
+import FKCompositeKit
 
+/// Filter bar anchored above a `UITableView`; selection events append to an on-screen log.
 final class FKFilterTableHostExampleViewController: UIViewController {
   private let provider: FKFilterExampleDataProviding = FKFilterExampleMockDataProvider()
   private let filterHost = FKFilterBarHost()

@@ -9,7 +9,7 @@ let package = Package(
   ],
   products: [
     .library(name: "FKUIKit", targets: ["FKUIKit"]),
-    .library(name: "FKBusinessKit", targets: ["FKBusinessKit"]),
+    .library(name: "FKCompositeKit", targets: ["FKCompositeKit"]),
   ],
   targets: [
     .target(
@@ -17,9 +17,9 @@ let package = Package(
       path: "Sources/FKUIKit"
     ),
     .target(
-      name: "FKBusinessKit",
+      name: "FKCompositeKit",
       dependencies: ["FKUIKit"],
-      path: "Sources/FKBusinessKit"
+      path: "Sources/FKCompositeKit"
     ),
   ],
   swiftLanguageModes: [.v6]

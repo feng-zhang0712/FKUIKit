@@ -1,6 +1,7 @@
 import UIKit
-import FKBusinessKit
+import FKCompositeKit
 
+/// Builds `FKFilterPanelFactory` panels for each `FKFilterBarPresentation.PanelKind` in the sample app.
 enum FKFilterExamplePanelSupport {
   @MainActor
   static func makePanel(
