@@ -211,7 +211,7 @@ open class FKBar: UIView {
   
   /// Programmatically select the item whose `id` matches.
   /// This uses the same selection logic and callbacks as a tap.
-  public func selectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
+  public func selectItem(_ item: Item, animated: Bool = true, completion: FKVoidHandler? = nil) {
     guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
       completion?()
       return
@@ -219,7 +219,7 @@ open class FKBar: UIView {
     selectIndex(idx, animated: animated, completion: completion)
   }
   
-  public func selectIndex(_ index: Int, animated: Bool = true, completion: VoidHandler? = nil) {
+  public func selectIndex(_ index: Int, animated: Bool = true, completion: FKVoidHandler? = nil) {
     guard index >= 0, index < items.count else {
       completion?()
       return
@@ -231,7 +231,7 @@ open class FKBar: UIView {
   
   /// Deselect by `id`.
   /// Effective only when the item is currently selected (independent of `selectionBehavior`).
-  public func deselectItem(_ item: Item, animated: Bool = true, completion: VoidHandler? = nil) {
+  public func deselectItem(_ item: Item, animated: Bool = true, completion: FKVoidHandler? = nil) {
     guard let idx = items.firstIndex(where: { $0.id == item.id }) else {
       completion?()
       return
@@ -241,7 +241,7 @@ open class FKBar: UIView {
 
   /// Deselect a given index.
   /// Effective only when that index is currently selected.
-  public func deselectIndex(_ index: Int, animated: Bool = true, completion: VoidHandler? = nil) {
+  public func deselectIndex(_ index: Int, animated: Bool = true, completion: FKVoidHandler? = nil) {
     guard index >= 0, index < items.count else {
       completion?()
       return

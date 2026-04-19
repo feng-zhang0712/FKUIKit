@@ -125,21 +125,21 @@ public extension FKBar {
       public typealias StateKey = UIControl.State.RawValue
 
       public var appearanceByState: [StateKey: FKButton.Appearance]
-      public var titleByState: [StateKey: FKButton.Text]
-      public var subtitleByState: [StateKey: FKButton.Text]
+      public var titleByState: [StateKey: FKButton.LabelAttributes]
+      public var subtitleByState: [StateKey: FKButton.LabelAttributes]
       public var customContentByState: [StateKey: FKButton.CustomContent]
 
     /// Stores images per `ImageSlot` and per state.
-      public var imageBySlotAndState: [FKButton.ImageSlot: [StateKey: FKButton.Image]]
+      public var imageBySlotAndState: [FKButton.ImageSlot: [StateKey: FKButton.ImageAttributes]]
 
       public init(
         content: FKButton.Content = .default,
         axis: FKButton.Axis = .horizontal,
         appearanceByState: [StateKey: FKButton.Appearance] = [:],
-        titleByState: [StateKey: FKButton.Text] = [:],
-        subtitleByState: [StateKey: FKButton.Text] = [:],
+        titleByState: [StateKey: FKButton.LabelAttributes] = [:],
+        subtitleByState: [StateKey: FKButton.LabelAttributes] = [:],
         customContentByState: [StateKey: FKButton.CustomContent] = [:],
-        imageBySlotAndState: [FKButton.ImageSlot: [StateKey: FKButton.Image]] = [:]
+        imageBySlotAndState: [FKButton.ImageSlot: [StateKey: FKButton.ImageAttributes]] = [:]
       ) {
         self.content = content
         self.axis = axis
@@ -163,7 +163,7 @@ public extension FKBar {
         appearanceByState[UIControl.State.disabled.rawValue] = appearances.disabled
       }
 
-      public mutating func setTitle(_ title: FKButton.Text?, for state: UIControl.State) {
+      public mutating func setTitle(_ title: FKButton.LabelAttributes?, for state: UIControl.State) {
         guard let title else {
           titleByState.removeValue(forKey: state.rawValue)
           return
@@ -171,7 +171,7 @@ public extension FKBar {
         titleByState[state.rawValue] = title
       }
 
-      public mutating func setSubtitle(_ subtitle: FKButton.Text?, for state: UIControl.State) {
+      public mutating func setSubtitle(_ subtitle: FKButton.LabelAttributes?, for state: UIControl.State) {
         guard let subtitle else {
           subtitleByState.removeValue(forKey: state.rawValue)
           return
@@ -188,7 +188,7 @@ public extension FKBar {
       }
 
       public mutating func setImage(
-        _ image: FKButton.Image?,
+        _ image: FKButton.ImageAttributes?,
         for state: UIControl.State,
         slot: FKButton.ImageSlot
       ) {

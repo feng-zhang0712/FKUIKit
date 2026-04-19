@@ -149,11 +149,11 @@ final class FKBarPresentationExampleViewController: UIViewController {
       var spec = FKBar.Item.FKButtonSpec()
       spec.content = FKButton.Content(kind: .textOnly)
       spec.setTitle(
-        FKButton.Text(text: title, font: bodyFont, color: .label),
+        FKButton.LabelAttributes(text: title, font: bodyFont, color: .label),
         for: .normal
       )
       spec.setTitle(
-        FKButton.Text(text: title, font: bodyFont, color: .label),
+        FKButton.LabelAttributes(text: title, font: bodyFont, color: .label),
         for: .selected
       )
       spec.setAppearance(
@@ -181,16 +181,16 @@ final class FKBarPresentationExampleViewController: UIViewController {
       spec.axis = .horizontal
 
       spec.setTitle(
-        FKButton.Text(text: title, font: bodyFont, color: .label),
+        FKButton.LabelAttributes(text: title, font: bodyFont, color: .label),
         for: .normal
       )
       spec.setTitle(
-        FKButton.Text(text: title, font: bodyFont, color: .label),
+        FKButton.LabelAttributes(text: title, font: bodyFont, color: .label),
         for: .selected
       )
 
       let arrowConfig = UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold)
-      let arrowImage = FKButton.Image(
+      let arrowImage = FKButton.ImageAttributes(
         systemName: "chevron.up",
         symbolConfiguration: arrowConfig,
         tintColor: .secondaryLabel,

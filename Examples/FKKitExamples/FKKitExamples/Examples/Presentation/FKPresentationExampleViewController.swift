@@ -6,10 +6,11 @@
 import UIKit
 import FKUIKit
 
+/// Interactive demo for `FKPresentation`: anchor, mask, layout, and embedded UIView / UIViewController content.
 final class FKPresentationExampleViewController: UIViewController {
   private let presentation = FKPresentation()
 
-  /// 作为 Presentation 的锚点视图：不在 stackView 内，全宽、贴导航栏下缘。
+  /// Anchor for `show(from:content:)`: full width under the nav bar, not inside the settings stack.
   private let anchorView: UIView = {
     let v = UIView()
     v.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.12)
@@ -17,7 +18,7 @@ final class FKPresentationExampleViewController: UIViewController {
 
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "（点此区域弹出 Presentation）"
+    label.text = "Tap here to present"
     label.font = .preferredFont(forTextStyle: .body)
     label.textColor = .systemBlue
 
@@ -33,7 +34,7 @@ final class FKPresentationExampleViewController: UIViewController {
 
   private let passthroughButton: UIButton = {
     var config = UIButton.Configuration.filled()
-    config.title = "Passthrough（遮罩下仍可点）"
+    config.title = "Passthrough (tappable under mask)"
     config.cornerStyle = .medium
     config.baseBackgroundColor = .systemGreen
     config.baseForegroundColor = .white
@@ -46,7 +47,7 @@ final class FKPresentationExampleViewController: UIViewController {
     label.numberOfLines = 0
     label.font = .preferredFont(forTextStyle: .footnote)
     label.textColor = .secondaryLabel
-    label.text = "日志："
+    label.text = "Log:"
     return label
   }()
 
@@ -94,7 +95,7 @@ final class FKPresentationExampleViewController: UIViewController {
   }
 
   private func setupUI() {
-    // 锚点视图：直接加在根 view 上，宽度跟 view 一致，高度约 55。
+    // Anchor: pinned to the root view (full width, fixed height ~55pt).
     view.addSubview(anchorView)
     NSLayoutConstraint.activate([
       anchorView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -122,8 +123,8 @@ final class FKPresentationExampleViewController: UIViewController {
 
     passthroughButton.addTarget(self, action: #selector(onPassthroughTapped), for: .touchUpInside)
 
-    let showVCButton = makeButton("展示 UIViewController 内容", action: #selector(onShowUIViewControllerContent))
-    let showNoAnimButton = makeButton("无动画展示", action: #selector(onShowNoAnimation))
+    let showVCButton = makeButton("Show UIViewController content", action: #selector(onShowUIViewControllerContent))
+    let showNoAnimButton = makeButton("Show without animation", action: #selector(onShowNoAnimation))
     showNoAnimButton.backgroundColor = .systemGray5
 
     container.addArrangedSubview(passthroughButton)
@@ -132,12 +133,12 @@ final class FKPresentationExampleViewController: UIViewController {
 
     container.addArrangedSubview(makeDivider())
 
-    container.addArrangedSubview(makeToggleRow(title: "遮罩点击 dismiss", switchView: maskTapToDismissSwitch))
-    container.addArrangedSubview(makeToggleRow(title: "遮罩 passthrough", switchView: passthroughEnabledSwitch))
-    container.addArrangedSubview(makeToggleRow(title: "优先向下", switchView: preferBelowSwitch))
-    container.addArrangedSubview(makeToggleRow(title: "允许翻到向上", switchView: allowFlipSwitch))
-    container.addArrangedSubview(makeToggleRow(title: "固定高度（先定高度再动画）", switchView: useFixedHeightSwitch))
-    container.addArrangedSubview(makeToggleRow(title: "显示阴影", switchView: shadowSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Mask tap dismisses", switchView: maskTapToDismissSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Mask passthrough", switchView: passthroughEnabledSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Prefer below anchor", switchView: preferBelowSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Allow flip above", switchView: allowFlipSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Fixed height (layout before animate)", switchView: useFixedHeightSwitch))
+    container.addArrangedSubview(makeToggleRow(title: "Show shadow", switchView: shadowSwitch))
 
     container.addArrangedSubview(makeSliderRow(title: "mask alpha", slider: maskAlphaSlider))
     container.addArrangedSubview(makeSliderRow(title: "corner radius", slider: cornerRadiusSlider))
@@ -206,7 +207,7 @@ final class FKPresentationExampleViewController: UIViewController {
     row.spacing = 6
 
     let label = UILabel()
-    label.text = "\(title)：\(String(format: "%.2f", slider.value))"
+    label.text = "\(title): \(String(format: "%.2f", slider.value))"
     label.font = .preferredFont(forTextStyle: .footnote)
     label.textColor = .secondaryLabel
 
@@ -228,7 +229,7 @@ final class FKPresentationExampleViewController: UIViewController {
     let key = ObjectIdentifier(sender)
     guard let label = sliderValueLabels[key] else { return }
     let title = sender.accessibilityIdentifier ?? "value"
-    label.text = "\(title)：\(String(format: "%.2f", sender.value))"
+    label.text = "\(title): \(String(format: "%.2f", sender.value))"
   }
 
   private func currentConfiguration(animated: Bool) -> FKPresentation.Configuration {
@@ -297,7 +298,7 @@ final class FKPresentationExampleViewController: UIViewController {
   }
 
   private func log(_ message: String) {
-    logLabel.text = "日志：\n" + message
+    logLabel.text = "Log:\n" + message
   }
 
 }
@@ -315,11 +316,11 @@ private final class ExamplePresentationContentView: UIView {
     stack.translatesAutoresizingMaskIntoConstraints = false
 
     let title = UILabel()
-    title.text = "Presentation 内容（UIView）"
+    title.text = "Presentation content (UIView)"
     title.font = .preferredFont(forTextStyle: .headline)
     title.numberOfLines = 0
 
-    let items = ["智能排序", "隔我最近", "好评优先", "价格最低", "价格最高", "更多调试入口…"]
+    let items = ["Smart sort", "Nearest", "Top rated", "Lowest price", "Highest price", "More…"]
     let list = UIStackView()
     list.axis = .vertical
     list.spacing = 6
@@ -333,7 +334,7 @@ private final class ExamplePresentationContentView: UIView {
     }
 
     let hint = UILabel()
-    hint.text = "点击遮罩可关闭；开启 passthrough 后点击绿色按钮不会 dismiss。"
+    hint.text = "Tap the mask to dismiss. With passthrough on, the green button does not dismiss."
     hint.numberOfLines = 0
     hint.font = .preferredFont(forTextStyle: .footnote)
     hint.textColor = .secondaryLabel
@@ -369,7 +370,7 @@ private final class ExamplePresentationContentViewController: UIViewController {
     stack.translatesAutoresizingMaskIntoConstraints = false
 
     let title = UILabel()
-    title.text = "Presentation 内容（UIViewController）"
+    title.text = "Presentation content (UIViewController)"
     title.font = .preferredFont(forTextStyle: .headline)
 
     let list = UIStackView()
@@ -384,7 +385,7 @@ private final class ExamplePresentationContentViewController: UIViewController {
     }
 
     let hint = UILabel()
-    hint.text = "Reduce Motion 开启时：动画将避免 transform-based motion（只靠 alpha）。"
+    hint.text = "When Reduce Motion is on, animations avoid transform-based motion (alpha only)."
     hint.numberOfLines = 0
     hint.font = .preferredFont(forTextStyle: .footnote)
     hint.textColor = .secondaryLabel

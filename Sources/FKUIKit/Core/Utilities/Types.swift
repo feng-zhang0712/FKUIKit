@@ -7,12 +7,12 @@
 import Foundation
 
 /// A callback with no parameters and no return value (completion, tap handling, etc.).
-public typealias VoidHandler = () -> Void
+public typealias FKVoidHandler = () -> Void
 /// A single-value callback.
-public typealias ValueHandler<Value> = (Value) -> Void
+public typealias FKValueHandler<Value> = (Value) -> Void
 /// An optional single-value callback for cases where the value may be nil.
-public typealias OptionalValueHandler<Value> = (Value?) -> Void
+public typealias FKOptionalValueHandler<Value> = (Value?) -> Void
 /// Error callback (passes only the failure reason).
-public typealias ErrorHandler = (Error) -> Void
+public typealias FKErrorHandler = (Error) -> Void
 /// Result callback carrying either a success value or a failure error.
-public typealias ResultHandler<Value> = (Result<Value, Error>) -> Void
+public typealias FKResultHandler<Value> = (Result<Value, Error>) -> Void

@@ -6,7 +6,7 @@
 import UIKit
 import FKUIKit
 
-extension FKButtonExampleViewController {
+extension FKButtonExampleBaseViewController {
   
   private struct AppearanceSpec {
     let foregroundColor: UIColor
@@ -46,11 +46,11 @@ extension FKButtonExampleViewController {
     selected: AppearanceSpec,
     position: FKButton.Content.ImagePlacement? = nil
   ) {
-    let normalImage = FKButton.Image(image: image, tintColor: normal.foregroundColor)
-    let selectedImage = FKButton.Image(image: image, tintColor: selected.foregroundColor)
-    let disabledImage = FKButton.Image(image: image, tintColor: .secondaryLabel)
+    let normalImage = FKButton.ImageAttributes(image: image, tintColor: normal.foregroundColor)
+    let selectedImage = FKButton.ImageAttributes(image: image, tintColor: selected.foregroundColor)
+    let disabledImage = FKButton.ImageAttributes(image: image, tintColor: .secondaryLabel)
 
-    func set(_ element: FKButton.Image, for state: UIControl.State) {
+    func set(_ element: FKButton.ImageAttributes, for state: UIControl.State) {
       if let position {
         switch position {
         case .leading:
@@ -120,7 +120,7 @@ extension FKButtonExampleViewController {
     button.widthAnchor.constraint(equalToConstant: 200).isActive = true
     button.addAction(UIAction { [weak self] _ in
       button.isSelected.toggle()
-      self?.didTapButton("Vertical: Text Only")
+      self?.recordDemoTap("Vertical: Text Only")
     }, for: .touchUpInside)
     return button
   }
@@ -140,7 +140,7 @@ extension FKButtonExampleViewController {
     button.widthAnchor.constraint(equalToConstant: 200).isActive = true
     button.addAction(UIAction { [weak self] _ in
       button.isSelected.toggle()
-      self?.didTapButton("Vertical: Icon Only")
+      self?.recordDemoTap("Vertical: Icon Only")
     }, for: .touchUpInside)
     return button
   }
@@ -160,7 +160,7 @@ extension FKButtonExampleViewController {
     button.widthAnchor.constraint(equalToConstant: 200).isActive = true
     button.addAction(UIAction { [weak self] _ in
       button.isSelected.toggle()
-      self?.didTapButton("Vertical: Composition Leading")
+      self?.recordDemoTap("Vertical: Composition Leading")
     }, for: .touchUpInside)
     return button
   }
@@ -181,7 +181,7 @@ extension FKButtonExampleViewController {
     button.widthAnchor.constraint(equalToConstant: 200).isActive = true
     button.addAction(UIAction { [weak self] _ in
       button.isSelected.toggle()
-      self?.didTapButton("Vertical: Composition Both")
+      self?.recordDemoTap("Vertical: Composition Both")
     }, for: .touchUpInside)
     return button
   }
@@ -203,18 +203,18 @@ extension FKButtonExampleViewController {
     button.setAppearance(makeAppearance(from: normalSpec), for: .normal)
     
     button.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Capsule Corner")
+      self?.recordDemoTap("Capsule Corner")
     }, for: .touchUpInside)
     
     button.heightAnchor.constraint(equalToConstant: 44).isActive = true
     button.widthAnchor.constraint(equalToConstant: 220).isActive = true
-    return button
+    return horizontallyCentered(button)
   }
   
   func makeNoBorderExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
     
@@ -242,7 +242,7 @@ extension FKButtonExampleViewController {
     firstButton.setAppearance(makeAppearance(from: normalSpec), for: .normal)
     
     firstButton.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("No Border")
+      self?.recordDemoTap("No Border")
     }, for: .touchUpInside)
     
     let disabledButton = FKButton()
@@ -254,15 +254,15 @@ extension FKButtonExampleViewController {
     firstButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
     disabledButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
     
-    stack.addArrangedSubview(firstButton)
-    stack.addArrangedSubview(disabledButton)
+    stack.addArrangedSubview(horizontallyCentered(firstButton))
+    stack.addArrangedSubview(horizontallyCentered(disabledButton))
     return stack
   }
   
   func makeDifferentLengthExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
     
@@ -284,16 +284,15 @@ extension FKButtonExampleViewController {
       button.setAppearance(makeAppearance(from: normalSpec), for: .highlighted)
       button.setAppearance(makeAppearance(from: normalSpec), for: .disabled)
       button.heightAnchor.constraint(equalToConstant: 44).isActive = true
-      button.widthAnchor.constraint(equalToConstant: view.bounds.width - ExampleMetrics.inset * 2).isActive = true
       button.addAction(UIAction { [weak self] _ in
-        self?.didTapButton("Different Length: \(title)")
+        self?.recordDemoTap("Different Length: \(title)")
       }, for: .touchUpInside)
       return button
     }
     
-    stack.addArrangedSubview(makeTextButton(title: "Short"))
-    stack.addArrangedSubview(makeTextButton(title: "Medium length"))
-    stack.addArrangedSubview(makeTextButton(title: "A very very very long title"))
+    stack.addArrangedSubview(horizontallyCentered(makeTextButton(title: "Short")))
+    stack.addArrangedSubview(horizontallyCentered(makeTextButton(title: "Medium length")))
+    stack.addArrangedSubview(horizontallyCentered(makeTextButton(title: "A very very very long title")))
     
     return stack
   }
@@ -317,7 +316,7 @@ extension FKButtonExampleViewController {
     }
   }
 
-  /// 按 `kind` 配置 `FKButton` 的标题 / 图片 / 自定义视图与外观（用于动态切换 `content` 的调试入口）。
+  /// Configures title / image / custom view and appearance from `kind` (debug entry for switching `content`).
   private func configureMorphingExampleButton(
     _ button: FKButton,
     kind: FKButton.Content.Kind,
@@ -404,12 +403,12 @@ extension FKButtonExampleViewController {
     return (normal, selected)
   }
 
-  /// 依次遍历 `textOnly → imageOnly → 三种 textAndImage → custom`，点击目标按钮切换。
+  /// Cycles `textOnly → imageOnly → three textAndImage variants → custom`; tap the target button to advance.
   func makeContentKindCycleAllExample() -> UIView {
     let (normal, selected) = morphingAppearanceSpecs()
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -418,6 +417,7 @@ extension FKButtonExampleViewController {
     status.textColor = .secondaryLabel
     status.textAlignment = .center
     status.numberOfLines = 0
+    status.lineBreakMode = .byWordWrapping
 
     let kinds: [FKButton.Content.Kind] = [
       .textOnly,
@@ -435,30 +435,30 @@ extension FKButtonExampleViewController {
     func applyCurrent() {
       let kind = kinds[index % kinds.count]
       configureMorphingExampleButton(morph, kind: kind, normal: normal, selected: selected)
-      status.text = "content.kind：\(contentKindDescription(kind))\n（点按钮循环下一种）"
+      status.text = "content.kind: \(contentKindDescription(kind))\n(Tap the button to cycle.)"
     }
 
     morph.addAction(UIAction { [weak self] _ in
       index = (index + 1) % kinds.count
       applyCurrent()
-      self?.didTapButton("ContentKind cycle → \(self?.contentKindDescription(kinds[index % kinds.count]) ?? "")")
+      self?.recordDemoTap("ContentKind cycle → \(self?.contentKindDescription(kinds[index % kinds.count]) ?? "")")
     }, for: .touchUpInside)
 
     applyCurrent()
     morph.heightAnchor.constraint(equalToConstant: 52).isActive = true
     morph.widthAnchor.constraint(equalToConstant: 240).isActive = true
 
-    stack.addArrangedSubview(status)
-    stack.addArrangedSubview(morph)
+    stack.addArrangedSubview(fullWidthLayoutWrapping(status))
+    stack.addArrangedSubview(horizontallyCentered(morph))
     return stack
   }
 
-  /// 多枚系统按钮直接跳到某一种 `Content.Kind`。
+  /// Multiple system buttons jump directly to a specific `Content.Kind`.
   func makeContentKindPickerExample() -> UIView {
     let (normal, selected) = morphingAppearanceSpecs()
     let outer = UIStackView()
     outer.axis = .vertical
-    outer.alignment = .center
+    outer.alignment = .fill
     outer.spacing = 10
     outer.translatesAutoresizingMaskIntoConstraints = false
 
@@ -467,7 +467,8 @@ extension FKButtonExampleViewController {
     hint.textColor = .secondaryLabel
     hint.textAlignment = .center
     hint.numberOfLines = 0
-    hint.text = "下方按钮设置中间 `FKButton` 的 `content.kind`（不循环）。"
+    hint.lineBreakMode = .byWordWrapping
+    hint.text = "Buttons below set the center `FKButton`’s `content.kind` (no cycling)."
 
     let morph = FKButton()
     morph.isSelected = true
@@ -487,7 +488,7 @@ extension FKButtonExampleViewController {
     func wire(_ ui: UIButton, kind: FKButton.Content.Kind) {
       ui.addAction(UIAction { [weak self] _ in
         self?.configureMorphingExampleButton(morph, kind: kind, normal: normal, selected: selected)
-        self?.didTapButton("ContentKind pick \(self?.contentKindDescription(kind) ?? "")")
+        self?.recordDemoTap("ContentKind pick \(self?.contentKindDescription(kind) ?? "")")
       }, for: .touchUpInside)
     }
 
@@ -524,19 +525,19 @@ extension FKButtonExampleViewController {
 
     configureMorphingExampleButton(morph, kind: .textOnly, normal: normal, selected: selected)
 
-    outer.addArrangedSubview(hint)
-    outer.addArrangedSubview(morph)
+    outer.addArrangedSubview(fullWidthLayoutWrapping(hint))
+    outer.addArrangedSubview(horizontallyCentered(morph))
     outer.addArrangedSubview(row1)
     outer.addArrangedSubview(row2)
     return outer
   }
 
-  /// 仅 `.textOnly` ↔ `.custom` 互切，用于观察「从未创建图片槽」路径。
+  /// Toggles only `.textOnly` ↔ `.custom` to exercise the “image slot never created” path.
   func makeContentKindTextCustomPingPongExample() -> UIView {
     let (normal, selected) = morphingAppearanceSpecs()
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -544,6 +545,8 @@ extension FKButtonExampleViewController {
     status.font = .preferredFont(forTextStyle: .caption1)
     status.textColor = .secondaryLabel
     status.textAlignment = .center
+    status.numberOfLines = 0
+    status.lineBreakMode = .byWordWrapping
 
     let morph = FKButton()
     morph.isSelected = true
@@ -555,34 +558,34 @@ extension FKButtonExampleViewController {
     func refresh() {
       if useText {
         configureMorphingExampleButton(morph, kind: .textOnly, normal: normal, selected: selected)
-        status.text = "当前：.textOnly — 点「切换」→ .custom"
+        status.text = "Now: .textOnly — tap Toggle → .custom"
       } else {
         configureMorphingExampleButton(morph, kind: .custom, normal: normal, selected: selected)
-        status.text = "当前：.custom — 点「切换」→ .textOnly"
+        status.text = "Now: .custom — tap Toggle → .textOnly"
       }
     }
 
     let toggle = UIButton(type: .system)
-    toggle.setTitle("切换 textOnly ↔ custom", for: .normal)
+    toggle.setTitle("Toggle textOnly ↔ custom", for: .normal)
     toggle.addAction(UIAction { [weak self] _ in
       useText.toggle()
       refresh()
-      self?.didTapButton("ContentKind text ↔ custom")
+      self?.recordDemoTap("ContentKind text ↔ custom")
     }, for: .touchUpInside)
 
     refresh()
-    stack.addArrangedSubview(status)
-    stack.addArrangedSubview(morph)
-    stack.addArrangedSubview(toggle)
+    stack.addArrangedSubview(fullWidthLayoutWrapping(status))
+    stack.addArrangedSubview(horizontallyCentered(morph))
+    stack.addArrangedSubview(horizontallyCentered(toggle))
     return stack
   }
 
-  /// 仅在三种 `textAndImage` 间循环，测试不同槽位 `UIImageView` 的创建与回收。
+  /// Cycles only among the three `textAndImage` kinds to test `UIImageView` slot reuse.
   func makeContentKindPlacementCycleExample() -> UIView {
     let (normal, selected) = morphingAppearanceSpecs()
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -590,6 +593,8 @@ extension FKButtonExampleViewController {
     status.font = .preferredFont(forTextStyle: .caption1)
     status.textColor = .secondaryLabel
     status.textAlignment = .center
+    status.numberOfLines = 0
+    status.lineBreakMode = .byWordWrapping
 
     let placements: [FKButton.Content.Kind] = [
       .textAndImage(.leading),
@@ -611,21 +616,21 @@ extension FKButtonExampleViewController {
     morph.addAction(UIAction { [weak self] _ in
       idx = (idx + 1) % placements.count
       apply()
-      self?.didTapButton("ContentKind placement cycle")
+      self?.recordDemoTap("ContentKind placement cycle")
     }, for: .touchUpInside)
 
     apply()
-    stack.addArrangedSubview(status)
-    stack.addArrangedSubview(morph)
+    stack.addArrangedSubview(fullWidthLayoutWrapping(status))
+    stack.addArrangedSubview(horizontallyCentered(morph))
     return stack
   }
 
-  /// 竖直轴 + 与「Cycle all」相同的 kind 序列，覆盖 `axis` 与内容切换叠加。
+  /// Vertical axis + same kind sequence as “Cycle all”, stacking `axis` with content switches.
   func makeContentKindVerticalCycleExample() -> UIView {
     let (normal, selected) = morphingAppearanceSpecs()
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -634,6 +639,7 @@ extension FKButtonExampleViewController {
     status.textColor = .secondaryLabel
     status.textAlignment = .center
     status.numberOfLines = 0
+    status.lineBreakMode = .byWordWrapping
 
     let kinds: [FKButton.Content.Kind] = [
       .textOnly,
@@ -656,12 +662,12 @@ extension FKButtonExampleViewController {
     morph.addAction(UIAction { [weak self] _ in
       index = (index + 1) % kinds.count
       applyCurrent()
-      self?.didTapButton("ContentKind vertical cycle")
+      self?.recordDemoTap("ContentKind vertical cycle")
     }, for: .touchUpInside)
 
     applyCurrent()
-    stack.addArrangedSubview(status)
-    stack.addArrangedSubview(morph)
+    stack.addArrangedSubview(fullWidthLayoutWrapping(status))
+    stack.addArrangedSubview(horizontallyCentered(morph))
     return stack
   }
 
@@ -739,7 +745,7 @@ extension FKButtonExampleViewController {
     selectedBtn.setAppearance(makeAppearance(from: normalSpec), for: .disabled)
     selectedBtn.heightAnchor.constraint(equalToConstant: 64).isActive = true
     selectedBtn.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: Selected")
+      self?.recordDemoTap("Subtitle: Selected")
     }, for: .touchUpInside)
 
     let highlightedBtn = FKButton()
@@ -752,7 +758,7 @@ extension FKButtonExampleViewController {
     highlightedBtn.setAppearance(makeAppearance(from: normalSpec), for: .disabled)
     highlightedBtn.heightAnchor.constraint(equalToConstant: 64).isActive = true
     highlightedBtn.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: Highlighted (via touch)")
+      self?.recordDemoTap("Subtitle: Highlighted (via touch)")
     }, for: .touchUpInside)
 
     let disabledBtn = FKButton()
@@ -767,7 +773,7 @@ extension FKButtonExampleViewController {
     disabledBtn.heightAnchor.constraint(equalToConstant: 64).isActive = true
 
     normalBtn.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: Normal")
+      self?.recordDemoTap("Subtitle: Normal")
     }, for: .touchUpInside)
 
     stack.addArrangedSubview(normalBtn)
@@ -814,7 +820,7 @@ extension FKButtonExampleViewController {
     leading.heightAnchor.constraint(equalToConstant: 64).isActive = true
     leading.widthAnchor.constraint(equalToConstant: 260).isActive = true
     leading.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: textAndImage (.leading)")
+      self?.recordDemoTap("Subtitle: textAndImage (.leading)")
     }, for: .touchUpInside)
 
     let both = FKButton()
@@ -831,7 +837,7 @@ extension FKButtonExampleViewController {
     both.heightAnchor.constraint(equalToConstant: 64).isActive = true
     both.widthAnchor.constraint(equalToConstant: 260).isActive = true
     both.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: textAndImage (.bothSides)")
+      self?.recordDemoTap("Subtitle: textAndImage (.bothSides)")
     }, for: .touchUpInside)
 
     stack.addArrangedSubview(leading)
@@ -877,7 +883,7 @@ extension FKButtonExampleViewController {
     b1.widthAnchor.constraint(equalToConstant: 200).isActive = true
     b1.isSelected = true
     b1.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("Subtitle: vertical axis")
+      self?.recordDemoTap("Subtitle: vertical axis")
     }, for: .touchUpInside)
 
     stack.addArrangedSubview(b1)
@@ -887,7 +893,7 @@ extension FKButtonExampleViewController {
   func makeSubtitleTogglePresenceExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
-    stack.alignment = .center
+    stack.alignment = .fill
     stack.spacing = 10
     stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -960,11 +966,11 @@ extension FKButtonExampleViewController {
       hasSubtitle.toggle()
       applySubtitle()
       let text = hasSubtitle ? "ON" : "OFF"
-      self?.didTapButton("Subtitle: toggle \(text)")
+      self?.recordDemoTap("Subtitle: toggle \(text)")
     }, for: .touchUpInside)
 
-    stack.addArrangedSubview(status)
-    stack.addArrangedSubview(button)
+    stack.addArrangedSubview(fullWidthLayoutWrapping(status))
+    stack.addArrangedSubview(horizontallyCentered(button))
     return stack
   }
 }

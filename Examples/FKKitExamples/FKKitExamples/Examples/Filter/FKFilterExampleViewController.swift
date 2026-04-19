@@ -1,6 +1,7 @@
 import UIKit
-import FKBusinessKit
+import FKCompositeKit
 
+/// Hosts `FKFilterBarPresentation` with mock hierarchical / grid / tag data from `FKFilterExampleMockDataProvider`.
 final class FKFilterExampleViewController: UIViewController {
   private let provider: FKFilterExampleDataProviding = FKFilterExampleMockDataProvider()
   private let filterHost = FKFilterBarHost()

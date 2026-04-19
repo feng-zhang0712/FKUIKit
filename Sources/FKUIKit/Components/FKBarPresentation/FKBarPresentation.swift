@@ -145,7 +145,7 @@ open class FKBarPresentation: UIView {
   }
 
   /// Applies `configuration.bar` / `configuration.presentation` to child components.
-  public func applyConfiguration(animated: Bool = false, completion: VoidHandler? = nil) {
+  public func applyConfiguration(animated: Bool = false, completion: FKVoidHandler? = nil) {
     bar.setConfiguration(configuration.bar, animated: animated, completion: nil)
     if embeddedPresentation.isPresented {
       embeddedPresentation.updateConfiguration(configuration.presentation, animated: animated, completion: completion)
@@ -161,7 +161,7 @@ open class FKBarPresentation: UIView {
   }
 
   /// Dismisses the current panel (does not change bar selection).
-  public func dismissPresentation(animated: Bool = true, completion: VoidHandler? = nil) {
+  public func dismissPresentation(animated: Bool = true, completion: FKVoidHandler? = nil) {
     guard embeddedPresentation.isPresented else {
       completion?()
       return

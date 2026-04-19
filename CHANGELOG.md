@@ -8,14 +8,114 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.11.0] - 2026-04-19
+
+### Added (FKCompositeKit FKListKit)
+- **`FKListPlugin`**: composition-first list coordinator for `UITableView` / `UICollectionView` without base controller inheritance.
+- **Pagination + state orchestration** via **`FKPageManager`** and **`FKListStateManager`**: initial skeleton (optional), pull-to-refresh, load-more, empty/error overlays, and load-more failure UX.
+- **List state drivers** (`FKListStateUIDrivers`) for decoupled UI integration (empty state, skeleton host, primary surface, and refresh controls).
+
+### Added (Examples)
+- **`FKListKitTableExampleViewController`**: end-to-end mock demo (random data, empty, failures, 3-page paging, skeleton, empty/error overlays).
+
+### Changed
+- **Breaking**: Renamed SwiftPM product and target **`FKBusinessKit`** → **`FKCompositeKit`**. Update `Package.swift` / Xcode package dependencies, `import FKCompositeKit`, and the on-disk module path to `Sources/FKCompositeKit`.
+- **Breaking**: Moved Filters sources to `FKCompositeKit` (from the legacy `FKBusinessKit` path) to align with product naming.
+
+## [0.10.0] - 2026-04-19
+
+### Added (FKUIKit FKRefresh)
+- **Pull-to-refresh & load-more** for any `UIScrollView`: `UIScrollView.fk_addPullToRefresh` / `fk_addLoadMore`, `fk_beginPullToRefresh`, `fk_beginLoadMore`, `fk_resetLoadMoreAfterPullToRefresh`.
+- **`FKRefreshControl`** / **`FKRefreshKind`**: state machine (`FKRefreshState` including `listEmpty`), weak scroll view attachment, main-queue `begin*` / `end*` APIs, duplicate-request guards, footer auto-hide when content is shorter than the viewport, baseline `contentInset` / `verticalScrollIndicatorInsets` sync, optional silent refresh and minimum loading visibility duration.
+- **`FKRefreshConfiguration`** & **`FKRefreshText`**: thresholds, timing, tint, localized copy, footer safe-area padding.
+- **`FKRefreshSettings`**: app-wide default configurations when `configuration` is omitted (assign on the main thread).
+- **`FKRefreshPagination`**: simple page index helper (`resetForNewRequest`, `advance`).
+- **`FKRefreshControlDelegate`**: optional state callbacks.
+- **Indicators**: **`FKDefaultRefreshContentView`** (arrow + spinner + label; arrow hosted above label to avoid overlap), **`FKGIFRefreshContentView`**, **`FKHostedRefreshContentView`** (host e.g. Lottie without a dependency).
+
+### Added (Examples)
+- **`FKRefreshExamplesHubViewController`** and demos under **`Examples/FKKitExamples/.../Refresh/`** (default, dots, GIF, hosted, configuration, global settings, delegate, pagination, collection view, plain scroll view).
+- **`ExampleMenuViewController`**: **FKRefresh** menu entry.
+
+## [0.9.1] - 2026-04-19
+
+### Changed (FKUIKit)
+- **`Types.swift`**: shared closure typealiases renamed with an `FK` prefix — **`FKVoidHandler`**, **`FKValueHandler`**, **`FKOptionalValueHandler`**, **`FKErrorHandler`**, **`FKResultHandler`** (replaces `VoidHandler`, `ValueHandler`, etc.).
+- **`FKBar`**: selection APIs (`selectItem`, `selectIndex`, `deselectItem`, `deselectIndex`) now take `completion: FKVoidHandler?` instead of `VoidHandler?`.
+- **`FKBar.Item.FKButtonSpec`**: `titleByState` / `subtitleByState` use **`FKButton.LabelAttributes`**; per-slot images use **`FKButton.ImageAttributes`** (aligned with `FKButton` naming).
+- **`FKBarPresentation`**: `applyConfiguration` and `dismissPresentation` completion parameters use **`FKVoidHandler`**.
+
+### Changed (Examples)
+- **`FKBarExampleViewController`**, **`FKBarPresentationExampleViewController`**, **`FKPresentationExampleViewController`**: English copy/comments; bar item specs updated for **`LabelAttributes`**.
+
+### Migration (0.9.1)
+- Replace any direct use of `VoidHandler`, `ValueHandler`, `OptionalValueHandler`, `ErrorHandler`, or `ResultHandler` with the **`FK*Handler`** names above.
+- In **`FKBar.Item.FKButtonSpec`**, replace **`FKButton.Text`** / **`FKButton.Image`** with **`FKButton.LabelAttributes`** / **`FKButton.ImageAttributes`**.
+
+## [0.9.0] - 2026-04-19
+
+### Added (FKUIKit FKEmptyState)
+- **`FKEmptyStatePhase`**: `content` (hide overlay), `loading`, `empty`, `error` (retry button enforced in the view).
+- **`FKEmptyStateModel`** / **`FKEmptyStateButtonStyle`**: configurable copy, fonts, colors, image, gradient, `blockingOverlayAlpha`, loading spinner style, keyboard avoidance (`adjustsPositionForKeyboard` + `keyboardLayoutGuide`), pull-to-refresh skip (`skipsLoadingWhileRefreshing`), optional `customAccessoryView` + **`FKEmptyStateCustomPlacement`** (e.g. Lottie host).
+- **`FKEmptyStateScenario`**: `CaseIterable` presets (`noNetwork`, `noSearchResult`, `loadFailed`, `noPermission`, `notLoggedIn`, …) via **`FKEmptyStateModel.scenario(_:)`**; fluent **`withTitle` / `withDescription` / `withImage` / `withButtonTitle` / `withPhase`**.
+- **`FKEmptyStateView`**: full-bleed overlay, safe-area–centered stack, tap-to-dismiss keyboard (gesture does not steal `UIControl` taps), default opaque **`systemBackground`** so underlying lists do not show through in landscape.
+- **`UIView` extensions**: `fk_applyEmptyState`, `fk_hideEmptyState`, `fk_emptyStateView` / `fk_emptyStateModel` (associated overlay; `UIScrollView` pins to **`frameLayoutGuide`**).
+- **`UIScrollView` extensions**: `fk_showEmptyState`, `fk_updateEmptyState(_:)`, `fk_updateEmptyStateVisibility`, `fk_refreshEmptyStateAutomatically`, **`fk_updateEmptyState(itemCount:…)`**; **`UITableView.fk_totalRowCount`** / **`fk_updateEmptyStateForTable`**; **`UICollectionView.fk_totalItemCount`**.
+- **`FKEmptyStateGlobalDefaults.template`** for app-wide baseline styling.
+- **`fk_emptyStateAssertMainThread()`** guard on public entry points.
+
+### Changed (Examples)
+- **`ExampleMenuViewController`**: table grouped by **FKUIKit** then **FKCompositeKit**; rows sorted alphabetically by title; **`insetGrouped`** style; navigation title **FKKit Examples**.
+- **`FKKitExamples`**: **`FKEmptyStateExamplesHubViewController`** and demos under **`Examples/EmptyState/`** (scenario gallery, phase switcher, interactive sandbox, retry→still-fails).
+
+## [0.8.0] - 2026-04-19
+
+### Added (FKUIKit FKSkeleton)
+- Skeleton loading UI for placeholders: `FKSkeletonView`, `FKSkeletonContainerView`, `FKSkeletonConfiguration` (base/highlight colors, corner radius, shimmer / breathing / static modes, animation duration, shimmer direction), and thread-safe `FKSkeleton.defaultConfiguration`.
+- `UIView.fk_showSkeleton` / `fk_hideSkeleton` overlays (optional safe-area pinning, interaction blocking); helpers on `UITableView` / `UICollectionView` for visible cells.
+- Unified shimmer for containers (`usesUnifiedShimmer`): one masked gradient over all blocks for smoother scrolling; per-block mode when disabled.
+- `FKSkeletonPresets` for list rows, cards, text blocks (including per-line width ratios), and grid cells; `FKSkeletonAvatarStyle` for circular or rounded avatars.
+- `FKSkeletonTableViewCell` and `FKSkeletonCollectionViewCell` for skeleton-only reuse identifiers, plus `removeAllSkeletonSubviews()` on containers.
+
+### Changed (Examples)
+- `FKKitExamples`: added `FKSkeletonExampleViewController` (single-scroll catalog of APIs) and main-menu entry under `Examples/.../Skeleton/`.
+
+## [0.7.0] - 2026-04-19
+
+### Added (FKUIKit FKBadge)
+- `FKBadge` overlay system for `UIView`, `UIBarButtonItem`, and `UITabBarItem`: dot, numeric (with overflow formatting), and text badges; configurable anchor (corners), offset, appearance (`FKBadgeConfiguration`), entrance animations, and visibility policy (including global hide/restore).
+- `UIView+FKBadge`, `UIBarButtonItem+FKBadge`, `UITabBarItem+FKBadge` convenience APIs; optional swizzling so bar items update when system images change.
+
+### Changed (Examples)
+- `FKKitExamples`: added `FKBadgeExamplesHubViewController.swift` (hub, categorized demo screens, and shared helpers in one file) and main-menu entry; scene uses programmatic root only (`Info.plist` no longer loads unused `Main` storyboard); removed invalid `ViewController` class from `Main.storyboard` placeholder.
+
+## [0.6.3] - 2026-04-19
+
+### Added (FKButton)
+- `FKButton.GlobalStyle` for app-wide defaults (`minimumTapInterval`, long-press timing, disabled dimming, optional `defaultAppearances`, `applyPerNewButton`).
+- `LoadingPresentationStyle` (`.overlay` / `.replacesContent`) with `ReplacedContentLoadingOptions`, `loadingActivityIndicatorColor`, and `performWhileLoading` for async work while showing the built-in spinner.
+- `FKButton+Chaining.swift` fluent helpers (appearance, content, interaction, loading, alignment).
+- `FKButton+Storyboard.swift` `@IBInspectable` properties for common knobs in Interface Builder.
+- Throttled primary actions via `minimumTapInterval` (applied in `sendAction(_:to:for:)`), plus `hitTestEdgeInsets` for a larger tap target without changing layout.
+- `contentHorizontalAlignment` / `contentVerticalAlignment` drive Auto Layout between `contentContainerView` and the content stack (reapplied on layout-direction changes).
+
+### Changed (FKButton)
+- Renamed per-state title/image value types to `LabelAttributes` and `ImageAttributes` for clarity; `FKButton.Text` and `FKButton.Image` remain as `public typealias` aliases.
+- Default `contentHorizontalAlignment` / `contentVerticalAlignment` are `.center` / `.center` so icon+title groups center like a typical `UIButton` (use `.fill` when the stack should span the padded area).
+- Expanded documentation across `FKButton`, `Appearance`, `Content`, and `Elements`.
+
+### Changed (Examples)
+- Replaced the monolithic `FKButtonExampleViewController` with `FKButtonExamplesHubViewController` and topic screens (basics, layout, interaction, appearance, loading, advanced/IB), with shared demo builders in `FKButtonExampleDemoContentBuilders.swift`.
+- Root example menu now opens the FKButton hub with an updated subtitle.
+
 ## [0.6.2] - 2026-04-17
 
-### Added (FKBusinessKit Filters)
+### Added (FKCompositeKit Filters)
 - Added subtitle support for filter bar items via `FKFilterBarPresentation.BarItemModel.subtitle`.
 - Added rich text support for filter bar and filter options using `AttributedString` (`attributedTitle` / `attributedSubtitle`).
 - Added optional cell customization hooks in filter panels so integrators can fully control table/grid cell rendering.
 
-### Changed (FKBusinessKit Filters)
+### Changed (FKCompositeKit Filters)
 - Extended `FKFilterBarPresentation.BarItemAppearance` with subtitle styling and layout controls (`subtitle` colors/fonts, title/subtitle alignment, and title-subtitle spacing).
 - Updated default cell rendering in list-based panels to support title + subtitle content while preserving existing fallback behavior.
 - Changed custom cell hook semantics to explicit override mode: when a custom closure is provided, default cell configuration is skipped.
@@ -28,13 +128,13 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ## [0.6.1] - 2026-04-17
 
-### Added (FKBusinessKit Filters)
+### Added (FKCompositeKit Filters)
 - Added configurable panel height behavior via `FKFilterPanelHeightBehavior` (`automatic` / `capped` / `fixed` / `screenFraction`) and integrated it across list/chips/two-column panels.
 - Added `FKFilterPanelFactory` to centralize panel construction and state wiring from lightweight data closures.
 - Added `FKFilterTwoColumnGridViewController` for left-list + right-grid course-like layouts with section header support.
 - Added richer filter bar lifecycle callbacks, including should-present and will-dismiss delegation.
 
-### Changed (FKBusinessKit Filters)
+### Changed (FKCompositeKit Filters)
 - Refactored and split filter panel controllers into focused files (`SingleList`, `TwoColumnList`, `TwoColumnGrid`) with clearer naming and responsibilities.
 - Generalized panel kind semantics and factory source naming (`twoColumnList` / `twoColumnGrid`) to reduce business-coupled terminology.
 - Unified reusable option-item styling with `FKFilterPillStyle` and kept backward compatibility through a deprecated `FKFilterChipStyle` typealias.
@@ -48,11 +148,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ### Breaking changes
 - Package and repository direction has been unified under `FKKit`, replacing the previous `FKUIKit`-named repository layout.
-- SwiftPM products were consolidated to `FKUIKit` and `FKBusinessKit` as top-level deliverables.
+- SwiftPM products were consolidated to `FKUIKit` and `FKCompositeKit` as top-level deliverables.
 - Example project structure migrated from `FKUIKitDemo` to `FKKitExamples` with new app/bootstrap wiring and resource layout.
 
-### Added (FKBusinessKit)
-- New `FKBusinessKit` product and target with filter-focused business UI components.
+### Added (FKCompositeKit)
+- New `FKCompositeKit` product and target with filter-focused business UI components.
 - Added filter module infrastructure including bar host/presentation, panel support, list/chips/course views, and demo data provider.
 - Added end-to-end filter demo entry points and host demo view controllers for practical integration reference.
 
@@ -185,7 +285,15 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...HEAD
+[0.11.0]: https://github.com/feng-zhang0712/FKKit/compare/0.10.0...0.11.0
+[0.10.0]: https://github.com/feng-zhang0712/FKKit/compare/0.9.1...0.10.0
+[0.9.1]: https://github.com/feng-zhang0712/FKKit/compare/0.9.0...0.9.1
+[0.9.0]: https://github.com/feng-zhang0712/FKKit/compare/0.8.0...0.9.0
+[0.8.0]: https://github.com/feng-zhang0712/FKKit/compare/0.7.0...0.8.0
+[0.7.0]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...0.7.0
+[0.6.4]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...0.6.4
+[0.6.3]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/feng-zhang0712/FKKit/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/feng-zhang0712/FKKit/compare/0.5.1...0.6.0

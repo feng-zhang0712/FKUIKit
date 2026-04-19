@@ -3,7 +3,7 @@
 A modular UIKit component library for iOS.
 
 - `FKUIKit`: foundational UI components and presentation infrastructure
-- `FKBusinessKit`: business-oriented UI compositions built on top of `FKUIKit`
+- `FKCompositeKit`: composed UI modules built on top of `FKUIKit` (filters, networking helpers, etc.)
 
 ## Requirements
 
@@ -27,14 +27,14 @@ In Xcode:
 
 | Product | Import | Notes |
 |---|---|---|
-| FKUIKit | `import FKUIKit` | core reusable UIKit components |
-| FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
+| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
+| FKCompositeKit | `import FKCompositeKit` | composite components and utilities, depends on `FKUIKit` |
 
 Dependency graph:
 
 ```text
 FKUIKit
-FKBusinessKit   → FKUIKit
+FKCompositeKit   → FKUIKit
 ```
 
 ### Local package (development)
@@ -55,10 +55,39 @@ config.itemSpacing = 8
 bar.setConfiguration(config)
 ```
 
-### FKBusinessKit
+### FKBadge (UIView)
 
 ```swift
-import FKBusinessKit
+import FKUIKit
+
+badgeHostView.fk_badge.setAnchor(.topTrailing)
+badgeHostView.fk_badge.showCount(12)
+```
+
+### FKSkeleton (loading placeholders)
+
+```swift
+import FKUIKit
+
+contentView.fk_showSkeleton()
+// …load data…
+contentView.fk_hideSkeleton()
+```
+
+### FKRefresh (pull to refresh & load more)
+
+```swift
+import FKUIKit
+
+tableView.fk_addPullToRefresh { /* reload */ }
+tableView.fk_addLoadMore { /* next page */ }
+// When done: tableView.fk_pullToRefresh?.endRefreshing()
+```
+
+### FKCompositeKit
+
+```swift
+import FKCompositeKit
 
 let filterBar = FKFilterBarPresentation()
 let filterHost = FKFilterBarHost(filterBar: filterBar)
@@ -68,15 +97,25 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 
 - Repository has been renamed from `FKUIKit` to `FKKit`.
 - SwiftPM package name is now `FKKit`.
-- Products are consolidated to `FKUIKit` and `FKBusinessKit`.
+- Products are consolidated to `FKUIKit` and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
-## Recent updates (0.6.2)
+## Recent updates (0.11.0)
 
-- Added subtitle + attributed text support for filter bar items and filter options to cover richer business display requirements.
-- Added opt-in cell customization hooks for list and grid panels, with explicit "custom overrides default" behavior.
-- Extended filter bar appearance configuration with subtitle alignment and title/subtitle spacing controls.
-- Improved FKPresentation internals documentation for reposition probe/coordinator responsibilities and scheduling semantics.
+- **`FKListKit`** (in `FKCompositeKit`): composition-based list plugin (**`FKListPlugin`**) that coordinates pagination (**`FKPageManager`**), list states (**`FKListStateManager`**), refresh/load-more, skeleton, and empty/error overlays for table/collection views.
+- **Examples**: `FKListKitTableExampleViewController` under `Examples/FKKitExamples/.../ListKit/` demonstrates initial skeleton, random mock data, empty/error scenarios, and a 3-page paging flow.
+
+## Recent updates (0.9.1)
+
+- **Shared types**: closure aliases in `Types.swift` are now prefixed (**`FKVoidHandler`**, **`FKValueHandler`**, …); **`FKBar`** / **`FKBarPresentation`** completion parameters use them.
+- **`FKBar.Item.FKButtonSpec`**: title/subtitle maps use **`FKButton.LabelAttributes`**; images use **`FKButton.ImageAttributes`**.
+- **Examples**: Bar, BarPresentation, and Presentation sample screens updated (English copy; bar specs aligned with the types above). See `CHANGELOG.md` for migration notes.
+
+## Recent updates (0.9.0)
+
+- **`FKEmptyState`**: unified placeholders for **loading**, **empty**, and **error** (plus **content** to hide the overlay) on `UIView` / `UIScrollView`. Includes `FKEmptyStateModel`, `FKEmptyStatePhase`, preset **`FKEmptyStateScenario`**, optional custom middle view, keyboard-safe layout, and refresh-control-aware loading skip. See `Sources/FKUIKit/Components/FKEmptyState/`.
+- **Examples**: `FKEmptyStateExamplesHubViewController` and related screens under `Examples/FKKitExamples/.../EmptyState/`.
+- **Example app menu**: grouped by **FKUIKit** / **FKCompositeKit**, sorted A→Z within each section.
 
 ## Branching & Collaboration (Recommended)
 

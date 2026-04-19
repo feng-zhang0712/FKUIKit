@@ -1,18 +1,24 @@
 //
 // FKButton+Elements.swift
 //
-// Value-type models for titles, subtitles, image slots, and custom content.
+// Value types registered per `UIControl.State`: `LabelAttributes` (title/subtitle), `ImageAttributes` (per slot),
+// and `CustomContent` for fully custom layouts.
 //
 
 import UIKit
 
+// MARK: - Elements (per-state payloads)
+
 public extension FKButton {
-  /// Title/subtitle display parameters rendered by an internal `UILabel`.
+
+  // MARK: LabelAttributes
+
+  /// Typography and metadata for the main title or subtitle `UILabel`, keyed by `UIControl.State`.
   /// Register per state via `setTitle(_:for:)` / `setSubtitle(_:for:)`.
   ///
-  /// Compared to `UIButton`: keep font, paragraph styling, shadow, and accessibility in one place.
-  struct Text {
-    /// Text transform strategy for plain text rendering.
+  /// Compared to `UIButton`, this keeps font, paragraph styling, shadow, and accessibility in one value type.
+  struct LabelAttributes {
+    /// Plain-string casing rules applied before building an `NSAttributedString`.
     public enum TextTransform: Equatable, Sendable {
       case none
       case uppercase
@@ -97,13 +103,16 @@ public extension FKButton {
       self.contentInsets = contentInsets
     }
 
-    /// Baseline text configuration used as state fallback.
-    public nonisolated(unsafe) static let `default` = Text()
+    /// Baseline configuration used when no per-state value is registered.
+    public nonisolated(unsafe) static let `default` = LabelAttributes()
   }
-  
-  /// Display parameters for an image slot (hosted by `UIImageView`).
-  /// Register per state via `setImage` / `setLeadingImage` / `setTrailingImage`.
-  struct Image {
+
+  // MARK: ImageAttributes
+
+  /// Image payload for one of the three slots (`center`, `leading`, `trailing`) rendered in `UIImageView`s.
+  /// Use `spacingToTitle` to control distance to the title when `content.kind` is `.textAndImage`.
+  /// Named `ImageAttributes` to align with `LabelAttributes` (both are per-state style bundles, not `UIImage`).
+  struct ImageAttributes {
     /// Prefer `image`. When `image` is nil, fall back to `systemName` (SF Symbol).
     public var image: UIImage?
     public var systemName: String?
@@ -174,19 +183,18 @@ public extension FKButton {
     }
 
     /// Baseline image configuration used as state fallback.
-    public nonisolated(unsafe) static let `default` = Image()
+    public nonisolated(unsafe) static let `default` = ImageAttributes()
   }
-  
-  /// Use when providing a custom `UIView` as the main content.
-  /// Set `content.kind` to `.custom` and register via `setCustomContent(_:for:)`.
-  ///
-  /// This does not wrap properties that should be set by the caller (e.g. alpha, backgroundColor, tint, constraints).
-  /// Size should be handled via Auto Layout or `intrinsicContentSize`.
+
+  // MARK: CustomContent
+
+  /// Hosts an arbitrary `UIView` when `content.kind == .custom`. You own sizing (Auto Layout or intrinsic size).
+  /// Register per state with `setCustomContent(_:for:)`.
   struct CustomContent {
     /// `nil` means no custom content for this state.
     public var view: UIView?
 
-    /// Spacing to adjacent content (semantic alignment with `Image.spacingToTitle`).
+    /// Spacing to adjacent content (semantic alignment with `ImageAttributes.spacingToTitle`).
     public var spacingToAdjacentContent: CGFloat
 
     public init(view: UIView? = nil, spacingToAdjacentContent: CGFloat = 6) {

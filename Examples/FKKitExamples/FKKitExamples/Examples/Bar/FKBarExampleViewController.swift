@@ -6,7 +6,7 @@
 import UIKit
 import FKUIKit
 
-/// 演示 `FKBar`：全宽横向滚动条（紧贴导航栏下方）、多种条目类型与调试面板。
+/// Demonstrates `FKBar`: full-width horizontal bar under the navigation bar, multiple item kinds, and a debug panel.
 final class FKBarExampleViewController: UIViewController {
 
   private let bar = FKBar()
@@ -49,7 +49,7 @@ final class FKBarExampleViewController: UIViewController {
     view.addSubview(actions)
 
     let guide = view.safeAreaLayoutGuide
-    // Bar：与屏幕同宽（leading/trailing 贴 view），高度由 intrinsicContentSize 决定。
+    // Bar: full width (leading/trailing to root); height follows intrinsicContentSize.
     NSLayoutConstraint.activate([
       bar.topAnchor.constraint(equalTo: guide.topAnchor),
       bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -66,12 +66,12 @@ final class FKBarExampleViewController: UIViewController {
     tapLogLabel.numberOfLines = 0
     tapLogLabel.font = .preferredFont(forTextStyle: .footnote)
     tapLogLabel.textColor = .secondaryLabel
-    tapLogLabel.text = "点击条目后在此显示回调与条目 id。"
+    tapLogLabel.text = "Tap an item to log callbacks and item id here."
 
     reloadLogLabel.numberOfLines = 0
     reloadLogLabel.font = .preferredFont(forTextStyle: .caption2)
     reloadLogLabel.textColor = .tertiaryLabel
-    reloadLogLabel.text = "didReloadItems：—"
+    reloadLogLabel.text = "didReloadItems: —"
   }
 
   private func makeActionsPanel() -> UIView {
@@ -109,8 +109,8 @@ final class FKBarExampleViewController: UIViewController {
     tip.textColor = .secondaryLabel
     tip.font = .preferredFont(forTextStyle: .footnote)
     tip.text =
-      "调试：可在 `FKBar` / `handleItemTap` / `reloadItems` 打断点。\n" +
-      "条目含：系统 UIButton.Configuration、FKButton、自定义 UIView。"
+      "Debug: set breakpoints in `FKBar`, `handleItemTap`, or `reloadItems`.\n" +
+      "Items may use `UIButton.Configuration`, `FKButton`, or custom `UIView`."
     stack.addArrangedSubview(tip)
 
     return stack
@@ -188,11 +188,11 @@ final class FKBarExampleViewController: UIViewController {
       var spec = FKBar.Item.FKButtonSpec()
       spec.content = FKButton.Content(kind: .textOnly)
       spec.setTitle(
-        FKButton.Text(text: title, font: font, color: .label),
+        FKButton.LabelAttributes(text: title, font: font, color: .label),
         for: .normal
       )
       spec.setTitle(
-        FKButton.Text(text: title, font: font, color: .systemOrange),
+        FKButton.LabelAttributes(text: title, font: font, color: .systemOrange),
         for: .selected
       )
       spec.setAppearance(
@@ -292,7 +292,7 @@ final class FKBarExampleViewController: UIViewController {
     let shortID = String(item.id.prefix(8))
     let idxText = index.map { String($0) } ?? "-"
     tapLogLabel.text =
-      "来源：\(source)\n" +
+      "source: \(source)\n" +
       "id: \(shortID)…\n" +
       "index: \(idxText)\n" +
       "selected: \(item.isSelected)"
@@ -343,7 +343,7 @@ final class FKBarExampleViewController: UIViewController {
 extension FKBarExampleViewController: FKBarDelegate {
 
   func bar(_ bar: FKBar, didReloadItems items: [FKBar.Item]) {
-    reloadLogLabel.text = "didReloadItems：\(items.count) 条"
+    reloadLogLabel.text = "didReloadItems: \(items.count) items"
   }
 
   func bar(

@@ -1,12 +1,17 @@
 //
 //  FKButton+Content.swift
 //
-// Main content layout for `FKButton` (text only, image only, text+image, custom view) and image/text placement.
+//  Declares *what* the button shows (title stack, images, or a hosted custom view). Pair with `FKButton.axis`
+//  and per-state `LabelAttributes` / `ImageAttributes` values to build the final layout.
 //
 
+// MARK: - Content
+
 public extension FKButton {
-  /// Main content layout strategy; combined with `axis` and state APIs to produce the final UI.
+  /// High-level content mode; changing `content` rebuilds the internal `UIStackView` hierarchy.
   struct Content: Equatable, Sendable {
+
+    // MARK: Kind
 
     /// Controls the main content type.
     ///
@@ -20,7 +25,9 @@ public extension FKButton {
       case textAndImage(ImagePlacement)
       case custom
     }
-    
+
+    // MARK: Image placement
+
     /// Image placement semantics for `.textAndImage`.
     ///
     /// - `leading`: image on the leading side relative to the title.

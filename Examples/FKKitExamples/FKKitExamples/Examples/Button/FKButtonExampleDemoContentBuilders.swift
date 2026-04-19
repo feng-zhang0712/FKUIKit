@@ -1,176 +1,13 @@
 //
-//  FKButtonExampleViewController.swift
+//  FKButtonExampleDemoContentBuilders.swift
 //  FKKitExamples
 //
 
 import UIKit
 import FKUIKit
 
-final class FKButtonExampleViewController: UIViewController {
-  enum ExampleMetrics {
-    static let inset: CGFloat = 16
-    static let spacing: CGFloat = 14
-    static let buttonHeight: CGFloat = 44
-  }
-  
-  private lazy var rootStackView: UIStackView = {
-    let stack = UIStackView()
-    stack.axis = .vertical
-    stack.alignment = .center
-    stack.spacing = ExampleMetrics.spacing
-    stack.translatesAutoresizingMaskIntoConstraints = false
-    return stack
-  }()
+extension FKButtonExampleBaseViewController {
 
-  func didTapButton(_ name: String) {
-    title = "FKButton · \(name)"
-  }
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    title = "FKButton"
-    view.backgroundColor = .systemBackground
-    let scrollView = UIScrollView()
-    scrollView.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(scrollView)
-    let guide = view.safeAreaLayoutGuide
-    NSLayoutConstraint.activate([
-      scrollView.topAnchor.constraint(equalTo: guide.topAnchor),
-      scrollView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
-      scrollView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-      scrollView.bottomAnchor.constraint(equalTo: guide.bottomAnchor)
-    ])
-    scrollView.addSubview(rootStackView)
-    let inset = ExampleMetrics.inset
-    let contentGuide = scrollView.contentLayoutGuide
-    NSLayoutConstraint.activate([
-      rootStackView.topAnchor.constraint(equalTo: contentGuide.topAnchor, constant: inset),
-      rootStackView.leadingAnchor.constraint(equalTo: contentGuide.leadingAnchor, constant: inset),
-      rootStackView.trailingAnchor.constraint(equalTo: contentGuide.trailingAnchor, constant: -inset),
-      rootStackView.bottomAnchor.constraint(equalTo: contentGuide.bottomAnchor)
-    ])
-    rootStackView.addArrangedSubview(sectionTitle("Text Only"))
-    rootStackView.addArrangedSubview(makeTextOnlyExample())
-    rootStackView.addArrangedSubview(sectionTitle("Icon Only"))
-    rootStackView.addArrangedSubview(makeIconOnlyExample())
-    rootStackView.addArrangedSubview(sectionTitle("Composition"))
-    rootStackView.addArrangedSubview(makeCompositionExample())
-    rootStackView.addArrangedSubview(sectionTitle("Vertical Layout"))
-    rootStackView.addArrangedSubview(makeVerticalLayoutExample())
-    rootStackView.addArrangedSubview(sectionTitle("Capsule Corner"))
-    rootStackView.addArrangedSubview(makeCapsuleCornerExample())
-    rootStackView.addArrangedSubview(sectionTitle("No Border"))
-    rootStackView.addArrangedSubview(makeNoBorderExample())
-    rootStackView.addArrangedSubview(sectionTitle("Different Length"))
-    rootStackView.addArrangedSubview(makeDifferentLengthExample())
-    rootStackView.addArrangedSubview(sectionTitle("Subtitle · Text Only"))
-    rootStackView.addArrangedSubview(makeSubtitleTextOnlyExample())
-    rootStackView.addArrangedSubview(sectionTitle("Subtitle · Text And Image"))
-    rootStackView.addArrangedSubview(makeSubtitleTextAndImageExample())
-    rootStackView.addArrangedSubview(sectionTitle("Subtitle · Vertical Axis"))
-    rootStackView.addArrangedSubview(makeSubtitleVerticalAxisExample())
-    rootStackView.addArrangedSubview(sectionTitle("Subtitle · Toggle Presence"))
-    rootStackView.addArrangedSubview(makeSubtitleTogglePresenceExample())
-    rootStackView.addArrangedSubview(sectionTitle("Content Kind · Cycle All"))
-    rootStackView.addArrangedSubview(makeContentKindCycleAllExample())
-    rootStackView.addArrangedSubview(sectionTitle("Content Kind · Picker"))
-    rootStackView.addArrangedSubview(makeContentKindPickerExample())
-    rootStackView.addArrangedSubview(sectionTitle("Content Kind · text ↔ custom"))
-    rootStackView.addArrangedSubview(makeContentKindTextCustomPingPongExample())
-    rootStackView.addArrangedSubview(sectionTitle("Content Kind · Placement Cycle"))
-    rootStackView.addArrangedSubview(makeContentKindPlacementCycleExample())
-    rootStackView.addArrangedSubview(sectionTitle("Content Kind · Vertical Cycle"))
-    rootStackView.addArrangedSubview(makeContentKindVerticalCycleExample())
-    rootStackView.setCustomSpacing(22, after: rootStackView.arrangedSubviews.last!)
-  }
-}
-
-private extension FKButtonExampleViewController {
-  func addTap(_ button: FKButton, name: String) {
-    button.addAction(UIAction { [weak self] _ in
-      self?.didTapButton(name)
-    }, for: .touchUpInside)
-  }
-
-  func addTapToggleSelected(_ button: FKButton, name: String) {
-    button.addAction(UIAction { [weak self] _ in
-      button.isSelected.toggle()
-      self?.didTapButton(name)
-    }, for: .touchUpInside)
-  }
-
-  func sectionTitle(_ text: String) -> UIView {
-    let label = UILabel()
-    label.text = text
-    label.font = .preferredFont(forTextStyle: .headline)
-    label.textAlignment = .center
-    label.textColor = .label
-    return label
-  }
-  
-  struct ButtonVisualSpec {
-    let foregroundColor: UIColor
-    let backgroundColor: UIColor
-    let borderColor: UIColor
-    let shadow: FKButton.Shadow?
-  }
-  
-  struct StatefulAppearances {
-    let normal: FKButton.Appearance
-    let selected: FKButton.Appearance
-    let highlighted: FKButton.Appearance
-    let disabled: FKButton.Appearance
-    let normalForegroundColor: UIColor
-    let selectedForegroundColor: UIColor
-    let highlightedForegroundColor: UIColor
-    let disabledForegroundColor: UIColor
-
-    func foregroundColor(for state: UIControl.State) -> UIColor {
-      switch state {
-      case .selected:
-        return selectedForegroundColor
-      case .highlighted:
-        return highlightedForegroundColor
-      case .disabled:
-        return disabledForegroundColor
-      default:
-        return normalForegroundColor
-      }
-    }
-  }
-  
-  func makeStatefulAppearance(
-    normal: ButtonVisualSpec,
-    selected: ButtonVisualSpec,
-    highlighted: ButtonVisualSpec,
-    disabled: ButtonVisualSpec,
-    corner: FKButton.Corner = .fixed(12),
-    borderWidth: CGFloat = 1
-  ) -> StatefulAppearances {
-    let insets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
-    func makeAppearance(from spec: ButtonVisualSpec) -> FKButton.Appearance {
-      FKButton.Appearance(
-        cornerStyle: .init(corner: corner),
-        border: .init(width: borderWidth, color: spec.borderColor),
-        backgroundColor: spec.backgroundColor,
-        shadow: spec.shadow,
-        contentInsets: insets
-      )
-    }
-    return StatefulAppearances(
-      normal: makeAppearance(from: normal),
-      selected: makeAppearance(from: selected),
-      highlighted: makeAppearance(from: highlighted),
-      disabled: makeAppearance(from: disabled),
-      normalForegroundColor: normal.foregroundColor,
-      selectedForegroundColor: selected.foregroundColor,
-      highlightedForegroundColor: highlighted.foregroundColor,
-      disabledForegroundColor: disabled.foregroundColor
-    )
-  }
-}
-
-private extension FKButtonExampleViewController {
   func makeTextOnlyStatefulAppearances(highlightedForegroundColor: UIColor) -> StatefulAppearances {
     makeStatefulAppearance(
       normal: ButtonVisualSpec(
@@ -201,7 +38,7 @@ private extension FKButtonExampleViewController {
       borderWidth: 0
     )
   }
-  
+
   func makeTextOnlyExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
@@ -217,32 +54,29 @@ private extension FKButtonExampleViewController {
     let disabledBtn = makeTextButton(title: "Disabled", appearances: normalAppearances)
     disabledBtn.isEnabled = false
     normalBtn.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("TextOnly: Normal")
+      self?.recordDemoTap("TextOnly: Normal")
     }, for: .touchUpInside)
     selectedBtn.addAction(UIAction { [weak self, weak selectedBtn] _ in
       selectedBtn?.isSelected.toggle()
-      self?.didTapButton("TextOnly: Selected")
+      self?.recordDemoTap("TextOnly: Selected")
     }, for: .touchUpInside)
     highlightedBtn.addAction(UIAction { [weak self] _ in
-      self?.didTapButton("TextOnly: Highlighted")
+      self?.recordDemoTap("TextOnly: Highlighted")
     }, for: .touchUpInside)
     stack.addArrangedSubview(normalBtn)
     stack.addArrangedSubview(selectedBtn)
     stack.addArrangedSubview(highlightedBtn)
     stack.addArrangedSubview(disabledBtn)
     NSLayoutConstraint.activate([
-      normalBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      selectedBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      highlightedBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      disabledBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight)
+      normalBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      selectedBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      highlightedBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      disabledBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
     ])
     return stack
   }
-  
-  func makeTextButton(
-    title: String,
-    appearances: StatefulAppearances
-  ) -> FKButton {
+
+  func makeTextButton(title: String, appearances: StatefulAppearances) -> FKButton {
     let button = FKButton()
     button.content = .init(kind: .textOnly)
     [UIControl.State.normal, .selected, .highlighted, .disabled].forEach { state in
@@ -261,7 +95,7 @@ private extension FKButtonExampleViewController {
     button.setAppearance(appearances.disabled, for: .disabled)
     return button
   }
-  
+
   func makeIconOnlyExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
@@ -302,23 +136,20 @@ private extension FKButtonExampleViewController {
     addTap(normalBtn, name: "IconOnly: Normal")
     selectedBtn.addAction(UIAction { [weak self, weak selectedBtn] _ in
       selectedBtn?.isSelected.toggle()
-      self?.didTapButton("IconOnly: Selected")
+      self?.recordDemoTap("IconOnly: Selected")
     }, for: .touchUpInside)
     stack.addArrangedSubview(normalBtn)
     stack.addArrangedSubview(selectedBtn)
     stack.addArrangedSubview(disabledBtn)
     NSLayoutConstraint.activate([
-      normalBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      selectedBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      disabledBtn.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight)
+      normalBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      selectedBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      disabledBtn.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
     ])
     return stack
   }
-  
-  func makeIconButton(
-    systemName: String,
-    appearances: StatefulAppearances
-  ) -> FKButton {
+
+  func makeIconButton(systemName: String, appearances: StatefulAppearances) -> FKButton {
     let button = FKButton()
     button.content = .init(kind: .imageOnly)
     [UIControl.State.normal, .selected, .highlighted, .disabled].forEach { state in
@@ -337,6 +168,7 @@ private extension FKButtonExampleViewController {
     button.accessibilityLabel = systemName
     return button
   }
+
   func makeCompositionAppearances() -> StatefulAppearances {
     makeStatefulAppearance(
       normal: ButtonVisualSpec(
@@ -370,7 +202,7 @@ private extension FKButtonExampleViewController {
       )
     )
   }
-  
+
   func makeCompositionButton(
     content: FKButton.Content,
     title: String,
@@ -425,7 +257,7 @@ private extension FKButtonExampleViewController {
     }
     return button
   }
-  
+
   func makeCompositionExample() -> UIView {
     let stack = UIStackView()
     stack.axis = .vertical
@@ -469,10 +301,10 @@ private extension FKButtonExampleViewController {
     stack.addArrangedSubview(trailing)
     stack.addArrangedSubview(disabled)
     NSLayoutConstraint.activate([
-      leading.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      both.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      trailing.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight),
-      disabled.heightAnchor.constraint(equalToConstant: ExampleMetrics.buttonHeight)
+      leading.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      both.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      trailing.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
+      disabled.heightAnchor.constraint(equalToConstant: Metrics.buttonHeight),
     ])
     return stack
   }

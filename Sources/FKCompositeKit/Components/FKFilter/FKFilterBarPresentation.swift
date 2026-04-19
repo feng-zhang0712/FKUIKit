@@ -234,7 +234,7 @@ public final class FKFilterBarPresentation: UIView {
     spec.axis = .horizontal
 
     spec.setTitle(
-      FKButton.Text(
+      FKButton.LabelAttributes(
         text: model.title,
         attributedText: model.attributedTitle.map(NSAttributedString.init),
         font: appearance.titleFont,
@@ -244,7 +244,7 @@ public final class FKFilterBarPresentation: UIView {
       for: .normal
     )
     spec.setTitle(
-      FKButton.Text(
+      FKButton.LabelAttributes(
         text: model.title,
         attributedText: model.attributedTitle.map(NSAttributedString.init),
         font: appearance.titleFont,
@@ -255,7 +255,7 @@ public final class FKFilterBarPresentation: UIView {
     )
     if model.subtitle != nil || model.attributedSubtitle != nil {
       spec.setSubtitle(
-        FKButton.Text(
+        FKButton.LabelAttributes(
           text: model.subtitle,
           attributedText: model.attributedSubtitle.map(NSAttributedString.init),
           font: appearance.subtitleFont,
@@ -271,7 +271,7 @@ public final class FKFilterBarPresentation: UIView {
         for: .normal
       )
       spec.setSubtitle(
-        FKButton.Text(
+        FKButton.LabelAttributes(
           text: model.subtitle,
           attributedText: model.attributedSubtitle.map(NSAttributedString.init),
           font: appearance.subtitleFont,
@@ -289,14 +289,14 @@ public final class FKFilterBarPresentation: UIView {
     }
 
     let downConfig = UIImage.SymbolConfiguration(pointSize: appearance.chevronPointSize, weight: .semibold)
-    let down = FKButton.Image(
+    let down = FKButton.ImageAttributes(
       systemName: "chevron.down",
       symbolConfiguration: downConfig,
       tintColor: appearance.normalChevronColor,
       fixedSize: CGSize(width: 14, height: 14),
       spacingToTitle: appearance.chevronSpacing
     )
-    let up = FKButton.Image(
+    let up = FKButton.ImageAttributes(
       systemName: "chevron.up",
       symbolConfiguration: downConfig,
       tintColor: appearance.selectedChevronColor,
