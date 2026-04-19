@@ -8,6 +8,18 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.8.0] - 2026-04-19
+
+### Added (FKUIKit FKSkeleton)
+- Skeleton loading UI for placeholders: `FKSkeletonView`, `FKSkeletonContainerView`, `FKSkeletonConfiguration` (base/highlight colors, corner radius, shimmer / breathing / static modes, animation duration, shimmer direction), and thread-safe `FKSkeleton.defaultConfiguration`.
+- `UIView.fk_showSkeleton` / `fk_hideSkeleton` overlays (optional safe-area pinning, interaction blocking); helpers on `UITableView` / `UICollectionView` for visible cells.
+- Unified shimmer for containers (`usesUnifiedShimmer`): one masked gradient over all blocks for smoother scrolling; per-block mode when disabled.
+- `FKSkeletonPresets` for list rows, cards, text blocks (including per-line width ratios), and grid cells; `FKSkeletonAvatarStyle` for circular or rounded avatars.
+- `FKSkeletonTableViewCell` and `FKSkeletonCollectionViewCell` for skeleton-only reuse identifiers, plus `removeAllSkeletonSubviews()` on containers.
+
+### Changed (Examples)
+- `FKKitExamples`: added `FKSkeletonExampleViewController` (single-scroll catalog of APIs) and main-menu entry under `Examples/.../Skeleton/`.
+
 ## [0.7.0] - 2026-04-19
 
 ### Added (FKUIKit FKBadge)
@@ -213,7 +225,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/feng-zhang0712/FKKit/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...0.7.0
 [0.6.4]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...0.6.3

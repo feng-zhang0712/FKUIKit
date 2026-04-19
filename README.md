@@ -27,7 +27,7 @@ In Xcode:
 
 | Product | Import | Notes |
 |---|---|---|
-| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, …) |
+| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, …) |
 | FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
 
 Dependency graph:
@@ -64,6 +64,16 @@ badgeHostView.fk_badge.setAnchor(.topTrailing)
 badgeHostView.fk_badge.showCount(12)
 ```
 
+### FKSkeleton (loading placeholders)
+
+```swift
+import FKUIKit
+
+contentView.fk_showSkeleton()
+// …load data…
+contentView.fk_hideSkeleton()
+```
+
 ### FKBusinessKit
 
 ```swift
@@ -80,23 +90,15 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
+## Recent updates (0.8.0)
+
+- **FKSkeleton**: shimmer / breathing placeholders, overlay API (`fk_showSkeleton` / `fk_hideSkeleton`), composable `FKSkeletonContainerView` with unified shimmer, presets (list/card/text/grid), dedicated table/collection skeleton cells, and thread-safe global defaults. See `CHANGELOG.md` for details.
+- **Examples**: `FKSkeletonExampleViewController` under `Examples/FKKitExamples/.../Skeleton/`.
+
 ## Recent updates (0.7.0)
 
 - **FKBadge**: dot / numeric / text badges on `UIView`, `UIBarButtonItem`, and `UITabBarItem`, with anchors, styling, animations, and visibility helpers. See `CHANGELOG.md` for details.
 - **Examples**: FKBadge catalog (`FKBadgeExamplesHubViewController`) and grouped demos in `Examples/FKKitExamples/.../Badge/FKBadgeExamplesHubViewController.swift`.
-
-## Recent updates (0.6.3)
-
-- **FKButton**: global defaults (`FKButton.GlobalStyle`), loading styles (`LoadingPresentationStyle` / `performWhileLoading`), tap throttling, expanded hit testing, IB inspectables, and alignment-aware stack layout (defaults center icon+title as a group).
-- **FKButton**: clearer type names `LabelAttributes` / `ImageAttributes` with `Text` / `Image` kept as compatibility typealiases.
-- **Examples**: FKButton samples split into a hub plus focused screens (basics, layout, interaction, appearance, loading, advanced).
-
-## Recent updates (0.6.2)
-
-- Added subtitle + attributed text support for filter bar items and filter options to cover richer business display requirements.
-- Added opt-in cell customization hooks for list and grid panels, with explicit "custom overrides default" behavior.
-- Extended filter bar appearance configuration with subtitle alignment and title/subtitle spacing controls.
-- Improved FKPresentation internals documentation for reposition probe/coordinator responsibilities and scheduling semantics.
 
 ## Branching & Collaboration (Recommended)
 

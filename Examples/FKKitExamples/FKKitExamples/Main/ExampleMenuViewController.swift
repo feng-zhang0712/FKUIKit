@@ -46,6 +46,11 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Dot, numeric & text badges, anchors, animations, TabBarItem",
       make: { FKBadgeExamplesHubViewController() }
     ),
+    MenuItem(
+      title: "FKSkeleton",
+      subtitle: "Overlay, presets, standalone blocks, table/collection skeleton cells, unified shimmer",
+      make: { FKSkeletonExampleViewController() }
+    ),
   ]
 
   override func viewDidLoad() {
