@@ -8,6 +8,15 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.6.4] - 2026-04-19
+
+### Added (FKUIKit FKBadge)
+- `FKBadge` overlay system for `UIView`, `UIBarButtonItem`, and `UITabBarItem`: dot, numeric (with overflow formatting), and text badges; configurable anchor (corners), offset, appearance (`FKBadgeConfiguration`), entrance animations, and visibility policy (including global hide/restore).
+- `UIView+FKBadge`, `UIBarButtonItem+FKBadge`, `UITabBarItem+FKBadge` convenience APIs; optional swizzling so bar items update when system images change.
+
+### Changed (Examples)
+- `FKKitExamples`: added `FKBadgeExamplesHubViewController.swift` (hub, categorized demo screens, and shared helpers in one file) and main-menu entry; scene uses programmatic root only (`Info.plist` no longer loads unused `Main` storyboard); removed invalid `ViewController` class from `Main.storyboard` placeholder.
+
 ## [0.6.3] - 2026-04-19
 
 ### Added (FKButton)
@@ -204,7 +213,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...HEAD
+[0.6.4]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/feng-zhang0712/FKKit/compare/0.6.0...0.6.1

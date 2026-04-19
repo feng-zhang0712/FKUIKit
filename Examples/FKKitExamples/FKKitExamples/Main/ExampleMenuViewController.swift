@@ -41,6 +41,11 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Business-like dropdown filters (top bar + panels)",
       make: { FKFilterExampleViewController() }
     ),
+    MenuItem(
+      title: "FKBadge",
+      subtitle: "Dot, numeric & text badges, anchors, animations, TabBarItem",
+      make: { FKBadgeExamplesHubViewController() }
+    ),
   ]
 
   override func viewDidLoad() {

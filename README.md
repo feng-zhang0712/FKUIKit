@@ -27,7 +27,7 @@ In Xcode:
 
 | Product | Import | Notes |
 |---|---|---|
-| FKUIKit | `import FKUIKit` | core reusable UIKit components |
+| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, …) |
 | FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
 
 Dependency graph:
@@ -55,6 +55,15 @@ config.itemSpacing = 8
 bar.setConfiguration(config)
 ```
 
+### FKBadge (UIView)
+
+```swift
+import FKUIKit
+
+badgeHostView.fk_badge.setAnchor(.topTrailing)
+badgeHostView.fk_badge.showCount(12)
+```
+
 ### FKBusinessKit
 
 ```swift
@@ -70,6 +79,11 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - SwiftPM package name is now `FKKit`.
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
+
+## Recent updates (0.6.4)
+
+- **FKBadge**: dot / numeric / text badges on `UIView`, `UIBarButtonItem`, and `UITabBarItem`, with anchors, styling, animations, and visibility helpers. See `CHANGELOG.md` for details.
+- **Examples**: FKBadge catalog (`FKBadgeExamplesHubViewController`) and grouped demos in `Examples/FKKitExamples/.../Badge/FKBadgeExamplesHubViewController.swift`.
 
 ## Recent updates (0.6.3)
 
