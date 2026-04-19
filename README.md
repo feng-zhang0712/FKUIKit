@@ -71,6 +71,12 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
+## Recent updates (0.6.3)
+
+- **FKButton**: global defaults (`FKButton.GlobalStyle`), loading styles (`LoadingPresentationStyle` / `performWhileLoading`), tap throttling, expanded hit testing, IB inspectables, and alignment-aware stack layout (defaults center icon+title as a group).
+- **FKButton**: clearer type names `LabelAttributes` / `ImageAttributes` with `Text` / `Image` kept as compatibility typealiases.
+- **Examples**: FKButton samples split into a hub plus focused screens (basics, layout, interaction, appearance, loading, advanced).
+
 ## Recent updates (0.6.2)
 
 - Added subtitle + attributed text support for filter bar items and filter options to cover richer business display requirements.

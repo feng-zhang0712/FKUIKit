@@ -18,8 +18,8 @@ final class ExampleMenuViewController: UITableViewController {
   private let menuItems: [MenuItem] = [
     MenuItem(
       title: "FKButton",
-      subtitle: "Title, image, subtitle, and appearance variants",
-      make: { FKButtonExampleViewController() }
+      subtitle: "Split demos: basics, layout, interaction, appearance, loading",
+      make: { FKButtonExamplesHubViewController() }
     ),
     MenuItem(
       title: "FKBar",

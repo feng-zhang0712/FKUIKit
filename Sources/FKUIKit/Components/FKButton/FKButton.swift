@@ -2,19 +2,32 @@
 // FKButton.swift
 //
 // Custom-layout button supporting multi-state title/subtitle, multi-slot images, and custom views.
-// Also provides corners, shadow, and border styling.
+// Includes throttled primary actions, expanded hit testing, long-press callbacks, configurable loading,
+// linear gradient backgrounds, per-state `Appearance`, `FKButton.GlobalStyle`, and IB attributes.
 //
 
 import UIKit
 
-/// A `UIControl` state-driven button.
-/// Register content via `setTitle`, `setImage`, `setAppearance`, etc. for `UIControl.State`.
+/// A `UIControl`-subclass button with explicit per-state models (title, images, appearance).
+///
+/// Highlights:
+/// - **Content**: `content` drives layout (text only, image only, text+image, or embedded custom view).
+/// - **Appearance**: `setAppearance(_:for:)` / `setAppearances(_:)` for colors, gradient, border, shadow, insets, highlight feedback.
+/// - **Interaction**: `minimumTapInterval` throttles primary actions; `hitTestEdgeInsets` enlarges the tap target;
+///   `onLongPressBegan` / `onLongPressRepeatTick` / `onLongPressEnded` for long-press workflows.
+/// - **Content alignment**: `contentHorizontalAlignment` / `contentVerticalAlignment` (inherited from `UIControl`) position
+///   the built-in title/image stack inside `Appearance.contentInsets`; defaults are `.center` / `.center` (typical title+image grouping).
+///   Use `.fill` when the stack should span the padded content area edge-to-edge.
+/// - **Loading**: `setLoading(_:presentation:)` with `LoadingPresentationStyle` (dimmed overlay or hidden content + status text).
+/// - **Global defaults**: `FKButton.GlobalStyle` supplies values copied into each new instance during `commonInit`.
 ///
 /// Subclasses may override `layoutSubviews`, `intrinsicContentSize`, `point(inside:with:)`, etc. (`open`).
-open class FKButton: UIControl {
+@IBDesignable open class FKButton: UIControl {
   private typealias StateKey = UInt
   private typealias StatefulValues<T> = [StateKey: T]
-  
+
+  // MARK: - Nested types (axis & slots)
+
   /// The layout axis for the button content (affects how image and title are arranged).
   ///
   /// - `horizontal`: laid out horizontally.
@@ -41,7 +54,9 @@ open class FKButton: UIControl {
   /// Resolves state lookup candidates for stateful maps.
   /// Return order must be from high to low priority.
   public typealias StateResolutionProvider = (_ isEnabled: Bool, _ isSelected: Bool, _ isHighlighted: Bool) -> [UIControl.State]
-  
+
+  // MARK: - Configuration
+
   /// Content composition model. Updating this rebinds internal subviews immediately.
   public var content: FKButton.Content {
     didSet {
@@ -59,8 +74,21 @@ open class FKButton: UIControl {
   public var stateResolutionProvider: StateResolutionProvider? {
     didSet { requestVisualRefresh() }
   }
-  
+
+  // MARK: - Content subviews & state storage
+
+  /// Hosts `stackView`; `Appearance.contentInsets` pin this view to `FKButton` edges so `contentHorizontalAlignment` /
+  /// `contentVerticalAlignment` can position the stack inside without fighting appearance insets.
+  private let contentContainerView: UIView = {
+    let v = UIView()
+    v.translatesAutoresizingMaskIntoConstraints = false
+    v.isUserInteractionEnabled = false
+    v.backgroundColor = .clear
+    return v
+  }()
+
   private let stackView = UIStackView()
+  private var contentAlignmentConstraints: [NSLayoutConstraint] = []
 
   /// Created only when `content.kind` is `.textOnly` / `.textAndImage` (added via the title container).
   /// When switching to `.imageOnly` / `.custom`, it is released via `releaseTitleLabel()`.
@@ -95,13 +123,13 @@ open class FKButton: UIControl {
 
   private var appearanceByState: StatefulValues<Appearance> = [UIControl.State.normal.rawValue: .default]
 
-  private var titleByState: StatefulValues<Text> = [:]
-  private var subtitleByState: StatefulValues<Text> = [:]
+  private var titleByState: StatefulValues<LabelAttributes> = [:]
+  private var subtitleByState: StatefulValues<LabelAttributes> = [:]
   private var customContentByState: StatefulValues<CustomContent> = [:]
 
   /// Store state data per slot.
   /// No pre-allocation (consistent with on-demand view creation); written on the first `setImage`.
-  private var imagesBySlotAndState: [ImageSlot: StatefulValues<Image>] = [:]
+  private var imagesBySlotAndState: [ImageSlot: StatefulValues<ImageAttributes>] = [:]
   
   private var imageConstraints: [ObjectIdentifier: [NSLayoutConstraint]] = [:]
   
@@ -112,6 +140,60 @@ open class FKButton: UIControl {
   private var batchUpdateDepth = 0
   private var needsVisualRefresh = false
   private var needsContentLayoutRefresh = false
+
+  // MARK: - Tap throttle / hit area / loading / long press
+
+  /// Ignores duplicate `touchUpInside` / `primaryActionTriggered` deliveries within this interval (seconds). `0` disables throttling.
+  ///
+  /// Throttling is applied in `sendAction(_:to:for:)` because UIKit often dispatches `UIAction` / target-action by calling
+  /// `sendAction` directly, without going through `sendActions(for:)` (so overriding only `sendActions` would not intercept taps).
+  public var minimumTapInterval: TimeInterval = 1.0
+  private var lastPrimaryActionDeliveryTime: CFAbsoluteTime = 0
+  /// `UIEvent.timestamp` of the last accepted user interaction wave (touches / presses); used to allow every `sendAction` in the same event.
+  private var lastThrottledInteractionEventTimestamp: TimeInterval = -1
+
+  /// Expands or shrinks the tappable rect in `point(inside:with:)` without changing layout.
+  /// Negative insets enlarge the target (same semantics as `CGRect.inset(by:)` with negative edges).
+  public var hitTestEdgeInsets: UIEdgeInsets = .zero
+
+  /// When `true`, applies `disabledDimmingAlpha` on top of resolved appearance while `isEnabled == false` (skipped while `isLoading`).
+  public var automaticallyDimsWhenDisabled: Bool = true
+  /// Multiplier applied to resolved appearance alpha when `automaticallyDimsWhenDisabled` is active.
+  public var disabledDimmingAlpha: CGFloat = 0.55
+
+  /// `true` while `setLoading(true, …)` is active; primary actions are suppressed and interaction is forced off until cleared.
+  public private(set) var isLoading: Bool = false
+  /// Spinner + optional status row layout while loading. Ignored until the next time loading becomes active unless you call `applyLoadingPresentation(_:)`.
+  public var loadingPresentationStyle: LoadingPresentationStyle = .overlay(dimmedContentAlpha: 0.35)
+  /// When non-`nil`, sets `UIActivityIndicatorView.color` for the built-in loading spinner. When `nil`, the system default tint is used.
+  public var loadingActivityIndicatorColor: UIColor? {
+    didSet { syncLoadingActivityIndicatorColor() }
+  }
+  private var userInteractionEnabledBeforeLoading: Bool = true
+
+  /// Minimum finger-down duration before `UILongPressGestureRecognizer` enters `.began`.
+  public var longPressMinimumDuration: TimeInterval = 0.5 {
+    didSet { longPressRecognizer.minimumPressDuration = longPressMinimumDuration }
+  }
+
+  /// Interval between `onLongPressRepeatTick` callbacks after recognition begins. `0` disables repeat ticks.
+  public var longPressRepeatTickInterval: TimeInterval = 0.1
+
+  /// Invoked when a long press is first recognized (after `longPressMinimumDuration`).
+  public var onLongPressBegan: (() -> Void)?
+  /// Invoked when the long-press gesture ends, fails, or is cancelled.
+  public var onLongPressEnded: (() -> Void)?
+  /// Invoked once when recognition begins and on each timer tick while the finger stays down (see `longPressRepeatTickInterval`).
+  public var onLongPressRepeatTick: (() -> Void)?
+
+  private let backgroundGradientLayer = CAGradientLayer()
+  private let loadingOverlayHost = UIView()
+  private let loadingRowStack = UIStackView()
+  private let loadingMessageLabel = UILabel()
+  private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+  private let longPressRecognizer = UILongPressGestureRecognizer()
+  /// `Timer` is not `Sendable`; only created/invalidated on the main run loop for long-press repeat.
+  private nonisolated(unsafe) var longPressRepeatTimer: Timer?
 
   private static let paddedImageCache = NSCache<NSString, UIImage>()
   
@@ -151,17 +233,28 @@ open class FKButton: UIControl {
     stackView.alignment = .center
     stackView.isUserInteractionEnabled = false
     stackView.translatesAutoresizingMaskIntoConstraints = false
-    addSubview(stackView)
-    
-    topConstraint = stackView.topAnchor.constraint(equalTo: topAnchor)
-    leadingConstraint = stackView.leadingAnchor.constraint(equalTo: leadingAnchor)
-    trailingConstraint = stackView.trailingAnchor.constraint(equalTo: trailingAnchor)
-    bottomConstraint = stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
+
+    addSubview(contentContainerView)
+    contentContainerView.addSubview(stackView)
+
+    topConstraint = contentContainerView.topAnchor.constraint(equalTo: topAnchor)
+    leadingConstraint = contentContainerView.leadingAnchor.constraint(equalTo: leadingAnchor)
+    trailingConstraint = contentContainerView.trailingAnchor.constraint(equalTo: trailingAnchor)
+    bottomConstraint = contentContainerView.bottomAnchor.constraint(equalTo: bottomAnchor)
     
     topConstraint?.isActive = true
     leadingConstraint?.isActive = true
     trailingConstraint?.isActive = true
     bottomConstraint?.isActive = true
+
+    layer.insertSublayer(backgroundGradientLayer, at: 0)
+    backgroundGradientLayer.zPosition = -1
+    configureLoadingOverlay()
+    longPressRecognizer.addTarget(self, action: #selector(handleLongPress(_:)))
+    longPressRecognizer.minimumPressDuration = longPressMinimumDuration
+    longPressRecognizer.cancelsTouchesInView = false
+    addGestureRecognizer(longPressRecognizer)
+    applyFactoryDefaultsFromGlobalStyle()
 
     applyAxis()
     applyContentLayout()
@@ -169,8 +262,17 @@ open class FKButton: UIControl {
     applyImagesForCurrentState()
     applyCustomContentForCurrentState()
     applyAppearanceForCurrentState()
+
+    if let appearances = FKButton.GlobalStyle.defaultAppearances {
+      setAppearances(appearances)
+    }
+    FKButton.GlobalStyle.applyPerNewButton?(self)
+
+    super.contentHorizontalAlignment = .center
+    super.contentVerticalAlignment = .center
+    applyContentAlignmentLayout()
   }
-  
+
   // MARK: - Public — Appearance
 
   /// Register an appearance for the given state.
@@ -196,7 +298,7 @@ open class FKButton: UIControl {
   }
 
   /// Convenience API to register title values for common states in one call.
-  public func setTitles(normal: Text?, selected: Text? = nil, highlighted: Text? = nil, disabled: Text? = nil) {
+  public func setTitles(normal: LabelAttributes?, selected: LabelAttributes? = nil, highlighted: LabelAttributes? = nil, disabled: LabelAttributes? = nil) {
     performBatchUpdates {
       setTitle(normal, for: .normal)
       setTitle(selected ?? normal, for: .selected)
@@ -206,7 +308,7 @@ open class FKButton: UIControl {
   }
 
   /// Convenience API to register subtitle values for common states in one call.
-  public func setSubtitles(normal: Text?, selected: Text? = nil, highlighted: Text? = nil, disabled: Text? = nil) {
+  public func setSubtitles(normal: LabelAttributes?, selected: LabelAttributes? = nil, highlighted: LabelAttributes? = nil, disabled: LabelAttributes? = nil) {
     performBatchUpdates {
       setSubtitle(normal, for: .normal)
       setSubtitle(selected ?? normal, for: .selected)
@@ -216,7 +318,7 @@ open class FKButton: UIControl {
   }
 
   /// Convenience API to register center-image values for common states in one call.
-  public func setImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+  public func setImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
     performBatchUpdates {
       setImage(normal, for: .normal)
       setImage(selected ?? normal, for: .selected)
@@ -226,7 +328,7 @@ open class FKButton: UIControl {
   }
 
   /// Convenience API to register leading-image values for common states in one call.
-  public func setLeadingImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+  public func setLeadingImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
     performBatchUpdates {
       setLeadingImage(normal, for: .normal)
       setLeadingImage(selected ?? normal, for: .selected)
@@ -236,7 +338,7 @@ open class FKButton: UIControl {
   }
 
   /// Convenience API to register trailing-image values for common states in one call.
-  public func setTrailingImages(normal: Image?, selected: Image? = nil, highlighted: Image? = nil, disabled: Image? = nil) {
+  public func setTrailingImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
     performBatchUpdates {
       setTrailingImage(normal, for: .normal)
       setTrailingImage(selected ?? normal, for: .selected)
@@ -266,63 +368,62 @@ open class FKButton: UIControl {
     }
   }
 
-  // MARK: - Public — Text
+  // MARK: - Public — Title & subtitle
 
-  /// Register the main title.
-  /// Use `nil` to clear this state.
-  public func setTitle(_ text: Text?, for state: UIControl.State) {
-    if let text {
-      titleByState[state.rawValue] = text
+  /// Registers the main title row for an exact `UIControl.State` key.
+  /// Pass `nil` to remove registration for that key.
+  public func setTitle(_ attributes: LabelAttributes?, for state: UIControl.State) {
+    if let attributes {
+      titleByState[state.rawValue] = attributes
     } else {
       titleByState.removeValue(forKey: state.rawValue)
     }
     requestVisualRefresh()
   }
   
-  /// Reads the registered title for an exact state key.
-  public func title(for state: UIControl.State) -> Text? {
+  /// Reads the registered title attributes for an exact state key.
+  public func title(for state: UIControl.State) -> LabelAttributes? {
     titleByState[state.rawValue]
   }
   
-  /// Register the subtitle.
-  /// Use `nil` to clear this state.
-  public func setSubtitle(_ text: Text?, for state: UIControl.State) {
-    if let text {
-      subtitleByState[state.rawValue] = text
+  /// Registers the subtitle row for an exact `UIControl.State` key.
+  public func setSubtitle(_ attributes: LabelAttributes?, for state: UIControl.State) {
+    if let attributes {
+      subtitleByState[state.rawValue] = attributes
     } else {
       subtitleByState.removeValue(forKey: state.rawValue)
     }
     requestVisualRefresh()
   }
   
-  /// Reads the registered subtitle for an exact state key.
-  public func subtitle(for state: UIControl.State) -> Text? {
+  /// Reads the registered subtitle attributes for an exact state key.
+  public func subtitle(for state: UIControl.State) -> LabelAttributes? {
     subtitleByState[state.rawValue]
   }
 
   // MARK: - Public — Images
 
   /// Set the centered image slot (`.center`).
-  public func setImage(_ image: Image?, for state: UIControl.State) {
+  public func setImage(_ image: ImageAttributes?, for state: UIControl.State) {
     setImage(image, for: state, slot: .center)
     requestVisualRefresh()
   }
   
   /// Set the leading-side image slot (relative to the title's leading side,
   /// mapped to concrete geometry based on `axis` and layout direction).
-  public func setLeadingImage(_ image: Image?, for state: UIControl.State) {
+  public func setLeadingImage(_ image: ImageAttributes?, for state: UIControl.State) {
     setImage(image, for: state, slot: .leading)
     requestVisualRefresh()
   }
   
   /// Set the trailing-side image slot.
-  public func setTrailingImage(_ image: Image?, for state: UIControl.State) {
+  public func setTrailingImage(_ image: ImageAttributes?, for state: UIControl.State) {
     setImage(image, for: state, slot: .trailing)
     requestVisualRefresh()
   }
   
   /// Read the registered image for a given slot/state pair.
-  public func image(for state: UIControl.State, slot: ImageSlot) -> Image? {
+  public func image(for state: UIControl.State, slot: ImageSlot) -> ImageAttributes? {
     imagesBySlotAndState[slot]?[state.rawValue]
   }
 
@@ -344,7 +445,32 @@ open class FKButton: UIControl {
   }
   
   // MARK: - Layout
-  
+
+  open override var contentHorizontalAlignment: UIControl.ContentHorizontalAlignment {
+    get { super.contentHorizontalAlignment }
+    set {
+      guard newValue != super.contentHorizontalAlignment else { return }
+      super.contentHorizontalAlignment = newValue
+      applyContentAlignmentLayout()
+    }
+  }
+
+  open override var contentVerticalAlignment: UIControl.ContentVerticalAlignment {
+    get { super.contentVerticalAlignment }
+    set {
+      guard newValue != super.contentVerticalAlignment else { return }
+      super.contentVerticalAlignment = newValue
+      applyContentAlignmentLayout()
+    }
+  }
+
+  open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    super.traitCollectionDidChange(previousTraitCollection)
+    if traitCollection.layoutDirection != previousTraitCollection?.layoutDirection {
+      applyContentAlignmentLayout()
+    }
+  }
+
   /// Intrinsic size based on resolved content plus `Appearance.contentInsets`.
   open override var intrinsicContentSize: CGSize {
     let appearance = resolveAppearance()
@@ -369,11 +495,15 @@ open class FKButton: UIControl {
     let appearance = resolveAppearance()
     applyCornerMetrics(using: appearance)
     updateShadowPath(using: appearance)
+    backgroundGradientLayer.frame = bounds
+    backgroundGradientLayer.cornerRadius = layer.cornerRadius
+    backgroundGradientLayer.cornerCurve = layer.cornerCurve
+    backgroundGradientLayer.maskedCorners = layer.maskedCorners
   }
   
-  /// Expands hit-testing using appearance and active image outsets.
+  /// Expands hit-testing using appearance, active image outsets, and `hitTestEdgeInsets`.
   open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-    expandedBounds(from: resolvedHitTestOutsets()).contains(point)
+    hitTestingBounds().contains(point)
   }
   
   // MARK: - State
@@ -395,12 +525,254 @@ open class FKButton: UIControl {
     didSet {
       requestVisualRefresh()
       let appearance = resolveAppearance()
+      let feedback = appearance.interaction.isHighlightFeedbackEnabled
       UIView.animate(withDuration: 0.12) {
-        self.alpha = self.resolvedAlpha(for: appearance)
-        self.transform = self.isHighlighted
-        ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
-        : .identity
+        self.alpha = self.resolvedAlpha(for: appearance) * self.disabledVisualMultiplier()
+        self.transform = (self.isHighlighted && feedback)
+          ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
+          : .identity
       }
+    }
+  }
+
+  open override func sendActions(for controlEvents: UIControl.Event) {
+    guard !isLoading else { return }
+    super.sendActions(for: controlEvents)
+  }
+
+  open override func sendAction(_ action: Selector, to target: Any?, for event: UIEvent?) {
+    guard !isLoading else { return }
+    if shouldSuppressThrottledPrimaryAction(for: event) {
+      return
+    }
+    super.sendAction(action, to: target, for: event)
+  }
+
+  open override func sendAction(_ action: UIAction) {
+    guard !isLoading else { return }
+    // `addAction(_:for:)` / UIAction dispatch commonly uses this overload without a `UIEvent`.
+    if shouldSuppressThrottledPrimaryAction(for: nil) {
+      return
+    }
+    super.sendAction(action)
+  }
+
+  /// Returns `true` if this `sendAction` should be dropped due to `minimumTapInterval`.
+  private func shouldSuppressThrottledPrimaryAction(for event: UIEvent?) -> Bool {
+    guard minimumTapInterval > 0 else { return false }
+    let now = CFAbsoluteTimeGetCurrent()
+
+    if let event, event.type == .touches || event.type == .presses {
+      let wave = event.timestamp
+      if wave == lastThrottledInteractionEventTimestamp {
+        return false
+      }
+      if lastPrimaryActionDeliveryTime > 0, now - lastPrimaryActionDeliveryTime < minimumTapInterval {
+        return true
+      }
+      lastThrottledInteractionEventTimestamp = wave
+      lastPrimaryActionDeliveryTime = now
+      return false
+    }
+
+    if event == nil {
+      if lastPrimaryActionDeliveryTime > 0, now - lastPrimaryActionDeliveryTime < minimumTapInterval {
+        return true
+      }
+      lastPrimaryActionDeliveryTime = now
+      return false
+    }
+
+    return false
+  }
+
+  /// Shows the loading chrome, blocks interaction, and optionally updates `loadingPresentationStyle` for this transition.
+  public func setLoading(_ loading: Bool, presentation: LoadingPresentationStyle? = nil) {
+    guard loading != isLoading else { return }
+    if let p = presentation {
+      loadingPresentationStyle = p
+    }
+    if loading {
+      userInteractionEnabledBeforeLoading = isUserInteractionEnabled
+      isLoading = true
+      isUserInteractionEnabled = false
+      applyLoadingChromeForCurrentStyle()
+      loadingOverlayHost.isHidden = false
+      loadingIndicator.startAnimating()
+    } else {
+      isLoading = false
+      isUserInteractionEnabled = userInteractionEnabledBeforeLoading
+      loadingIndicator.stopAnimating()
+      loadingOverlayHost.isHidden = true
+      stackView.isHidden = false
+      stackView.alpha = 1
+      loadingMessageLabel.text = nil
+      loadingMessageLabel.isHidden = true
+      accessibilityValue = nil
+    }
+    requestVisualRefresh()
+  }
+
+  /// Updates loading visuals while already loading (or stores the style for the next `setLoading(true)`).
+  public func applyLoadingPresentation(_ style: LoadingPresentationStyle) {
+    loadingPresentationStyle = style
+    if isLoading {
+      applyLoadingChromeForCurrentStyle()
+    }
+  }
+
+  /// Runs `operation` with loading enabled, then restores interaction and any temporary `presentation` override.
+  @MainActor
+  public func performWhileLoading(
+    presentation: LoadingPresentationStyle? = nil,
+    operation: () async throws -> Void
+  ) async rethrows {
+    let previousStyle = loadingPresentationStyle
+    if let p = presentation {
+      loadingPresentationStyle = p
+    }
+    setLoading(true)
+    defer {
+      setLoading(false)
+      loadingPresentationStyle = previousStyle
+    }
+    try await operation()
+  }
+
+  deinit {
+    longPressRepeatTimer?.invalidate()
+  }
+
+  open override func prepareForInterfaceBuilder() {
+    super.prepareForInterfaceBuilder()
+    flushPendingRefresh()
+  }
+
+  private func applyFactoryDefaultsFromGlobalStyle() {
+    minimumTapInterval = FKButton.GlobalStyle.minimumTapInterval
+    longPressMinimumDuration = FKButton.GlobalStyle.longPressMinimumDuration
+    longPressRepeatTickInterval = FKButton.GlobalStyle.longPressRepeatTickInterval
+    automaticallyDimsWhenDisabled = FKButton.GlobalStyle.automaticallyDimsWhenDisabled
+    disabledDimmingAlpha = FKButton.GlobalStyle.disabledDimmingAlpha
+    longPressRecognizer.minimumPressDuration = longPressMinimumDuration
+  }
+
+  private func configureLoadingOverlay() {
+    loadingOverlayHost.isUserInteractionEnabled = false
+    loadingOverlayHost.backgroundColor = .clear
+    loadingOverlayHost.translatesAutoresizingMaskIntoConstraints = false
+    loadingOverlayHost.isHidden = true
+
+    loadingRowStack.axis = .horizontal
+    loadingRowStack.alignment = .center
+    loadingRowStack.spacing = 8
+    loadingRowStack.isUserInteractionEnabled = false
+    loadingRowStack.translatesAutoresizingMaskIntoConstraints = false
+
+    loadingMessageLabel.numberOfLines = 1
+    loadingMessageLabel.textAlignment = .natural
+    loadingMessageLabel.lineBreakMode = .byTruncatingTail
+    loadingMessageLabel.isHidden = true
+
+    loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+    loadingIndicator.hidesWhenStopped = true
+    syncLoadingActivityIndicatorColor()
+
+    loadingRowStack.addArrangedSubview(loadingIndicator)
+    loadingRowStack.addArrangedSubview(loadingMessageLabel)
+
+    addSubview(loadingOverlayHost)
+    loadingOverlayHost.addSubview(loadingRowStack)
+    NSLayoutConstraint.activate([
+      loadingOverlayHost.topAnchor.constraint(equalTo: topAnchor),
+      loadingOverlayHost.leadingAnchor.constraint(equalTo: leadingAnchor),
+      loadingOverlayHost.trailingAnchor.constraint(equalTo: trailingAnchor),
+      loadingOverlayHost.bottomAnchor.constraint(equalTo: bottomAnchor),
+      loadingRowStack.centerXAnchor.constraint(equalTo: loadingOverlayHost.centerXAnchor),
+      loadingRowStack.centerYAnchor.constraint(equalTo: loadingOverlayHost.centerYAnchor),
+    ])
+  }
+
+  private func syncLoadingActivityIndicatorColor() {
+    loadingIndicator.color = loadingActivityIndicatorColor
+  }
+
+  private func applyLoadingChromeForCurrentStyle() {
+    switch loadingPresentationStyle {
+    case .overlay(let dimmed):
+      stackView.isHidden = false
+      stackView.alpha = max(0, min(1, dimmed))
+      loadingMessageLabel.text = nil
+      loadingMessageLabel.isHidden = true
+      accessibilityValue = nil
+    case .replacesContent(let options):
+      stackView.isHidden = true
+      stackView.alpha = 1
+      loadingRowStack.spacing = max(0, options.spacingAfterIndicator)
+      let trimmed = options.message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+      if trimmed.isEmpty {
+        loadingMessageLabel.isHidden = true
+        loadingMessageLabel.text = nil
+        accessibilityValue = nil
+      } else {
+        loadingMessageLabel.isHidden = false
+        loadingMessageLabel.text = options.message
+        loadingMessageLabel.font = options.messageFont
+        loadingMessageLabel.textColor = options.messageColor
+        accessibilityValue = trimmed
+      }
+    }
+  }
+
+  private func hitTestingBounds() -> CGRect {
+    let appearanceOutsets = resolveAppearance().interaction.hitTestOutsets
+    let imageOutsets = activeImageElements().reduce(UIEdgeInsets.zero) { current, element in
+      UIEdgeInsets(
+        top: max(current.top, element.hitTestOutsets.top),
+        left: max(current.left, element.hitTestOutsets.left),
+        bottom: max(current.bottom, element.hitTestOutsets.bottom),
+        right: max(current.right, element.hitTestOutsets.right)
+      )
+    }
+    let sum = UIEdgeInsets(
+      top: appearanceOutsets.top + imageOutsets.top,
+      left: appearanceOutsets.left + imageOutsets.left,
+      bottom: appearanceOutsets.bottom + imageOutsets.bottom,
+      right: appearanceOutsets.right + imageOutsets.right
+    )
+    let inset = UIEdgeInsets(
+      top: -sum.top + hitTestEdgeInsets.top,
+      left: -sum.left + hitTestEdgeInsets.left,
+      bottom: -sum.bottom + hitTestEdgeInsets.bottom,
+      right: -sum.right + hitTestEdgeInsets.right
+    )
+    return bounds.inset(by: inset)
+  }
+
+  private func disabledVisualMultiplier() -> CGFloat {
+    guard !isLoading else { return 1 }
+    guard !isEnabled, automaticallyDimsWhenDisabled else { return 1 }
+    return max(0, min(1, disabledDimmingAlpha))
+  }
+
+  @objc private func handleLongPress(_ sender: UILongPressGestureRecognizer) {
+    switch sender.state {
+    case .began:
+      onLongPressBegan?()
+      onLongPressRepeatTick?()
+      guard onLongPressRepeatTick != nil, longPressRepeatTickInterval > 0 else { break }
+      longPressRepeatTimer?.invalidate()
+      let timer = Timer(timeInterval: longPressRepeatTickInterval, repeats: true) { [weak self] _ in
+        self?.onLongPressRepeatTick?()
+      }
+      RunLoop.main.add(timer, forMode: .common)
+      longPressRepeatTimer = timer
+    case .ended, .cancelled, .failed:
+      longPressRepeatTimer?.invalidate()
+      longPressRepeatTimer = nil
+      onLongPressEnded?()
+    default:
+      break
     }
   }
   
@@ -412,6 +784,139 @@ open class FKButton: UIControl {
       stackView.axis = .horizontal
     case .vertical:
       stackView.axis = .vertical
+    }
+    applyContentAlignmentLayout()
+  }
+
+  /// Maps inherited `UIControl` alignment into `contentContainerView` constraints and `UIStackView` distribution/alignment.
+  private func applyContentAlignmentLayout() {
+    guard stackView.superview === contentContainerView else { return }
+
+    NSLayoutConstraint.deactivate(contentAlignmentConstraints)
+    contentAlignmentConstraints.removeAll()
+
+    let h = super.contentHorizontalAlignment
+    let v = super.contentVerticalAlignment
+    let c = contentContainerView
+
+    applyStackViewMetricsForContentAlignment(horizontal: h, vertical: v)
+
+    var next: [NSLayoutConstraint] = []
+
+    switch h {
+    case .fill:
+      next += [
+        stackView.leadingAnchor.constraint(equalTo: c.leadingAnchor),
+        stackView.trailingAnchor.constraint(equalTo: c.trailingAnchor),
+      ]
+    case .leading, .left:
+      next += [
+        stackView.leadingAnchor.constraint(equalTo: c.leadingAnchor),
+        stackView.trailingAnchor.constraint(lessThanOrEqualTo: c.trailingAnchor),
+      ]
+    case .trailing, .right:
+      next += [
+        stackView.leadingAnchor.constraint(greaterThanOrEqualTo: c.leadingAnchor),
+        stackView.trailingAnchor.constraint(equalTo: c.trailingAnchor),
+      ]
+    case .center:
+      next += [
+        stackView.centerXAnchor.constraint(equalTo: c.centerXAnchor),
+        stackView.leadingAnchor.constraint(greaterThanOrEqualTo: c.leadingAnchor),
+        stackView.trailingAnchor.constraint(lessThanOrEqualTo: c.trailingAnchor),
+      ]
+    @unknown default:
+      next += [
+        stackView.leadingAnchor.constraint(equalTo: c.leadingAnchor),
+        stackView.trailingAnchor.constraint(equalTo: c.trailingAnchor),
+      ]
+    }
+
+    switch v {
+    case .fill:
+      next += [
+        stackView.topAnchor.constraint(equalTo: c.topAnchor),
+        stackView.bottomAnchor.constraint(equalTo: c.bottomAnchor),
+      ]
+    case .top:
+      next += [
+        stackView.topAnchor.constraint(equalTo: c.topAnchor),
+        stackView.bottomAnchor.constraint(lessThanOrEqualTo: c.bottomAnchor),
+      ]
+    case .bottom:
+      next += [
+        stackView.topAnchor.constraint(greaterThanOrEqualTo: c.topAnchor),
+        stackView.bottomAnchor.constraint(equalTo: c.bottomAnchor),
+      ]
+    case .center:
+      next += [
+        stackView.centerYAnchor.constraint(equalTo: c.centerYAnchor),
+        stackView.topAnchor.constraint(greaterThanOrEqualTo: c.topAnchor),
+        stackView.bottomAnchor.constraint(lessThanOrEqualTo: c.bottomAnchor),
+      ]
+    @unknown default:
+      next += [
+        stackView.topAnchor.constraint(equalTo: c.topAnchor),
+        stackView.bottomAnchor.constraint(equalTo: c.bottomAnchor),
+      ]
+    }
+
+    contentAlignmentConstraints = next
+    NSLayoutConstraint.activate(next)
+    invalidateIntrinsicContentSize()
+  }
+
+  private func applyStackViewMetricsForContentAlignment(
+    horizontal h: UIControl.ContentHorizontalAlignment,
+    vertical v: UIControl.ContentVerticalAlignment
+  ) {
+    switch axis {
+    case .horizontal:
+      switch h {
+      case .center:
+        stackView.distribution = .equalCentering
+      default:
+        stackView.distribution = .fill
+      }
+      stackView.alignment = stackCrossAxisAlignmentForHorizontalStack(vertical: v)
+    case .vertical:
+      switch v {
+      case .center:
+        stackView.distribution = .equalCentering
+      default:
+        stackView.distribution = .fill
+      }
+      stackView.alignment = stackCrossAxisAlignmentForVerticalStack(horizontal: h)
+    }
+  }
+
+  private func stackCrossAxisAlignmentForHorizontalStack(vertical v: UIControl.ContentVerticalAlignment) -> UIStackView.Alignment {
+    switch v {
+    case .top:
+      return .top
+    case .bottom:
+      return .bottom
+    case .center:
+      return .center
+    case .fill:
+      return .fill
+    @unknown default:
+      return .center
+    }
+  }
+
+  private func stackCrossAxisAlignmentForVerticalStack(horizontal h: UIControl.ContentHorizontalAlignment) -> UIStackView.Alignment {
+    switch h {
+    case .leading, .left:
+      return .leading
+    case .trailing, .right:
+      return .trailing
+    case .center:
+      return .center
+    case .fill:
+      return .fill
+    @unknown default:
+      return .center
     }
   }
 
@@ -564,7 +1069,7 @@ open class FKButton: UIControl {
     titleLabelBottomConstraintToContainer?.isActive = true
   }
 
-  /// Update constraints inside the title container based on the resolved `Text.contentInsets`,
+  /// Update constraints inside the title container based on the resolved `LabelAttributes.contentInsets`,
   /// including spacing between title and subtitle (`title.bottom + subtitle.top`).
   private func updateTitleContainerLayoutConstraints() {
     guard let container = titleContainerView,
@@ -687,11 +1192,32 @@ open class FKButton: UIControl {
   private func applyAppearanceForCurrentState() {
     let appearance = resolveAppearance()
 
-    alpha = resolvedAlpha(for: appearance)
-    transform = isHighlighted
-      ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
-      : .identity
-    backgroundColor = appearance.backgroundColor
+    if isLoading {
+      alpha = 1
+      transform = .identity
+    } else {
+      let feedback = appearance.interaction.isHighlightFeedbackEnabled
+      alpha = resolvedAlpha(for: appearance) * disabledVisualMultiplier()
+      transform = (isHighlighted && feedback)
+        ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
+        : .identity
+    }
+
+    if let gradient = appearance.backgroundGradient {
+      backgroundGradientLayer.isHidden = false
+      backgroundGradientLayer.colors = gradient.colors.map(\.cgColor)
+      if let locations = gradient.locations {
+        backgroundGradientLayer.locations = locations.map { NSNumber(value: Double($0)) }
+      } else {
+        backgroundGradientLayer.locations = nil
+      }
+      backgroundGradientLayer.startPoint = gradient.startPoint
+      backgroundGradientLayer.endPoint = gradient.endPoint
+      backgroundColor = .clear
+    } else {
+      backgroundGradientLayer.isHidden = true
+      backgroundColor = appearance.backgroundColor
+    }
     layer.borderWidth = appearance.border.width
     layer.borderColor = appearance.border.color.cgColor
     layer.cornerCurve = appearance.cornerStyle.curve
@@ -751,34 +1277,15 @@ open class FKButton: UIControl {
   }
 
   private func resolvedAlpha(for appearance: Appearance) -> CGFloat {
-    guard isHighlighted, isEnabled else { return appearance.alpha }
-    return appearance.alpha * appearance.interaction.pressedAlpha
-  }
-
-  private func expandedBounds(from outsets: UIEdgeInsets) -> CGRect {
-    bounds.inset(by: UIEdgeInsets(top: -outsets.top, left: -outsets.left, bottom: -outsets.bottom, right: -outsets.right))
-  }
-
-  /// Combines button-level hit-test outsets with active image-slot outsets.
-  private func resolvedHitTestOutsets() -> UIEdgeInsets {
-    let appearanceOutsets = resolveAppearance().interaction.hitTestOutsets
-    let imageOutsets = activeImageElements().reduce(UIEdgeInsets.zero) { current, element in
-      UIEdgeInsets(
-        top: max(current.top, element.hitTestOutsets.top),
-        left: max(current.left, element.hitTestOutsets.left),
-        bottom: max(current.bottom, element.hitTestOutsets.bottom),
-        right: max(current.right, element.hitTestOutsets.right)
-      )
+    let base = appearance.alpha
+    let highlight = isHighlighted && isEnabled && appearance.interaction.isHighlightFeedbackEnabled
+    if highlight {
+      return base * appearance.interaction.pressedAlpha
     }
-    return UIEdgeInsets(
-      top: appearanceOutsets.top + imageOutsets.top,
-      left: appearanceOutsets.left + imageOutsets.left,
-      bottom: appearanceOutsets.bottom + imageOutsets.bottom,
-      right: appearanceOutsets.right + imageOutsets.right
-    )
+    return base
   }
 
-  private func activeImageElements() -> [Image] {
+  private func activeImageElements() -> [ImageAttributes] {
     switch content.kind {
     case .imageOnly:
       return [resolveImageElement(for: .center)].compactMap { $0 }
@@ -820,11 +1327,11 @@ open class FKButton: UIControl {
 
   // MARK: - Subviews rendering
 
-  private func resolveSubtitleElement() -> Text? {
+  private func resolveSubtitleElement() -> LabelAttributes? {
     resolveFromStateMap(subtitleByState)
   }
 
-  private func subtitleHasRenderableContent(_ subtitle: Text) -> Bool {
+  private func subtitleHasRenderableContent(_ subtitle: LabelAttributes) -> Bool {
     if subtitle.attributedText != nil { return true }
     if let text = subtitle.text { return !text.isEmpty }
     return false
@@ -940,16 +1447,16 @@ open class FKButton: UIControl {
     resolveFromStateMap(appearanceByState) ?? .default
   }
 
-  private func resolveTitleElement() -> Text {
+  private func resolveTitleElement() -> LabelAttributes {
     resolveFromStateMap(titleByState) ?? .default
   }
 
-  private func resolveImageElement(for slot: ImageSlot) -> Image? {
+  private func resolveImageElement(for slot: ImageSlot) -> ImageAttributes? {
     guard let map = imagesBySlotAndState[slot] else { return nil }
     return resolveFromStateMap(map)
   }
 
-  private func setImage(_ image: Image?, for state: UIControl.State, slot: ImageSlot) {
+  private func setImage(_ image: ImageAttributes?, for state: UIControl.State, slot: ImageSlot) {
     if var map = imagesBySlotAndState[slot] {
       if let image {
         map[state.rawValue] = image
@@ -962,7 +1469,7 @@ open class FKButton: UIControl {
     }
   }
 
-  private func applyTitle(_ title: Text) {
+  private func applyTitle(_ title: LabelAttributes) {
     let label = titleLabelIfNeeded()
     label.textAlignment = title.alignment
     label.numberOfLines = title.numberOfLines
@@ -1011,7 +1518,7 @@ open class FKButton: UIControl {
     }
   }
 
-  private func applySubtitle(_ subtitle: Text) {
+  private func applySubtitle(_ subtitle: LabelAttributes) {
     let label = subtitleLabelIfNeeded()
     label.textAlignment = subtitle.alignment
     label.numberOfLines = subtitle.numberOfLines
@@ -1049,7 +1556,7 @@ open class FKButton: UIControl {
     label.attributedText = NSAttributedString(string: text, attributes: attributes)
   }
 
-  private func applyImage(_ element: Image?, to imageView: UIImageView) {
+  private func applyImage(_ element: ImageAttributes?, to imageView: UIImageView) {
     guard let element else {
       imageView.image = nil
       imageView.alpha = 0
@@ -1115,7 +1622,7 @@ open class FKButton: UIControl {
     }
   }
 
-  private func transformedText(from text: String, by transform: Text.TextTransform) -> String {
+  private func transformedText(from text: String, by transform: LabelAttributes.TextTransform) -> String {
     switch transform {
     case .none:
       return text
@@ -1126,8 +1633,8 @@ open class FKButton: UIControl {
     }
   }
 
-  /// Enforces aspect-preserving content mode when requested by `Image.preserveAspectRatio`.
-  private func resolvedImageContentMode(for element: Image) -> UIView.ContentMode {
+  /// Enforces aspect-preserving content mode when requested by `ImageAttributes.preserveAspectRatio`.
+  private func resolvedImageContentMode(for element: ImageAttributes) -> UIView.ContentMode {
     guard element.preserveAspectRatio else { return element.contentMode }
     switch element.contentMode {
     case .scaleToFill:

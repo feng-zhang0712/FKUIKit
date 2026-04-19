@@ -8,6 +8,25 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.6.3] - 2026-04-19
+
+### Added (FKButton)
+- `FKButton.GlobalStyle` for app-wide defaults (`minimumTapInterval`, long-press timing, disabled dimming, optional `defaultAppearances`, `applyPerNewButton`).
+- `LoadingPresentationStyle` (`.overlay` / `.replacesContent`) with `ReplacedContentLoadingOptions`, `loadingActivityIndicatorColor`, and `performWhileLoading` for async work while showing the built-in spinner.
+- `FKButton+Chaining.swift` fluent helpers (appearance, content, interaction, loading, alignment).
+- `FKButton+Storyboard.swift` `@IBInspectable` properties for common knobs in Interface Builder.
+- Throttled primary actions via `minimumTapInterval` (applied in `sendAction(_:to:for:)`), plus `hitTestEdgeInsets` for a larger tap target without changing layout.
+- `contentHorizontalAlignment` / `contentVerticalAlignment` drive Auto Layout between `contentContainerView` and the content stack (reapplied on layout-direction changes).
+
+### Changed (FKButton)
+- Renamed per-state title/image value types to `LabelAttributes` and `ImageAttributes` for clarity; `FKButton.Text` and `FKButton.Image` remain as `public typealias` aliases.
+- Default `contentHorizontalAlignment` / `contentVerticalAlignment` are `.center` / `.center` so icon+title groups center like a typical `UIButton` (use `.fill` when the stack should span the padded area).
+- Expanded documentation across `FKButton`, `Appearance`, `Content`, and `Elements`.
+
+### Changed (Examples)
+- Replaced the monolithic `FKButtonExampleViewController` with `FKButtonExamplesHubViewController` and topic screens (basics, layout, interaction, appearance, loading, advanced/IB), with shared demo builders in `FKButtonExampleDemoContentBuilders.swift`.
+- Root example menu now opens the FKButton hub with an updated subtitle.
+
 ## [0.6.2] - 2026-04-17
 
 ### Added (FKBusinessKit Filters)
@@ -185,7 +204,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...HEAD
+[0.6.3]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/feng-zhang0712/FKKit/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/feng-zhang0712/FKKit/compare/0.5.1...0.6.0

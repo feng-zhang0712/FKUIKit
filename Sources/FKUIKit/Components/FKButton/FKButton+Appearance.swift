@@ -1,12 +1,40 @@
 //
 //  FKButton+Appearance.swift
 //
-// Appearance model applied to `FKButton` for `UIControl.State`: corners, shadow, border, background, and insets.
+//  Per-`UIControl.State` container styling: solid or gradient fill, border, shadow, corner radii, content insets,
+//  and interaction tuning (highlight feedback, extra hit-testing slop).
 //
 
 import UIKit
 
+// MARK: - Appearance model
+
 public extension FKButton {
+
+  // MARK: LinearGradient
+
+  /// Linear gradient used as the button background when `backgroundGradient != nil`.
+  struct LinearGradient: Equatable, Sendable {
+    public var colors: [UIColor]
+    public var locations: [CGFloat]?
+    public var startPoint: CGPoint
+    public var endPoint: CGPoint
+
+    public init(
+      colors: [UIColor],
+      locations: [CGFloat]? = nil,
+      startPoint: CGPoint = CGPoint(x: 0.5, y: 0),
+      endPoint: CGPoint = CGPoint(x: 0.5, y: 1)
+    ) {
+      self.colors = colors
+      self.locations = locations
+      self.startPoint = startPoint
+      self.endPoint = endPoint
+    }
+  }
+
+  // MARK: Appearance
+
   /// Appearance for the button container layer and content insets for a specific state.
   struct Appearance: Equatable, Sendable {
     /// Corner styling (radius strategy + curve + masked corners).
@@ -17,6 +45,8 @@ public extension FKButton {
     
     /// Background color.
     public var backgroundColor: UIColor
+    /// When non-`nil`, draws behind content as a linear gradient and ignores `backgroundColor` for fill.
+    public var backgroundGradient: LinearGradient?
     /// Overall alpha (0...1).
     public var alpha: CGFloat
 
@@ -37,6 +67,7 @@ public extension FKButton {
       cornerStyle: CornerStyle = .default,
       border: Border = .default,
       backgroundColor: UIColor = .clear,
+      backgroundGradient: LinearGradient? = nil,
       alpha: CGFloat = 1.0,
       shadow: Shadow? = nil,
       shadowPathStrategy: ShadowPathStrategy = .automatic,
@@ -47,6 +78,7 @@ public extension FKButton {
       self.cornerStyle = cornerStyle
       self.border = border
       self.backgroundColor = backgroundColor
+      self.backgroundGradient = backgroundGradient
       self.alpha = max(0, min(1, alpha))
       self.shadow = shadow
       self.shadowPathStrategy = shadowPathStrategy
@@ -57,10 +89,18 @@ public extension FKButton {
 
     /// Returns a new appearance by applying a partial override on top of the current value.
     public func merged(with override: AppearanceOverride) -> Appearance {
-      Appearance(
+      let mergedGradient: LinearGradient?
+      switch override.backgroundGradient {
+      case nil:
+        mergedGradient = backgroundGradient
+      case .some(let inner):
+        mergedGradient = inner
+      }
+      return Appearance(
         cornerStyle: override.cornerStyle ?? cornerStyle,
         border: override.border ?? border,
         backgroundColor: override.backgroundColor ?? backgroundColor,
+        backgroundGradient: mergedGradient,
         alpha: override.alpha ?? alpha,
         shadow: override.shadow ?? shadow,
         shadowPathStrategy: override.shadowPathStrategy ?? shadowPathStrategy,
@@ -79,7 +119,8 @@ public extension FKButton {
       Appearance(
         cornerStyle: cornerStyle,
         border: Border(width: 0, color: borderColor),
-        backgroundColor: backgroundColor
+        backgroundColor: backgroundColor,
+        backgroundGradient: nil
       )
     }
 
@@ -92,20 +133,24 @@ public extension FKButton {
       Appearance(
         cornerStyle: cornerStyle,
         border: Border(width: borderWidth, color: borderColor),
-        backgroundColor: .clear
+        backgroundColor: .clear,
+        backgroundGradient: nil
       )
     }
 
     /// Ghost-style preset with transparent background and no border.
     public static func ghost(cornerStyle: CornerStyle = .default) -> Appearance {
-      Appearance(cornerStyle: cornerStyle, border: .clear, backgroundColor: .clear)
+      Appearance(cornerStyle: cornerStyle, border: .clear, backgroundColor: .clear, backgroundGradient: nil)
     }
     
     /// Baseline appearance used when no per-state appearance is registered.
     public static let `default` = Appearance()
   }
 
-  /// Per-state appearance bundle for common button states.
+  // MARK: StateAppearances
+
+  /// Convenience bundle of four appearances matching the usual `UIControl.State` set used by `setAppearances(_:)`.
+  /// Unspecified slots fall back to `.normal` (or from `.selected` to `.highlighted`) so you rarely need all four.
   struct StateAppearances: Equatable, Sendable {
     public let normal: Appearance
     public let selected: Appearance
@@ -139,6 +184,8 @@ public extension FKButton {
     }
   }
 
+  // MARK: AppearanceOverride
+
   /// Partial override model for `Appearance.merged(with:)`.
   ///
   /// `shadow` and `clipsToBounds` use double optional to represent three states:
@@ -149,6 +196,7 @@ public extension FKButton {
     public var cornerStyle: CornerStyle?
     public var border: Border?
     public var backgroundColor: UIColor?
+    public var backgroundGradient: LinearGradient??
     public var alpha: CGFloat?
     public var shadow: Shadow??
     public var shadowPathStrategy: ShadowPathStrategy?
@@ -161,6 +209,7 @@ public extension FKButton {
       cornerStyle: CornerStyle? = nil,
       border: Border? = nil,
       backgroundColor: UIColor? = nil,
+      backgroundGradient: LinearGradient?? = nil,
       alpha: CGFloat? = nil,
       shadow: Shadow?? = nil,
       shadowPathStrategy: ShadowPathStrategy? = nil,
@@ -171,6 +220,7 @@ public extension FKButton {
       self.cornerStyle = cornerStyle
       self.border = border
       self.backgroundColor = backgroundColor
+      self.backgroundGradient = backgroundGradient
       self.alpha = alpha
       self.shadow = shadow
       self.shadowPathStrategy = shadowPathStrategy
@@ -179,6 +229,8 @@ public extension FKButton {
       self.interaction = interaction
     }
   }
+
+  // MARK: CornerStyle
 
   struct CornerStyle: Equatable, Sendable {
     /// Radius strategy (`none` / fixed / capsule).
@@ -206,6 +258,8 @@ public extension FKButton {
     public static let `default` = CornerStyle()
   }
 
+  // MARK: Border
+
   struct Border: Equatable, Sendable {
     /// Border width in points. Negative input is clamped to `0`.
     public let width: CGFloat
@@ -221,6 +275,8 @@ public extension FKButton {
     public static let clear = Border()
   }
 
+  // MARK: Interaction
+
   struct Interaction: Equatable, Sendable {
     /// Highlight alpha multiplier when touching down.
     public let pressedAlpha: CGFloat
@@ -228,20 +284,26 @@ public extension FKButton {
     public let pressedScale: CGFloat
     /// Hit-test outsets used by `point(inside:with:)`.
     public let hitTestOutsets: UIEdgeInsets
+    /// When `false`, ignores `pressedAlpha` / `pressedScale` so you can drive highlight visuals yourself.
+    public let isHighlightFeedbackEnabled: Bool
 
     public init(
       pressedAlpha: CGFloat = 0.88,
       pressedScale: CGFloat = 1.0,
-      hitTestOutsets: UIEdgeInsets = .init(top: 6, left: 0, bottom: 6, right: 0)
+      hitTestOutsets: UIEdgeInsets = .init(top: 6, left: 0, bottom: 6, right: 0),
+      isHighlightFeedbackEnabled: Bool = true
     ) {
       self.pressedAlpha = max(0, min(1, pressedAlpha))
       self.pressedScale = max(0.2, min(1.2, pressedScale))
       self.hitTestOutsets = hitTestOutsets
+      self.isHighlightFeedbackEnabled = isHighlightFeedbackEnabled
     }
 
     public static let `default` = Interaction()
   }
-  
+
+  // MARK: Shadow
+
   /// Shadow parameters paired with `Appearance`.
   struct Shadow: Equatable, Sendable {
     public let color: UIColor
@@ -262,6 +324,8 @@ public extension FKButton {
     }
   }
 
+  // MARK: ShadowPathStrategy
+
   /// Shadow path generation strategy.
   ///
   /// - `automatic`: automatically generates a rounded `shadowPath` from current bounds/corners.
@@ -270,6 +334,8 @@ public extension FKButton {
     case automatic
     case none
   }
+
+  // MARK: Corner
 
   /// Corner strategy mapped to `FKButton.layer.cornerRadius` / `maskedCorners`.
   ///
