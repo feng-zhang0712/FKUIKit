@@ -8,7 +8,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
-## [0.6.4] - 2026-04-19
+## [0.7.0] - 2026-04-19
 
 ### Added (FKUIKit FKBadge)
 - `FKBadge` overlay system for `UIView`, `UIBarButtonItem`, and `UITabBarItem`: dot, numeric (with overflow formatting), and text badges; configurable anchor (corners), offset, appearance (`FKBadgeConfiguration`), entrance animations, and visibility policy (including global hide/restore).
@@ -213,7 +213,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...0.7.0
 [0.6.4]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/feng-zhang0712/FKKit/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/feng-zhang0712/FKKit/compare/0.6.1...0.6.2

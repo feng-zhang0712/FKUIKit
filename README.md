@@ -80,7 +80,7 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
-## Recent updates (0.6.4)
+## Recent updates (0.7.0)
 
 - **FKBadge**: dot / numeric / text badges on `UIView`, `UIBarButtonItem`, and `UITabBarItem`, with anchors, styling, animations, and visibility helpers. See `CHANGELOG.md` for details.
 - **Examples**: FKBadge catalog (`FKBadgeExamplesHubViewController`) and grouped demos in `Examples/FKKitExamples/.../Badge/FKBadgeExamplesHubViewController.swift`.
