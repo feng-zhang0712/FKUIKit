@@ -8,6 +8,22 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.9.0] - 2026-04-19
+
+### Added (FKUIKit FKEmptyState)
+- **`FKEmptyStatePhase`**: `content` (hide overlay), `loading`, `empty`, `error` (retry button enforced in the view).
+- **`FKEmptyStateModel`** / **`FKEmptyStateButtonStyle`**: configurable copy, fonts, colors, image, gradient, `blockingOverlayAlpha`, loading spinner style, keyboard avoidance (`adjustsPositionForKeyboard` + `keyboardLayoutGuide`), pull-to-refresh skip (`skipsLoadingWhileRefreshing`), optional `customAccessoryView` + **`FKEmptyStateCustomPlacement`** (e.g. Lottie host).
+- **`FKEmptyStateScenario`**: `CaseIterable` presets (`noNetwork`, `noSearchResult`, `loadFailed`, `noPermission`, `notLoggedIn`, …) via **`FKEmptyStateModel.scenario(_:)`**; fluent **`withTitle` / `withDescription` / `withImage` / `withButtonTitle` / `withPhase`**.
+- **`FKEmptyStateView`**: full-bleed overlay, safe-area–centered stack, tap-to-dismiss keyboard (gesture does not steal `UIControl` taps), default opaque **`systemBackground`** so underlying lists do not show through in landscape.
+- **`UIView` extensions**: `fk_applyEmptyState`, `fk_hideEmptyState`, `fk_emptyStateView` / `fk_emptyStateModel` (associated overlay; `UIScrollView` pins to **`frameLayoutGuide`**).
+- **`UIScrollView` extensions**: `fk_showEmptyState`, `fk_updateEmptyState(_:)`, `fk_updateEmptyStateVisibility`, `fk_refreshEmptyStateAutomatically`, **`fk_updateEmptyState(itemCount:…)`**; **`UITableView.fk_totalRowCount`** / **`fk_updateEmptyStateForTable`**; **`UICollectionView.fk_totalItemCount`**.
+- **`FKEmptyStateGlobalDefaults.template`** for app-wide baseline styling.
+- **`fk_emptyStateAssertMainThread()`** guard on public entry points.
+
+### Changed (Examples)
+- **`ExampleMenuViewController`**: table grouped by **FKUIKit** then **FKBusinessKit**; rows sorted alphabetically by title; **`insetGrouped`** style; navigation title **FKKit Examples**.
+- **`FKKitExamples`**: **`FKEmptyStateExamplesHubViewController`** and demos under **`Examples/EmptyState/`** (scenario gallery, phase switcher, interactive sandbox, retry→still-fails).
+
 ## [0.8.0] - 2026-04-19
 
 ### Added (FKUIKit FKSkeleton)
@@ -225,7 +241,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.8.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.9.0...HEAD
+[0.9.0]: https://github.com/feng-zhang0712/FKKit/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/feng-zhang0712/FKKit/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/feng-zhang0712/FKKit/compare/0.6.4...0.7.0
 [0.6.4]: https://github.com/feng-zhang0712/FKKit/compare/0.6.3...0.6.4

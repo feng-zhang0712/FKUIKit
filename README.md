@@ -27,7 +27,7 @@ In Xcode:
 
 | Product | Import | Notes |
 |---|---|---|
-| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, …) |
+| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, …) |
 | FKBusinessKit | `import FKBusinessKit` | business-layer components, depends on `FKUIKit` |
 
 Dependency graph:
@@ -90,15 +90,11 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit` and `FKBusinessKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
-## Recent updates (0.8.0)
+## Recent updates (0.9.0)
 
-- **FKSkeleton**: shimmer / breathing placeholders, overlay API (`fk_showSkeleton` / `fk_hideSkeleton`), composable `FKSkeletonContainerView` with unified shimmer, presets (list/card/text/grid), dedicated table/collection skeleton cells, and thread-safe global defaults. See `CHANGELOG.md` for details.
-- **Examples**: `FKSkeletonExampleViewController` under `Examples/FKKitExamples/.../Skeleton/`.
-
-## Recent updates (0.7.0)
-
-- **FKBadge**: dot / numeric / text badges on `UIView`, `UIBarButtonItem`, and `UITabBarItem`, with anchors, styling, animations, and visibility helpers. See `CHANGELOG.md` for details.
-- **Examples**: FKBadge catalog (`FKBadgeExamplesHubViewController`) and grouped demos in `Examples/FKKitExamples/.../Badge/FKBadgeExamplesHubViewController.swift`.
+- **`FKEmptyState`**: unified placeholders for **loading**, **empty**, and **error** (plus **content** to hide the overlay) on `UIView` / `UIScrollView`. Includes `FKEmptyStateModel`, `FKEmptyStatePhase`, preset **`FKEmptyStateScenario`**, optional custom middle view, keyboard-safe layout, and refresh-control-aware loading skip. See `Sources/FKUIKit/Components/FKEmptyState/`.
+- **Examples**: `FKEmptyStateExamplesHubViewController` and related screens under `Examples/FKKitExamples/.../EmptyState/`.
+- **Example app menu**: grouped by **FKUIKit** / **FKBusinessKit**, sorted A→Z within each section.
 
 ## Branching & Collaboration (Recommended)
 
