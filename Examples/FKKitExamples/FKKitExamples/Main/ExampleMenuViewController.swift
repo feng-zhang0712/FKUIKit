@@ -73,6 +73,11 @@ final class ExampleMenuViewController: UITableViewController {
           subtitle: "Overlay, presets, standalone blocks, table/collection skeleton cells, unified shimmer",
           make: { FKSkeletonExampleViewController() }
         ),
+        ExampleMenuItem(
+          title: "TextField",
+          subtitle: "Formatted input, validation, style customization, callbacks, and global defaults",
+          make: { FKTextFieldExampleViewController() }
+        ),
       ].sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
     ),
     KitEntry(

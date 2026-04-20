@@ -60,7 +60,8 @@ FKKit/
 │  │     ├─ EmptyState/
 │  │     ├─ Presentation/
 │  │     ├─ Refresh/
-│  │     └─ Skeleton/
+│  │     ├─ Skeleton/
+│  │     └─ TextField/
 │  └─ FKCompositeKit/
 │     └─ Components/
 │        ├─ Filter/
@@ -106,6 +107,7 @@ Module docs:
 - `Refresh`: pull-to-refresh and load-more controls.
 - `Badge`: flexible badge display for views, bar items, and tab items.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
+- `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
 Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
@@ -113,6 +115,7 @@ Module docs:
 - `Sources/FKUIKit/Components/EmptyState/README.md`
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
+- `Sources/FKUIKit/Components/TextField/README.md`
 
 ### FKCompositeKit
 `FKCompositeKit` builds business-facing composite components on top of `FKCoreKit` + `FKUIKit`:
@@ -141,7 +144,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.24.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.25.0")
 ],
 targets: [
   .target(
@@ -206,7 +209,7 @@ For complete usage and advanced APIs, refer to each module README in `Sources/..
   - change summary
   - test/verification notes
   - migration notes when APIs change
-- Tag stable releases with semantic versions (for example: `0.24.0`), then merge release work back into `develop`.
+- Tag stable releases with semantic versions (for example: `0.25.0`), then merge release work back into `develop`.
 
 ## License
 This repository is licensed under the MIT License.  
