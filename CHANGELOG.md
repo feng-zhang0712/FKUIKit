@@ -8,6 +8,24 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.13.0] - 2026-04-20
+
+### Added (FKCoreKit FKStorage)
+- **`FKStorage`**: native persistence under `Sources/FKCoreKit/Storage/` — protocol-oriented API (`FKStorageBackend`, `FKCodableStorage`), **UserDefaults** (prefixed keys), **Keychain** (generic password), **file** storage under Application Support with `index.json` + hashed filenames, and **in-memory** cache; JSON **`Codable`** values with optional TTL via internal **`ExpiringRecord`**; unified **`FKStorageError`**; **`FKStorageKey`** / **`FKStorageStringKey`**; **`StorageAsync`** `async`/`await` overloads; English module **`Storage/README.md`**; full Swift documentation comments across the module.
+
+### Added (Package)
+- **`Package.swift`**: **`macOS(.v10_15)`** platform so `swift build` on macOS satisfies CryptoKit and Swift concurrency availability for `FKCoreKit`.
+
+### Added (Examples)
+- **`FKStorageExampleViewController`** and **`FKStorageExampleModels`** under `Examples/FKKitExamples/.../FKCoreKit/Storage/` (UserDefaults, Keychain, file, memory, TTL, purge, async).
+- **Example menu**: **FKStorage** entry under **FKCoreKit**.
+
+### Fixed (FKStorage)
+- **`StorageAsync`**: use **`await Task.yield()`** and explicit **`return`** where required so Swift 6 does not report redundant-`await` warnings when calling async storage APIs.
+
+### Notes
+- **`FKCoreKit.swift`**: module namespace marker documents **FKNetwork** and **FKStorage**.
+
 ## [0.12.0] - 2026-04-20
 
 ### Added (FKCoreKit FKNetwork)
@@ -301,7 +319,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.12.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.13.0...HEAD
+[0.13.0]: https://github.com/feng-zhang0712/FKKit/compare/0.12.0...0.13.0
 [0.12.0]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...0.12.0
 [0.11.0]: https://github.com/feng-zhang0712/FKKit/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/feng-zhang0712/FKKit/compare/0.9.1...0.10.0

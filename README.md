@@ -3,7 +3,7 @@
 A modular UIKit component library for iOS.
 
 - `FKUIKit`: foundational UI components and presentation infrastructure
-- `FKCoreKit`: foundational non-UI capabilities (networking, logging, permissions, utilities, etc.)
+- `FKCoreKit`: foundational non-UI capabilities (networking, storage, logging, permissions, utilities, etc.)
 - `FKCompositeKit`: composed UI modules built on top of `FKUIKit` and `FKCoreKit`
 
 ## Requirements
@@ -29,7 +29,7 @@ In Xcode:
 | Product | Import | Notes |
 |---|---|---|
 | FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities (includes **FKNetwork** — see `Sources/FKCoreKit/Network/README.md`) |
+| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities (includes **FKNetwork** — `Sources/FKCoreKit/Network/README.md`; **FKStorage** — `Sources/FKCoreKit/Storage/README.md`) |
 | FKCompositeKit | `import FKCompositeKit` | composite UI modules and higher-level integrations, depends on `FKUIKit` and `FKCoreKit` |
 
 Dependency graph:
@@ -102,6 +102,12 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - SwiftPM package name is now `FKKit`.
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
+
+## Recent updates (0.13.0)
+
+- **`FKStorage`** (in `FKCoreKit`): protocol-based persistence — **UserDefaults**, **Keychain**, **file** (Application Support), and **memory** cache; **`Codable`** + optional TTL; **`FKStorageError`**; async helpers. Documentation: `Sources/FKCoreKit/Storage/README.md`.
+- **Examples**: **FKStorage** demo at `Examples/FKKitExamples/.../FKCoreKit/Storage/`; menu entry under **FKCoreKit**.
+- **SwiftPM**: **`macOS 10.15+`** declared alongside iOS so `swift build` works for `FKCoreKit` on macOS.
 
 ## Recent updates (0.12.0)
 

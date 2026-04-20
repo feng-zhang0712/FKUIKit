@@ -79,6 +79,11 @@ final class ExampleMenuViewController: UITableViewController {
           subtitle: "GET/POST, async/await, upload/download, cache, cancel, parsing",
           make: { FKNetworkExampleViewController() }
         ),
+        ExampleMenuItem(
+          title: "FKStorage",
+          subtitle: "UserDefaults, Keychain, file, memory cache, TTL, purge, async",
+          make: { FKStorageExampleViewController() }
+        ),
       ]
     ),
     KitEntry(
