@@ -114,6 +114,11 @@ final class ExampleMenuViewController: UITableViewController {
           subtitle: "UserDefaults, Keychain, file, memory cache, TTL, purge, async",
           make: { FKStorageExampleViewController() }
         ),
+        ExampleMenuItem(
+          title: "FKUtils",
+          subtitle: "Date, regex, number, string, device, UI, collection, image and common helpers",
+          make: { FKUtilsExampleViewController() }
+        ),
       ]
     ),
     KitEntry(

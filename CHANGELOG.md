@@ -8,6 +8,39 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.20.0] - 2026-04-20
+
+### Added (FKCoreKit FKUtils)
+- **`FKUtils`**: pure-native Swift utility module under `Sources/FKCoreKit/Utils/` with unified namespace entry (`FKUtils`) and category facades:
+  - `FKUtils.DateTime`
+  - `FKUtils.Regex`
+  - `FKUtils.Number`
+  - `FKUtils.String`
+  - `FKUtils.Device`
+  - `FKUtils.Collection`
+  - `FKUtils.Common`
+  - `FKUtils.UI` *(UIKit-available builds)*
+  - `FKUtils.Image` *(UIKit-available builds)*
+- **Date/time utilities**: custom format conversion, timestamp conversion, relative descriptions, date comparison, date addition, weekday/month extraction, and date-string validation.
+- **Regex utilities**: built-in high-frequency validators (phone/email/ID/password/code/license plate/url/ip/postal/bank card), plus generic match/extract/replace APIs.
+- **Number utilities**: grouped amount formatting, rounding/truncation, percent formatting, Chinese unit formatting (`万`/`亿`), random integers, zero-padding, and compact number text.
+- **String utilities**: trimming/cleaning, safe substring, masking (phone/ID/email/bank card), pinyin + first letter, URL/Base64/HTML encode-decode.
+- **Device/app utilities**: model/system/screen/battery/network/disk/memory/app metadata, safe vendor identifier, and one-shot reachability callback.
+- **UI/image/common utilities**: hex color conversion, dynamic color, adaptive font, point/pixel conversion, corner/shadow/gradient helpers, screenshot, image compress/crop/round/base64, sandbox/file-size helpers, app jumps, vibration/sound, null checks, safe conversion and safe execution wrapper.
+
+### Added (Examples)
+- **`FKUtilsExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/Utils/` with copy-ready, button-driven demos covering all utility categories.
+- **Example menu**: **FKUtils** entry under **FKCoreKit** in `ExampleMenuViewController`.
+
+### Added (Documentation)
+- Root `README.md` updated to a complete FKUtils-focused open-source guide with API categories, usage, advanced examples, and best practices.
+- Public API docs for new utility files are fully documented with English Swift-style comments.
+
+### Fixed (Swift 6 Concurrency)
+- Eliminated shared mutable static-state warnings in FKUtils providers and audio player storage.
+- Resolved main-actor default argument warnings in UI helpers and sendability warnings in network-status callback.
+- Updated memory page-size retrieval and compact number formatting implementation to avoid Swift 6 diagnostics.
+
 ## [0.19.0] - 2026-04-20
 
 ### Added (FKCoreKit FKBusinessKit)
