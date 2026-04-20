@@ -8,6 +8,22 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.12.0] - 2026-04-20
+
+### Added (FKCoreKit FKNetwork)
+- **`FKNetwork`**: native **`URLSession`** networking stack under `Sources/FKCoreKit/Network/` — protocol-oriented API (`Requestable`, `Networkable`, `Cacheable`, interceptors, signing, token refresh), closure + **async/await**, environment config, two-level cache, upload/download with progress, request deduplication, reachability hook, and English module **README**.
+- Full Swift documentation comments across the networking module.
+
+### Added (Examples)
+- **`FKNetworkExampleViewController`** and **`FKNetworkExampleModels`** under `Examples/FKKitExamples/.../FKCoreKit/Network/` (GET/POST, headers, caching, cancellation, upload/download, resume data).
+- Example sources reorganized by product (**`FKUIKit`**, **`FKCoreKit`**, **`FKCompositeKit`**) for clearer navigation.
+
+### Changed
+- **Example menu**: **FKCoreKit** section includes **FKNetwork** entry.
+
+### Removed
+- **Breaking**: Legacy networking stubs removed from **`FKCompositeKit`** (`Sources/FKCompositeKit/Network/*`). Use **`FKCoreKit`** **`FKNetwork`** instead.
+
 ## [0.11.0] - 2026-04-19
 
 ### Added (FKCompositeKit FKListKit)
@@ -285,7 +301,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.12.0...HEAD
+[0.12.0]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...0.12.0
 [0.11.0]: https://github.com/feng-zhang0712/FKKit/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/feng-zhang0712/FKKit/compare/0.9.1...0.10.0
 [0.9.1]: https://github.com/feng-zhang0712/FKKit/compare/0.9.0...0.9.1

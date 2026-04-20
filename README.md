@@ -29,7 +29,7 @@ In Xcode:
 | Product | Import | Notes |
 |---|---|---|
 | FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities |
+| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities (includes **FKNetwork** — see `Sources/FKCoreKit/Network/README.md`) |
 | FKCompositeKit | `import FKCompositeKit` | composite UI modules and higher-level integrations, depends on `FKUIKit` and `FKCoreKit` |
 
 Dependency graph:
@@ -102,6 +102,12 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - SwiftPM package name is now `FKKit`.
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
+
+## Recent updates (0.12.0)
+
+- **`FKNetwork`** (in `FKCoreKit`): production-oriented **`URLSession`** layer — environments, **`Requestable`** / **`FKNetworkClient`**, interceptors, signing, token refresh retry, memory+disk cache, upload/download, and async/await. Documentation: `Sources/FKCoreKit/Network/README.md`.
+- **Examples**: sample screens grouped under **`FKUIKit`**, **`FKCoreKit`**, and **`FKCompositeKit`**; **FKNetwork** demo at `Examples/FKKitExamples/.../FKCoreKit/Network/`.
+- **Breaking**: removed legacy **`FKCompositeKit/Network`** stubs; migrate to **`FKCoreKit`** **FKNetwork**.
 
 ## Recent updates (0.11.0)
 
