@@ -103,6 +103,11 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
+## Recent updates (0.17.0)
+
+- **`FKFileManager`** (in `FKCoreKit`): native file + transfer module with sandbox directory helpers, file CRUD, file info + MIME type resolution, text/data/JSON/`Codable` IO, directory traversal, cache/temp management, disk-space guard, resumable background downloads (pause/resume/cancel + progress callbacks + snapshots persistence), multipart uploads (progress + snapshots persistence), and iOS helpers for sharing/Quick Look preview. Documentation: `Sources/FKCoreKit/FileManager/README.md`.
+- **Examples**: **FKFileManager** demo at `Examples/FKKitExamples/.../FKCoreKit/FileManager/`; menu entry under **FKCoreKit**.
+
 ## Recent updates (0.16.0)
 
 - **`FKPermissions`** (in `FKCoreKit`): native permission management module for iOS with unified permission kinds/statuses/results, async/await + closure APIs, single and batch requests, status-only checks, denied handling, app settings jump, customizable pre-permission prompt, and permission status observation. Documentation: `Sources/FKCoreKit/Permissions/README.md`.

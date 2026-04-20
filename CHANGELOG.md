@@ -8,6 +8,23 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.17.0] - 2026-04-20
+
+### Added (FKCoreKit FKFileManager)
+- **`FKFileManager`**: native file + transfer module under `Sources/FKCoreKit/FileManager/` with unified entry point (`FKFileManager.shared`), sandbox directory helpers (`Documents`, `Caches`, `Tmp`), file CRUD (create/remove/move/copy/rename), file info (`FKFileInfo`), MIME type resolution (`FKFileMimeResolver`), content read/write (text/data/JSON object and `Codable` JSON), directory traversal (`FKFileTraversalOptions`), directory size calculation and cache/temp cleanup, transfer models (`FKDownloadRequest/Result`, `FKUploadRequest/Result`, `FKTransferProgress`, `FKPersistedTransfer`), disk-space guard (`ensureSufficientDiskSpace`), and iOS convenience helpers for sharing/preview (Quick Look).
+- **Downloads**: `URLSessionDownloadDelegate` based resumable downloads with pause/resume (resume-data persistence), background downloads (background session identifier), progress callbacks, task cancellation, and snapshots persistence via `FKTransferPersistenceStore`.
+- **Uploads**: multipart form upload via `URLSession` with progress callbacks and snapshot persistence.
+
+### Added (Documentation)
+- English module documentation: `Sources/FKCoreKit/FileManager/README.md` (GitHub-style structure with copy-paste examples and Background Modes guidance).
+
+### Added (Examples)
+- **`FKFileManagerExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/FileManager/` covering: sandbox directories, file ops, text/JSON/image/`Codable` IO, resumable download with progress, single/multi file upload, cache size/clean, ZIP API usage, and file info checks (async/await + closure APIs).
+- **Example menu**: **FKFileManager** entry under **FKCoreKit**.
+
+### Notes
+- ZIP compress/decompress uses native system APIs that are not available on iOS 13+ without newer OS support; current implementation may throw `zipUnavailable` depending on platform availability.
+
 ## [0.16.0] - 2026-04-20
 
 ### Added (FKCoreKit FKPermissions)
@@ -354,7 +371,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.16.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.17.0...HEAD
+[0.17.0]: https://github.com/feng-zhang0712/FKKit/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/feng-zhang0712/FKKit/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/feng-zhang0712/FKKit/compare/0.14.0...0.15.0
 [0.14.0]: https://github.com/feng-zhang0712/FKKit/compare/0.13.0...0.14.0
