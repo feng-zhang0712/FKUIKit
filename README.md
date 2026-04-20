@@ -63,6 +63,7 @@ FKKit/
 │  │     ├─ Presentation/
 │  │     ├─ Refresh/
 │  │     ├─ Skeleton/
+│  │     ├─ StarRating/
 │  │     ├─ SwipeAction/
 │  │     └─ TextField/
 │  └─ FKCompositeKit/
@@ -112,6 +113,7 @@ Module docs:
 - `Refresh`: pull-to-refresh and load-more controls.
 - `Badge`: flexible badge display for views, bar items, and tab items.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
+- `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
 - `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
 - `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
@@ -123,6 +125,7 @@ Module docs:
 - `Sources/FKUIKit/Components/MultiPicker/README.md`
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
+- `Sources/FKUIKit/Components/StarRating/README.md`
 - `Sources/FKUIKit/Components/SwipeAction/README.md`
 - `Sources/FKUIKit/Components/TextField/README.md`
 
@@ -153,7 +156,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.28.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.29.0")
 ],
 targets: [
   .target(

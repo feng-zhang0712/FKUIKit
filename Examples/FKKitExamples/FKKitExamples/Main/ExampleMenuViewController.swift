@@ -84,6 +84,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKSkeletonExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "StarRating",
+          subtitle: "5-star, half-star, precise decimal, image/color styles, callbacks, and table reuse demos",
+          make: { FKStarRatingExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "SwipeAction",
           subtitle: "Native left/right multi-button swipe actions for table and collection lists",
           make: { FKSwipeActionExamplesHubViewController() }

@@ -8,6 +8,62 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.29.0] - 2026-04-21
+
+### Added (FKUIKit FKStarRating)
+- Added a new native star-rating module at `Sources/FKUIKit/Components/StarRating/` with layered source structure:
+  - `Core`
+  - `Star`
+  - `Configuration`
+  - `Manager`
+  - `Model`
+  - `Extension`
+- Added `FKStarRating` (`UIControl`-based) with full rating interaction and display capabilities:
+  - full-star rating mode
+  - half-star rating mode
+  - precise decimal rating mode (`.precise(step:)`)
+  - editable and read-only display modes
+  - tap and pan gesture rating
+  - continuous slide updates with realtime callback and commit callback
+  - configurable min/max rating range
+  - manual rating updates with UI refresh
+- Added dual rendering strategies:
+  - image mode (selected/unselected/half images)
+  - color mode (selected/unselected tint rendering)
+- Added star appearance model `FKStarRatingStarStyle` for corner/border/shadow customization.
+- Added global default configuration support via `FKStarRatingManager.shared` and `FKStarRating.defaultConfiguration`.
+- Added fluent chaining APIs and Interface Builder support:
+  - `withMode`, `withStarCount`, `withRange`, `withEditable`, `withColors`, `withImages`
+  - `@IBDesignable` component with `@IBInspectable` bridge properties.
+- Added module-level documentation at `Sources/FKUIKit/Components/StarRating/README.md`.
+
+### Added (Examples)
+- Added complete FKStarRating demo suite under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/StarRating/FKStarRatingExamplesHubViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/StarRating/FKStarRatingBasicExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/StarRating/FKStarRatingTableExampleViewController.swift`
+- Added `StarRating` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - editable 5-star full rating
+  - half-star display and edit modes
+  - precise decimal continuous slide rating
+  - read-only score presentation
+  - custom star count (`3` and `10`)
+  - custom star size/spacing/colors
+  - image mode and color mode switching
+  - realtime and final rating callbacks
+  - `UITableViewCell` reuse-safe binding and reset flow
+  - global default style configuration
+  - manual set and reset rating operations
+
+### Fixed (FKUIKit FKStarRating)
+- Fixed configuration-update reentry crash (`EXC_BAD_ACCESS`) by removing recursive property mutation in `configuration.didSet`.
+- Fixed Swift concurrency diagnostic on `FKStarRatingStarStyle.plain` by switching from static shared storage to computed value semantics.
+
+### Changed (Documentation)
+- Updated root `README.md` to include `StarRating` in module structure, FKUIKit component list, and FKUIKit module docs navigation.
+- Updated SPM version reference in root `README.md` from `0.28.0` to `0.29.0`.
+
 ## [0.28.0] - 2026-04-21
 
 ### Added (FKUIKit FKExpandableText)
@@ -873,7 +929,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.28.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.29.0...HEAD
+[0.29.0]: https://github.com/feng-zhang0712/FKKit/compare/0.28.0...0.29.0
 [0.28.0]: https://github.com/feng-zhang0712/FKKit/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/feng-zhang0712/FKKit/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/feng-zhang0712/FKKit/compare/0.25.0...0.26.0
