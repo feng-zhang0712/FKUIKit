@@ -100,6 +100,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKPermissionsExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "FKSecurity",
+          subtitle: "Hash, AES, RSA, Base64/HEX/URL, HMAC, random, masking, wipe, anti-debug",
+          make: { FKSecurityExampleViewController() }
+        ),
+        ExampleMenuItem(
           title: "FKStorage",
           subtitle: "UserDefaults, Keychain, file, memory cache, TTL, purge, async",
           make: { FKStorageExampleViewController() }

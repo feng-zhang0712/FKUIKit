@@ -103,6 +103,11 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
+## Recent updates (0.18.0)
+
+- **`FKSecurity`** (in `FKCoreKit`): pure-native Swift security & cryptography module (Hash/AES/RSA/Base64-HEX-URL/HMAC/random/masking/wipe/anti-debug hints) with protocol-oriented services and async-first APIs. Documentation: `Sources/FKCoreKit/Security/README.md`.
+- **Examples**: **FKSecurity** demo at `Examples/FKKitExamples/.../FKCoreKit/Security/`; menu entry under **FKCoreKit**.
+
 ## Recent updates (0.17.0)
 
 - **`FKFileManager`** (in `FKCoreKit`): native file + transfer module with sandbox directory helpers, file CRUD, file info + MIME type resolution, text/data/JSON/`Codable` IO, directory traversal, cache/temp management, disk-space guard, resumable background downloads (pause/resume/cancel + progress callbacks + snapshots persistence), multipart uploads (progress + snapshots persistence), and iOS helpers for sharing/Quick Look preview. Documentation: `Sources/FKCoreKit/FileManager/README.md`.

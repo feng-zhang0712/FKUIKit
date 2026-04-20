@@ -25,6 +25,23 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 ### Notes
 - ZIP compress/decompress uses native system APIs that are not available on iOS 13+ without newer OS support; current implementation may throw `zipUnavailable` depending on platform availability.
 
+## [0.18.0] - 2026-04-20
+
+### Added (FKCoreKit FKSecurity)
+- **`FKSecurity`**: pure-native Swift security and cryptography module under `Sources/FKCoreKit/Security/` with singleton entry (`FKSecurity.shared`) and protocol-oriented services:
+  - **Hash**: MD5 / SHA1 / SHA256 / SHA512 for String / Data / File (streaming file hashing).
+  - **AES**: CBC / ECB with PKCS7 padding for String / Data / File (streaming file encryption via `CCCryptor`), plus secure key/IV generation.
+  - **RSA**: key pair generation (2048/3072/4096), encrypt/decrypt (PKCS#1 v1.5, OAEP SHA-256), sign/verify (PKCS#1 v1.5 SHA-256/SHA-512), and DER import/export (Public SPKI, Private PKCS#8).
+  - **Coding**: Base64, HEX, and URL encode/decode helpers.
+  - **HMAC**: SHA-256/SHA-512, plus stable request parameter signing and verification helpers.
+  - **Utilities**: secure random bytes/strings, sensitive data masking (phone/ID/email), basic anti-debug/suspicious environment hints, in-memory wipe and secure file wipe.
+  - **Key storage**: built-in Keychain-backed raw key store (`FKKeychainKeyStore`).
+- English module documentation: `Sources/FKCoreKit/Security/README.md` (GitHub-style structure with copy-paste examples and security notes).
+
+### Added (Examples)
+- **`FKSecurityExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/Security/` covering: hash (string/data/file), AES (string/data) encrypt/decrypt, RSA key pair + encrypt/decrypt + sign/verify, Base64/HEX/URL encoding, HMAC, secure random + Keychain store, masking, secure wipe, and anti-tamper snapshot checks (async/await + closure usage).
+- **Example menu**: **FKSecurity** entry under **FKCoreKit**.
+
 ## [0.16.0] - 2026-04-20
 
 ### Added (FKCoreKit FKPermissions)
@@ -371,7 +388,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.17.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.18.0...HEAD
+[0.18.0]: https://github.com/feng-zhang0712/FKKit/compare/0.17.0...0.18.0
 [0.17.0]: https://github.com/feng-zhang0712/FKKit/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/feng-zhang0712/FKKit/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/feng-zhang0712/FKKit/compare/0.14.0...0.15.0
