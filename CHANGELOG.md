@@ -8,6 +8,17 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.15.0] - 2026-04-20
+
+### Added (FKCoreKit FKLogger)
+- **`FKLogger`**: native logging and debugging module under `Sources/FKCoreKit/Logger/` with protocol-oriented architecture (`FKLogFormatting`, `FKLogFileManaging`, `FKConsoleOutputting`), singleton + global one-line API (`FKLogger.shared`, `FKLogV/D/I/W/E`), five log levels (`verbose`, `debug`, `info`, `warning`, `error`), build-aware defaults (`debugDefault` / `releaseDefault`), structured formatting (timestamp, level, source info, metadata), ANSI color + emoji console styling, asynchronous thread-safe pipeline, file persistence with daily and size-based rotation, total storage cap cleanup, log listing/clear/export APIs, and debug dump helpers (`dumpValue`, `dumpEncodable`).
+- **Crash and diagnostics capture**: uncaught exception handler, common fatal signal capture (`SIGABRT`, `SIGILL`, `SIGSEGV`, `SIGFPE`, `SIGBUS`, `SIGPIPE`), custom exception logging, and network diagnostic capture helpers.
+- English module documentation: `Sources/FKCoreKit/Logger/README.md` (GitHub-style structure with copy-paste examples).
+
+### Added (Examples)
+- **`FKLoggerExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/Logger/` covering: 5-level log printing, basic global configuration, model/array/dictionary printing, file logging and management, custom format toggles, debug/release environment behavior, crash capture setup, and clear/export flows.
+- **Example menu**: **FKLogger** entry under **FKCoreKit**.
+
 ## [0.14.0] - 2026-04-20
 
 ### Added (FKCoreKit FKAsync)
@@ -332,7 +343,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.14.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.15.0...HEAD
+[0.15.0]: https://github.com/feng-zhang0712/FKKit/compare/0.14.0...0.15.0
 [0.14.0]: https://github.com/feng-zhang0712/FKKit/compare/0.13.0...0.14.0
 [0.13.0]: https://github.com/feng-zhang0712/FKKit/compare/0.12.0...0.13.0
 [0.12.0]: https://github.com/feng-zhang0712/FKKit/compare/0.11.0...0.12.0

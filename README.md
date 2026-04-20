@@ -29,7 +29,7 @@ In Xcode:
 | Product | Import | Notes |
 |---|---|---|
 | FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities (includes **FKNetwork** — `Sources/FKCoreKit/Network/README.md`; **FKStorage** — `Sources/FKCoreKit/Storage/README.md`; **FKAsync** — `Sources/FKCoreKit/Async/README.md`) |
+| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities (includes **FKNetwork** — `Sources/FKCoreKit/Network/README.md`; **FKStorage** — `Sources/FKCoreKit/Storage/README.md`; **FKAsync** — `Sources/FKCoreKit/Async/README.md`; **FKLogger** — `Sources/FKCoreKit/Logger/README.md`) |
 | FKCompositeKit | `import FKCompositeKit` | composite UI modules and higher-level integrations, depends on `FKUIKit` and `FKCoreKit` |
 
 Dependency graph:
@@ -102,6 +102,12 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - SwiftPM package name is now `FKKit`.
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
+
+## Recent updates (0.15.0)
+
+- **`FKLogger`** (in `FKCoreKit`): native logging and debugging module with 5 levels, build-aware defaults (`DEBUG`/`RELEASE`), protocol-oriented formatting/output/file manager abstractions, ANSI color + emoji console output, asynchronous thread-safe pipeline, file persistence (daily + size rotation), storage cap cleanup, clear/export APIs, and model/collection pretty-print helpers. Documentation: `Sources/FKCoreKit/Logger/README.md`.
+- **Crash diagnostics**: uncaught exception handler, common fatal signal capture, custom exception logging, and network diagnostic capture APIs.
+- **Examples**: **FKLogger** demo at `Examples/FKKitExamples/.../FKCoreKit/Logger/`; menu entry under **FKCoreKit**.
 
 ## Recent updates (0.14.0)
 
