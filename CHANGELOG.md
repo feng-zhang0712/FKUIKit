@@ -8,6 +8,44 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.28.0] - 2026-04-21
+
+### Added (FKUIKit FKExpandableText)
+- Added a new expandable text module at `Sources/FKUIKit/Components/ExpandableText/` with layered source structure:
+  - `Core`
+  - `Configuration`
+  - `Button`
+  - `Text`
+  - `Manager`
+  - `Model`
+  - `Protocol`
+  - `Extension`
+- Added `FKExpandableText` with configurable collapsed/expanded behavior for long text rendering.
+- Added reuse-safe state cache support for list scenarios:
+  - `FKExpandableTextManager.shared`
+  - `FKExpandableText.stateCache`
+  - `UITableViewCell.fk_bindExpandableText(...)`
+  - `UICollectionViewCell.fk_bindExpandableText(...)`
+- Added pre-measurement API for list height calculation:
+  - `FKExpandableText.preferredHeight(...)`
+- Added module-level documentation at `Sources/FKUIKit/Components/ExpandableText/README.md`.
+
+### Added (Examples)
+- Added full FKExpandableText demo suite under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/ExpandableText/FKExpandableTextExamplesHubViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/ExpandableText/FKExpandableTextBasicExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/ExpandableText/FKExpandableTextTableExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/ExpandableText/FKExpandableTextCollectionExampleViewController.swift`
+- Added `ExpandableText` entry in `ExampleMenuViewController` under `FKUIKit`.
+
+### Fixed (FKUIKit FKExpandableText)
+- Fixed early constraint-update crash (`Index out of range`) during initial configuration before Auto Layout constraint groups are built.
+- Fixed truncation detection reliability by comparing measured expanded/collapsed heights, improving button visibility and interaction consistency in basic, table, and collection demos.
+
+### Changed (Documentation)
+- Updated root `README.md` to include `ExpandableText` in module structure, FKUIKit component list, and FKUIKit module docs navigation.
+- Updated SPM version reference in root `README.md` from `0.27.0` to `0.28.0`.
+
 ## [0.27.0] - 2026-04-21
 
 ### Added (FKUIKit FKSwipeAction)
@@ -835,7 +873,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.26.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.28.0...HEAD
+[0.28.0]: https://github.com/feng-zhang0712/FKKit/compare/0.27.0...0.28.0
+[0.27.0]: https://github.com/feng-zhang0712/FKKit/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/feng-zhang0712/FKKit/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/feng-zhang0712/FKKit/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/feng-zhang0712/FKKit/compare/0.23.0...0.24.0
