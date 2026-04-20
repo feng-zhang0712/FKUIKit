@@ -105,6 +105,8 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 
 ## Recent updates (0.15.0)
 
+- **`FKPermissions`** (in `FKCoreKit`): native permission management module for iOS with unified permission kinds/statuses/results, async/await + closure APIs, single and batch requests, status-only checks, denied handling, app settings jump, customizable pre-permission prompt, and permission status observation. Documentation: `Sources/FKCoreKit/Permissions/README.md`.
+- **Examples**: **FKPermissions** demo at `Examples/FKKitExamples/.../FKCoreKit/Permissions/`; menu entry under **FKCoreKit** and required usage descriptions configured in `Examples/FKKitExamples/Info.plist`.
 - **`FKLogger`** (in `FKCoreKit`): native logging and debugging module with 5 levels, build-aware defaults (`DEBUG`/`RELEASE`), protocol-oriented formatting/output/file manager abstractions, ANSI color + emoji console output, asynchronous thread-safe pipeline, file persistence (daily + size rotation), storage cap cleanup, clear/export APIs, and model/collection pretty-print helpers. Documentation: `Sources/FKCoreKit/Logger/README.md`.
 - **Crash diagnostics**: uncaught exception handler, common fatal signal capture, custom exception logging, and network diagnostic capture APIs.
 - **Examples**: **FKLogger** demo at `Examples/FKKitExamples/.../FKCoreKit/Logger/`; menu entry under **FKCoreKit**.

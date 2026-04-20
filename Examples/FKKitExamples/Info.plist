@@ -2,6 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used in the FKPermissions example to demonstrate camera authorization flow.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Location access is used in the FKPermissions example to demonstrate always authorization flow.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>FKLocationTemporaryFullAccuracyPurpose</key>
+		<string>Precise location is used in the FKPermissions example to demonstrate temporary full accuracy authorization.</string>
+	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is used in the FKPermissions example to demonstrate when-in-use authorization flow.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is used in the FKPermissions example to demonstrate audio permission requests.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library access is used in the FKPermissions example to demonstrate read authorization flow.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Notification access is used in the FKPermissions example to demonstrate notification authorization requests.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

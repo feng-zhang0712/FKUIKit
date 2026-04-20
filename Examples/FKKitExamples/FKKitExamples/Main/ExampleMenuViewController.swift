@@ -90,6 +90,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKNetworkExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "FKPermissions",
+          subtitle: "Unified permission status/query/request, batch, denied handling, settings jump",
+          make: { FKPermissionsExampleViewController() }
+        ),
+        ExampleMenuItem(
           title: "FKStorage",
           subtitle: "UserDefaults, Keychain, file, memory cache, TTL, purge, async",
           make: { FKStorageExampleViewController() }

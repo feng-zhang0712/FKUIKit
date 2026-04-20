@@ -10,6 +10,15 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ## [0.15.0] - 2026-04-20
 
+### Added (FKCoreKit FKPermissions)
+- **`FKPermissions`**: native permission management module under `Sources/FKCoreKit/Permissions/` with protocol-oriented architecture (`FKPermissionHandling`, `FKPermissionObserving`), unified permission models (`FKPermissionKind`, `FKPermissionStatus`, `FKPermissionRequest`, `FKPermissionResult`, `FKPermissionError`), singleton entry (`FKPermissions.shared`), async/await and closure-based APIs, batch requests, real-time status checks, app-settings jump helper, customizable pre-permission prompt (`FKPermissionPrePrompt`), permission observation token (`FKPermissionObservationToken`), iOS version adaptation (photo access level and temporary full-accuracy location), and Swift 6 concurrency-safe delegate bridging for Bluetooth and Location handlers.
+- English module documentation: `Sources/FKCoreKit/Permissions/README.md` (GitHub-style structure with copy-paste examples and Info.plist guidance).
+
+### Added (Examples)
+- **`FKPermissionsExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/Permissions/` covering: status checks, single permission requests (camera/photo/microphone/location/notifications), batch requests, denied-state handling, jump-to-settings flow, and async/await plus closure usage.
+- **Example menu**: **FKPermissions** entry under **FKCoreKit**.
+- **`Examples/FKKitExamples/Info.plist`** updated with required permission usage descriptions for the permissions example.
+
 ### Added (FKCoreKit FKLogger)
 - **`FKLogger`**: native logging and debugging module under `Sources/FKCoreKit/Logger/` with protocol-oriented architecture (`FKLogFormatting`, `FKLogFileManaging`, `FKConsoleOutputting`), singleton + global one-line API (`FKLogger.shared`, `FKLogV/D/I/W/E`), five log levels (`verbose`, `debug`, `info`, `warning`, `error`), build-aware defaults (`debugDefault` / `releaseDefault`), structured formatting (timestamp, level, source info, metadata), ANSI color + emoji console styling, asynchronous thread-safe pipeline, file persistence with daily and size-based rotation, total storage cap cleanup, log listing/clear/export APIs, and debug dump helpers (`dumpValue`, `dumpEncodable`).
 - **Crash and diagnostics capture**: uncaught exception handler, common fatal signal capture (`SIGABRT`, `SIGILL`, `SIGSEGV`, `SIGFPE`, `SIGBUS`, `SIGPIPE`), custom exception logging, and network diagnostic capture helpers.
