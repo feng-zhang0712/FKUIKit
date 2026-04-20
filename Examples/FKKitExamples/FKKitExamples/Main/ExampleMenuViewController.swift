@@ -49,6 +49,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKButtonExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "CornerShadow",
+          subtitle: "Any-corner radius + high-performance shadow (path based)",
+          make: { FKCornerShadowExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "EmptyState",
           subtitle: "Hub: scenarios, phases, sandbox, retry→fail",
           make: { FKEmptyStateExamplesHubViewController() }

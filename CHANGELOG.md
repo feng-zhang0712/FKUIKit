@@ -8,6 +8,63 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.24.0] - 2026-04-20
+
+### Added (FKUIKit FKCornerShadow)
+- Added a new high-performance visual component at `Sources/FKUIKit/Components/CornerShadow/` with layered source structure:
+  - `Core`
+  - `Model`
+  - `Configuration`
+  - `Protocol`
+  - `Extension`
+- Added one-line corner + shadow APIs on `UIView` and all UIKit subclasses through `UIView+FKCornerShadow`:
+  - `fk_applyCornerShadow(_:)`
+  - `fk_applyCornerShadow(corners:cornerRadius:fillColor:fillGradient:border:shadow:)`
+  - `fk_applyCornerShadowFromGlobal(configure:)`
+  - `fk_setCorners(_:radius:fillColor:)`
+  - `fk_setShadow(color:opacity:offset:blur:spread:sides:)`
+  - `fk_setBorder(_:)`
+  - `fk_resetCornerShadow()`, `fk_resetCorners()`, `fk_resetShadow()`, `fk_resetBorder()`
+- Added style models for reusable configuration:
+  - `FKCornerShadowStyle`
+  - `FKCornerShadowShadow`
+  - `FKCornerShadowBorder`
+  - `FKCornerShadowGradient`
+  - `FKCornerShadowSide`
+- Added global default style management via `FKCornerShadowManager.shared`.
+- Added module-level documentation at `Sources/FKUIKit/Components/CornerShadow/README.md`.
+
+### Changed (FKUIKit FKCornerShadow)
+- Implemented rounded-corner rendering with `UIBezierPath` + `CAShapeLayer` masking and automatic layout-sync refresh.
+- Implemented shadow rendering with explicit `shadowPath` (full-shadow mode) and side-selective shadow carriers (partial-shadow mode) to reduce implicit offscreen cost.
+- Added gradient fill and gradient border composition while keeping border/fill paths aligned with corner geometry.
+- Aligned component internals with Swift concurrency diagnostics:
+  - main-actor isolation on view-facing APIs/protocol boundaries
+  - sendability adjustments for side option set and static style template behavior
+- Completed professional English API documentation comments across all FKCornerShadow source files.
+
+### Added (Examples)
+- Added copy-ready FKCornerShadow example suite under `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/CornerShadow/`:
+  - `Core/FKCornerShadowExamplesHubViewController.swift`
+  - `Core/FKCornerShadowDemoSupport.swift`
+  - `UIView/FKCornerShadowUIViewExampleViewController.swift`
+  - `Controls/FKCornerShadowControlsExampleViewController.swift`
+  - `List/FKCornerShadowListExampleViewController.swift`
+- Added `CornerShadow` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - single/multi/all corner radius
+  - high-performance shadows with path optimization
+  - corner + border + shadow combinations
+  - custom shadow color/offset/blur/spread
+  - gradient backgrounds and gradient borders
+  - global style configuration and per-view overrides
+  - UIButton/UILabel/UIImageView usage
+  - UITableViewCell/UICollectionViewCell reuse-safe reset patterns
+  - auto layout/frame-change adaptation and style reset flows
+
+### Changed (Documentation)
+- Updated root `README.md` to include FKCornerShadow in module structure, feature list, module docs navigation, and release version alignment (`0.24.0`).
+
 ## [0.23.0] - 2026-04-20
 
 ### Added (FKUIKit FKEmptyState)
@@ -602,7 +659,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.22.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.24.0...HEAD
+[0.24.0]: https://github.com/feng-zhang0712/FKKit/compare/0.23.0...0.24.0
+[0.23.0]: https://github.com/feng-zhang0712/FKKit/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/feng-zhang0712/FKKit/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/feng-zhang0712/FKKit/compare/0.20.1...0.21.0
 [0.20.1]: https://github.com/feng-zhang0712/FKKit/compare/0.20.0...0.20.1

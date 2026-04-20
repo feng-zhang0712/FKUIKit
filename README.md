@@ -56,6 +56,7 @@ FKKit/
 │  │     ├─ Bar/
 │  │     ├─ BarPresentation/
 │  │     ├─ Button/
+│  │     ├─ CornerShadow/
 │  │     ├─ EmptyState/
 │  │     ├─ Presentation/
 │  │     ├─ Refresh/
@@ -101,12 +102,14 @@ Module docs:
 - `Presentation`: presentation container and positioning utilities.
 - `BarPresentation`: bar-driven presentation coordinator.
 - `EmptyState`: loading/empty/error state overlay system.
+- `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
 - `Refresh`: pull-to-refresh and load-more controls.
 - `Badge`: flexible badge display for views, bar items, and tab items.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 
 Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
+- `Sources/FKUIKit/Components/CornerShadow/README.md`
 - `Sources/FKUIKit/Components/EmptyState/README.md`
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
@@ -138,7 +141,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.23.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.24.0")
 ],
 targets: [
   .target(
@@ -203,7 +206,7 @@ For complete usage and advanced APIs, refer to each module README in `Sources/..
   - change summary
   - test/verification notes
   - migration notes when APIs change
-- Tag stable releases with semantic versions (for example: `0.22.0`), then merge release work back into `develop`.
+- Tag stable releases with semantic versions (for example: `0.24.0`), then merge release work back into `develop`.
 
 ## License
 This repository is licensed under the MIT License.  
