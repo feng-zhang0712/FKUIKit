@@ -58,6 +58,7 @@ FKKit/
 │  │     ├─ Button/
 │  │     ├─ CornerShadow/
 │  │     ├─ EmptyState/
+│  │     ├─ MultiPicker/
 │  │     ├─ Presentation/
 │  │     ├─ Refresh/
 │  │     ├─ Skeleton/
@@ -103,6 +104,7 @@ Module docs:
 - `Presentation`: presentation container and positioning utilities.
 - `BarPresentation`: bar-driven presentation coordinator.
 - `EmptyState`: loading/empty/error state overlay system.
+- `MultiPicker`: native multi-level cascading picker with built-in region data and custom provider support.
 - `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
 - `Refresh`: pull-to-refresh and load-more controls.
 - `Badge`: flexible badge display for views, bar items, and tab items.
@@ -113,6 +115,7 @@ Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
 - `Sources/FKUIKit/Components/CornerShadow/README.md`
 - `Sources/FKUIKit/Components/EmptyState/README.md`
+- `Sources/FKUIKit/Components/MultiPicker/README.md`
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
 - `Sources/FKUIKit/Components/TextField/README.md`
@@ -144,7 +147,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.25.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.26.0")
 ],
 targets: [
   .target(
