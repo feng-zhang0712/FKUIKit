@@ -8,6 +8,47 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.22.0] - 2026-04-20
+
+### Added (FKUIKit FKRefresh)
+- Added a production-ready module guide at `Sources/FKUIKit/Components/Refresh/README.md` with complete usage, advanced customization, and API reference sections.
+- Added async/await callback support for refresh controls:
+  - `fk_addPullToRefresh(configuration:asyncAction:)`
+  - `fk_addPullToRefresh(configuration:contentView:asyncAction:)`
+  - `fk_addLoadMore(configuration:asyncAction:)`
+  - `fk_addLoadMore(configuration:contentView:asyncAction:)`
+- Added async action type alias: `FKRefreshAsyncHandler`.
+- Added global configuration manager: `FKRefreshManager.shared` (`@MainActor`) for unified pull/load default style updates.
+- Added load-more trigger mode model: `FKLoadMoreTriggerMode` (`automatic` / `manual`).
+- Added built-in async auto-end options in `FKRefreshConfiguration`:
+  - `automaticallyEndsRefreshingOnAsyncCompletion`
+  - `automaticEndDelay`
+- Added one-line footer control helpers in `UIScrollView+FKRefresh`:
+  - `fk_setLoadMoreHidden(_:)`
+  - `fk_resetLoadMoreState()`
+  - `fk_removeRefreshComponents()`
+
+### Changed (FKUIKit FKRefresh)
+- Reorganized FKRefresh sources into layered directories while preserving public behavior:
+  - `Core`
+  - `Model`
+  - `Manager`
+  - `Extension`
+  - `View`
+  - `Animation`
+- Improved Swift concurrency diagnostics handling in refresh manager/control lifecycle.
+
+### Changed (Examples)
+- Refactored FKRefresh example sources into clear functional folders:
+  - `Hub`, `Common`, `Basic`, `Container`, `Custom`, `Advanced`
+- Added `FKRefreshAsyncAwaitDemoViewController` to cover async/await integration and automatic end behavior.
+- Expanded existing demos to cover:
+  - manual start/end operations
+  - no-more-data and failed load-more states
+  - global configuration updates through `FKRefreshManager`
+  - footer hide/show and reset flows
+  - auto refresh on initial screen load
+
 ## [0.21.0] - 2026-04-20
 
 ### Added (FKUIKit FKSkeleton)
@@ -516,7 +557,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.21.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.22.0...HEAD
+[0.22.0]: https://github.com/feng-zhang0712/FKKit/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/feng-zhang0712/FKKit/compare/0.20.1...0.21.0
 [0.20.1]: https://github.com/feng-zhang0712/FKKit/compare/0.20.0...0.20.1
 [0.20.0]: https://github.com/feng-zhang0712/FKKit/compare/0.19.0...0.20.0

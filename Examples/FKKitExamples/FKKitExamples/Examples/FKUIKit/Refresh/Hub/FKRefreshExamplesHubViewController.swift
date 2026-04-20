@@ -13,6 +13,7 @@ final class FKRefreshExamplesHubViewController: UITableViewController {
 
   private enum Row: Int, CaseIterable {
     case defaultIndicator
+    case asyncAwait
     case customDots
     case gif
     case hosted
@@ -26,6 +27,7 @@ final class FKRefreshExamplesHubViewController: UITableViewController {
     var title: String {
       switch self {
       case .defaultIndicator: return "Default indicator"
+      case .asyncAwait: return "Async/Await + auto end"
       case .customDots: return "Custom dots (FKRefreshContentView)"
       case .gif: return "GIF (FKGIFRefreshContentView)"
       case .hosted: return "Hosted view (FKHostedRefreshContentView)"
@@ -42,6 +44,8 @@ final class FKRefreshExamplesHubViewController: UITableViewController {
       switch self {
       case .defaultIndicator:
         return "FKDefaultRefreshContentView — pull + load more, triggers"
+      case .asyncAwait:
+        return "asyncAction, auto end, and state transitions"
       case .customDots:
         return "Custom UIView conforming to FKRefreshContentView"
       case .gif:
@@ -93,6 +97,8 @@ final class FKRefreshExamplesHubViewController: UITableViewController {
     switch Row.allCases[indexPath.row] {
     case .defaultIndicator:
       vc = FKRefreshDefaultDemoViewController()
+    case .asyncAwait:
+      vc = FKRefreshAsyncAwaitDemoViewController()
     case .customDots:
       vc = FKRefreshDotsDemoViewController()
     case .gif:

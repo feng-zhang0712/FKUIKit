@@ -55,8 +55,10 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
     let reset = makePanelButton(title: "Reset data") { [weak self] in self?.resetData() }
     let pull = makePanelButton(title: "Begin pull") { [weak self] in self?.triggerPull() }
     let more = makePanelButton(title: "Begin load more") { [weak self] in self?.triggerLoadMore() }
+    let toggleFooter = makePanelButton(title: "Toggle footer hidden") { [weak self] in self?.toggleFooterHidden() }
+    let toggleHeader = makePanelButton(title: "Toggle header enabled") { [weak self] in self?.toggleHeaderEnabled() }
 
-    let buttons = UIStackView(arrangedSubviews: [reset, pull, more])
+    let buttons = UIStackView(arrangedSubviews: [reset, pull, more, toggleFooter, toggleHeader])
     buttons.axis = .vertical
     buttons.spacing = 8
     buttons.distribution = .fillEqually
@@ -137,6 +139,9 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
     }
 
     updateStatus()
+
+    // Auto refresh once after initial screen load.
+    tableView.fk_beginPullToRefresh(animated: true)
   }
 
   private func makePanelButton(title: String, action: @escaping () -> Void) -> UIButton {
@@ -219,6 +224,18 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
     page = 1
     tableView.reloadData()
     tableView.fk_loadMore?.resetToIdle()
+    updateStatus()
+  }
+
+  @objc private func toggleFooterHidden() {
+    let nextHidden = !(tableView.fk_loadMore?.isHidden ?? false)
+    tableView.fk_setLoadMoreHidden(nextHidden)
+    updateStatus()
+  }
+
+  @objc private func toggleHeaderEnabled() {
+    guard let header = tableView.fk_pullToRefresh else { return }
+    header.isEnabled.toggle()
     updateStatus()
   }
 }

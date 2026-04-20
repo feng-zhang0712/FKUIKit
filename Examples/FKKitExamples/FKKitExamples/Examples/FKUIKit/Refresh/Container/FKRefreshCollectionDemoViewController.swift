@@ -10,7 +10,14 @@ import UIKit
 
 final class FKRefreshCollectionDemoViewController: UIViewController {
 
+  private enum LoadOutcome: Int {
+    case success
+    case noMore
+    case failed
+  }
+
   private var items = (0..<24).map { "Cell \($0)" }
+  private let maxItems = 48
 
   private lazy var layout: UICollectionViewFlowLayout = {
     let l = UICollectionViewFlowLayout()
@@ -30,13 +37,25 @@ final class FKRefreshCollectionDemoViewController: UIViewController {
     return cv
   }()
 
+  private lazy var outcomeControl: UISegmentedControl = {
+    let control = UISegmentedControl(items: ["Success", "No more", "Failed"])
+    control.selectedSegmentIndex = 0
+    return control
+  }()
+
   override func viewDidLoad() {
     super.viewDidLoad()
     title = "CollectionView"
     view.backgroundColor = .systemGroupedBackground
+    outcomeControl.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(outcomeControl)
     view.addSubview(collectionView)
     NSLayoutConstraint.activate([
-      collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      outcomeControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+      outcomeControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+      outcomeControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+
+      collectionView.topAnchor.constraint(equalTo: outcomeControl.bottomAnchor, constant: 8),
       collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -46,22 +65,34 @@ final class FKRefreshCollectionDemoViewController: UIViewController {
     cfg.tintColor = .systemRed
     collectionView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
       FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
-        self?.items = (0..<20).map { "Refreshed \($0)" }
+        self?.items = (0..<24).map { "Refreshed \($0)" }
         self?.collectionView.reloadData()
         self?.collectionView.fk_pullToRefresh?.endRefreshing()
-        self?.collectionView.fk_loadMore?.resetToIdle()
+        self?.collectionView.fk_resetLoadMoreState()
       }
     }
 
     collectionView.fk_addLoadMore(configuration: cfg) { [weak self] in
       FKRefreshDemoCommon.simulateRequest(delay: 0.9) {
         guard let self else { return }
+        let outcome = LoadOutcome(rawValue: self.outcomeControl.selectedSegmentIndex) ?? .success
+        if outcome == .failed {
+          self.collectionView.fk_loadMore?.endRefreshingWithError()
+          return
+        }
+        if outcome == .noMore || self.items.count >= self.maxItems {
+          self.collectionView.fk_loadMore?.endRefreshingWithNoMoreData()
+          return
+        }
         let n = self.items.count
         self.items.append(contentsOf: (n..<(n + 8)).map { "More \($0)" })
         self.collectionView.reloadData()
         self.collectionView.fk_loadMore?.endRefreshing()
       }
     }
+
+    // Auto trigger pull-to-refresh to demonstrate one-line startup loading.
+    collectionView.fk_beginPullToRefresh(animated: true)
   }
 
   override func viewDidLayoutSubviews() {

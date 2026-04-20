@@ -44,6 +44,8 @@ public final class FKRefreshControl: UIView {
 
   /// Primary callback when the user (or `begin*`) starts an action.
   public var actionHandler: FKVoidHandler?
+  /// Async callback alternative to `actionHandler`.
+  public var asyncActionHandler: FKRefreshAsyncHandler?
 
   /// Observe state without a delegate.
   public var onStateChanged: ((_ control: FKRefreshControl, _ state: FKRefreshState) -> Void)?
@@ -76,6 +78,7 @@ public final class FKRefreshControl: UIView {
   private var isUpdatingInset = false
   private var loadingStartedAt: Date?
   private var pendingEndWorkItem: DispatchWorkItem?
+  private var asyncTask: Task<Void, Never>?
 
   // MARK: - Init
 
@@ -83,13 +86,15 @@ public final class FKRefreshControl: UIView {
     kind: FKRefreshKind,
     configuration: FKRefreshConfiguration = .default,
     contentView: FKRefreshContentView? = nil,
-    action: FKVoidHandler? = nil
+    action: FKVoidHandler? = nil,
+    asyncAction: FKRefreshAsyncHandler? = nil
   ) {
     self.kind = kind
     self.configuration = configuration
     let cv = contentView ?? FKDefaultRefreshContentView()
     self.contentView = cv
     self.actionHandler = action
+    self.asyncActionHandler = asyncAction
     super.init(frame: .zero)
     clipsToBounds = true
     embedContentView(cv)
@@ -102,6 +107,10 @@ public final class FKRefreshControl: UIView {
 
   public required init?(coder: NSCoder) {
     fatalError("Use init(kind:configuration:contentView:action:)")
+  }
+
+  deinit {
+    stopObserving()
   }
 
   // MARK: - Attachment
@@ -123,6 +132,8 @@ public final class FKRefreshControl: UIView {
     stopObserving()
     pendingEndWorkItem?.cancel()
     pendingEndWorkItem = nil
+    asyncTask?.cancel()
+    asyncTask = nil
     removeFromSuperview()
     scrollView = nil
   }
@@ -457,6 +468,7 @@ public final class FKRefreshControl: UIView {
 
   private func handleLoadMoreScroll(_ scrollView: UIScrollView) {
     guard isEnabled else { return }
+    guard configuration.loadMoreTriggerMode == .automatic else { return }
     guard state == .idle else { return }
     guard !isFooterHiddenForShortContent(scrollView) else { return }
 
@@ -672,7 +684,46 @@ public final class FKRefreshControl: UIView {
   // MARK: - Action
 
   private func fireAction() {
+    asyncTask?.cancel()
     actionHandler?()
+    guard let asyncActionHandler else { return }
+    asyncTask = Task { [weak self] in
+      guard let self else { return }
+      do {
+        try await asyncActionHandler()
+        await MainActor.run {
+          guard self.configuration.automaticallyEndsRefreshingOnAsyncCompletion else { return }
+          self.finishAsyncActionWithSuccess()
+        }
+      } catch {
+        await MainActor.run {
+          guard self.configuration.automaticallyEndsRefreshingOnAsyncCompletion else { return }
+          self.finishAsyncActionWithFailure(error)
+        }
+      }
+    }
+  }
+
+  private func finishAsyncActionWithSuccess() {
+    let delay = configuration.automaticEndDelay
+    if delay <= 0 {
+      endRefreshing()
+      return
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+      self?.endRefreshing()
+    }
+  }
+
+  private func finishAsyncActionWithFailure(_ error: Error) {
+    let delay = configuration.automaticEndDelay
+    if delay <= 0 {
+      endRefreshingWithError(error)
+      return
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+      self?.endRefreshingWithError(error)
+    }
   }
 
   // MARK: - Content view embedding

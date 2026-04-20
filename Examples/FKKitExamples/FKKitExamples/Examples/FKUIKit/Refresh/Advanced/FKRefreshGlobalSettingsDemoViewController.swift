@@ -2,7 +2,7 @@
 // FKRefreshGlobalSettingsDemoViewController.swift
 // FKKitExamples — FKRefresh demos
 //
-// Sets `FKRefreshSettings` then attaches controls with `configuration: nil`; restores on pop.
+// Sets global defaults via `FKRefreshManager`, then restores originals on pop.
 //
 
 import FKUIKit
@@ -47,8 +47,10 @@ final class FKRefreshGlobalSettingsDemoViewController: UIViewController {
     t.pullToRefresh = "[Global] Pull me"
     t.footerLoading = "[Global] Loading…"
     global.texts = t
-    FKRefreshSettings.pullToRefresh = global
-    FKRefreshSettings.loadMore = global
+    FKRefreshManager.shared.applyGlobalConfiguration(
+      pullToRefresh: global,
+      loadMore: global
+    )
 
     let stack = UIStackView(arrangedSubviews: [hintLabel, tableView])
     stack.axis = .vertical
@@ -81,13 +83,18 @@ final class FKRefreshGlobalSettingsDemoViewController: UIViewController {
         self.tableView.fk_loadMore?.endRefreshing()
       }
     }
+
+    // Auto refresh to verify global style immediately.
+    tableView.fk_beginPullToRefresh(animated: true)
   }
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     if isMovingFromParent {
-      FKRefreshSettings.pullToRefresh = savedPull
-      FKRefreshSettings.loadMore = savedLoad
+      FKRefreshManager.shared.applyGlobalConfiguration(
+        pullToRefresh: savedPull,
+        loadMore: savedLoad
+      )
     }
   }
 }

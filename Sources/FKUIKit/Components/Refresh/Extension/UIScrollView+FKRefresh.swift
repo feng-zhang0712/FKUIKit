@@ -37,6 +37,21 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches a pull-to-refresh control with an async callback.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    asyncAction: @escaping FKRefreshAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh,
+      asyncAction: asyncAction
+    )
+    fk_setPullToRefresh(control)
+    return control
+  }
+
   /// Attaches a pull-to-refresh control with a custom content view.
   @discardableResult
   func fk_addPullToRefresh(
@@ -49,6 +64,23 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.pullToRefresh,
       contentView: contentView,
       action: action
+    )
+    fk_setPullToRefresh(control)
+    return control
+  }
+
+  /// Attaches a pull-to-refresh control with a custom content view and async callback.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    asyncAction: @escaping FKRefreshAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh,
+      contentView: contentView,
+      asyncAction: asyncAction
     )
     fk_setPullToRefresh(control)
     return control
@@ -88,6 +120,21 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches a load-more control with an async callback.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    asyncAction: @escaping FKRefreshAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore,
+      asyncAction: asyncAction
+    )
+    fk_setLoadMore(control)
+    return control
+  }
+
   /// Attaches a load-more control with a custom content view.
   @discardableResult
   func fk_addLoadMore(
@@ -100,6 +147,23 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.loadMore,
       contentView: contentView,
       action: action
+    )
+    fk_setLoadMore(control)
+    return control
+  }
+
+  /// Attaches a load-more control with a custom content view and async callback.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    asyncAction: @escaping FKRefreshAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore,
+      contentView: contentView,
+      asyncAction: asyncAction
     )
     fk_setLoadMore(control)
     return control
@@ -121,12 +185,29 @@ public extension UIScrollView {
     fk_loadMore?.beginLoadingMore()
   }
 
+  /// Controls footer visibility without removing the load-more control.
+  func fk_setLoadMoreHidden(_ isHidden: Bool) {
+    fk_loadMore?.isHidden = isHidden
+    fk_loadMore?.isUserInteractionEnabled = !isHidden
+  }
+
+  /// Clears `.noMoreData` / `.failed` and returns footer to `.idle`.
+  func fk_resetLoadMoreState() {
+    fk_loadMore?.resetToIdle()
+  }
+
   // MARK: Companion coordination
 
   /// Resets the footer after a pull-to-refresh begins so pagination can restart from page 1.
   /// Called automatically by the header control — exposed for advanced custom controls.
   func fk_resetLoadMoreAfterPullToRefresh() {
     fk_loadMore?.resetFooterAfterPullToRefresh()
+  }
+
+  /// Removes both pull-to-refresh and load-more controls in one call.
+  func fk_removeRefreshComponents() {
+    fk_removePullToRefresh()
+    fk_removeLoadMore()
   }
 
   // MARK: - Private helpers

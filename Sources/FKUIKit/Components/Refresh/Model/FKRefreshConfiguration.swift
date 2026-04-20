@@ -7,6 +7,14 @@
 
 import UIKit
 
+/// Trigger strategy for load-more controls.
+public enum FKLoadMoreTriggerMode: Sendable {
+  /// Triggers automatically when the bottom threshold is reached.
+  case automatic
+  /// Requires explicit `fk_beginLoadMore()` or `beginLoadingMore()`.
+  case manual
+}
+
 /// Shared configuration for pull-to-refresh and load-more controls.
 public struct FKRefreshConfiguration: Sendable {
 
@@ -61,6 +69,15 @@ public struct FKRefreshConfiguration: Sendable {
   /// Extra height added under the footer content to clear the home indicator / safe area.
   public var footerSafeAreaPadding: CGFloat
 
+  /// Controls whether load-more starts automatically when scrolled near the bottom.
+  public var loadMoreTriggerMode: FKLoadMoreTriggerMode
+
+  /// Automatically ends loading after async handlers complete.
+  public var automaticallyEndsRefreshingOnAsyncCompletion: Bool
+
+  /// Delay used when `automaticallyEndsRefreshingOnAsyncCompletion` is enabled.
+  public var automaticEndDelay: TimeInterval
+
   // MARK: - Init
 
   public init(
@@ -78,7 +95,10 @@ public struct FKRefreshConfiguration: Sendable {
     isSilentRefresh: Bool = false,
     isHapticFeedbackEnabled: Bool = true,
     autohidesFooterWhenNotScrollable: Bool = true,
-    footerSafeAreaPadding: CGFloat = 0
+    footerSafeAreaPadding: CGFloat = 0,
+    loadMoreTriggerMode: FKLoadMoreTriggerMode = .automatic,
+    automaticallyEndsRefreshingOnAsyncCompletion: Bool = false,
+    automaticEndDelay: TimeInterval = 0
   ) {
     self.triggerThreshold = max(20, triggerThreshold)
     self.expandedHeight = max(20, expandedHeight)
@@ -95,6 +115,9 @@ public struct FKRefreshConfiguration: Sendable {
     self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
     self.autohidesFooterWhenNotScrollable = autohidesFooterWhenNotScrollable
     self.footerSafeAreaPadding = max(0, footerSafeAreaPadding)
+    self.loadMoreTriggerMode = loadMoreTriggerMode
+    self.automaticallyEndsRefreshingOnAsyncCompletion = automaticallyEndsRefreshingOnAsyncCompletion
+    self.automaticEndDelay = max(0, automaticEndDelay)
   }
 
   public static let `default` = FKRefreshConfiguration()

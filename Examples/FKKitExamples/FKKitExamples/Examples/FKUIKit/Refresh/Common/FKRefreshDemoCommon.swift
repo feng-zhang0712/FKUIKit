@@ -42,6 +42,12 @@ enum FKRefreshDemoCommon {
   static func simulateRequest(delay: TimeInterval, _ completion: @escaping () -> Void) {
     DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: completion)
   }
+
+  /// Async/await helper that mimics a network delay.
+  static func simulateAsyncRequest(delay: TimeInterval) async throws {
+    let nanos = UInt64(max(0, delay) * 1_000_000_000)
+    try await Task.sleep(nanoseconds: nanos)
+  }
 }
 
 // MARK: - Dots indicator (custom FKRefreshContentView)

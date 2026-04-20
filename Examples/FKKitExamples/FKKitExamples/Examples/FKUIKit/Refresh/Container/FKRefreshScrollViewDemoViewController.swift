@@ -26,16 +26,38 @@ final class FKRefreshScrollViewDemoViewController: UIViewController {
     return st
   }()
 
+  private lazy var toolBar: UIStackView = {
+    let triggerLoadButton = UIButton(type: .system)
+    triggerLoadButton.setTitle("Manual load more", for: .normal)
+    triggerLoadButton.addTarget(self, action: #selector(triggerManualLoadMore), for: .touchUpInside)
+
+    let toggleFooterButton = UIButton(type: .system)
+    toggleFooterButton.setTitle("Toggle footer hidden", for: .normal)
+    toggleFooterButton.addTarget(self, action: #selector(toggleFooterHidden), for: .touchUpInside)
+
+    let bar = UIStackView(arrangedSubviews: [triggerLoadButton, toggleFooterButton])
+    bar.axis = .horizontal
+    bar.spacing = 12
+    bar.distribution = .fillEqually
+    bar.translatesAutoresizingMaskIntoConstraints = false
+    return bar
+  }()
+
   override func viewDidLoad() {
     super.viewDidLoad()
     title = "UIScrollView"
     view.backgroundColor = .systemGroupedBackground
 
+    view.addSubview(toolBar)
     view.addSubview(scrollView)
     scrollView.addSubview(contentStack)
 
     NSLayoutConstraint.activate([
-      scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      toolBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+      toolBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+      toolBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+
+      scrollView.topAnchor.constraint(equalTo: toolBar.bottomAnchor, constant: 8),
       scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -68,10 +90,11 @@ final class FKRefreshScrollViewDemoViewController: UIViewController {
 
     var cfg = FKRefreshConfiguration()
     cfg.tintColor = .systemMint
+    cfg.loadMoreTriggerMode = .manual
     scrollView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
       FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
         self?.scrollView.fk_pullToRefresh?.endRefreshing()
-        self?.scrollView.fk_loadMore?.resetToIdle()
+        self?.scrollView.fk_resetLoadMoreState()
       }
     }
 
@@ -80,5 +103,17 @@ final class FKRefreshScrollViewDemoViewController: UIViewController {
         self?.scrollView.fk_loadMore?.endRefreshing()
       }
     }
+
+    // Auto refresh when this screen is first shown.
+    scrollView.fk_beginPullToRefresh(animated: true)
+  }
+
+  @objc private func triggerManualLoadMore() {
+    scrollView.fk_beginLoadMore()
+  }
+
+  @objc private func toggleFooterHidden() {
+    let nextHidden = !(scrollView.fk_loadMore?.isHidden ?? false)
+    scrollView.fk_setLoadMoreHidden(nextHidden)
   }
 }

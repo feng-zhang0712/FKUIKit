@@ -58,17 +58,17 @@ final class FKRefreshConfigurationDemoViewController: UIViewController {
 
   private func installControls() {
     let texts = FKRefreshText(
-      pullToRefresh: "下拉刷新",
-      releaseToRefresh: "松开立即刷新",
-      headerLoading: "加载中…",
-      headerFinished: "完成",
-      headerListEmpty: "暂无数据",
-      headerFailed: "刷新失败",
-      footerLoading: "正在加载…",
-      footerFinished: "已加载",
-      footerNoMoreData: "没有更多了",
-      footerFailed: "加载失败",
-      footerTapToRetry: "点击重试"
+      pullToRefresh: "Pull down to refresh",
+      releaseToRefresh: "Release to refresh",
+      headerLoading: "Refreshing...",
+      headerFinished: "Refresh complete",
+      headerListEmpty: "No items",
+      headerFailed: "Refresh failed",
+      footerLoading: "Loading more...",
+      footerFinished: "Load complete",
+      footerNoMoreData: "No more data",
+      footerFailed: "Load failed",
+      footerTapToRetry: "Tap to retry"
     )
 
     let cfg = FKRefreshConfiguration(
@@ -84,7 +84,7 @@ final class FKRefreshConfigurationDemoViewController: UIViewController {
     tableView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
       // Very fast “network” to show minimum visibility hold.
       FKRefreshDemoCommon.simulateRequest(delay: 0.08) {
-        self?.items = (1...8).map { "Cfg 刷新 \($0)" }
+        self?.items = (1...8).map { "Cfg refreshed \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
         self?.tableView.fk_loadMore?.resetToIdle()

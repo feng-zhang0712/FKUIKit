@@ -107,6 +107,7 @@ Module docs:
 
 Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
+- `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
 
 ### FKCompositeKit
@@ -136,7 +137,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.21.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.22.0")
 ],
 targets: [
   .target(
@@ -201,7 +202,7 @@ For complete usage and advanced APIs, refer to each module README in `Sources/..
   - change summary
   - test/verification notes
   - migration notes when APIs change
-- Tag stable releases with semantic versions (for example: `0.21.0`), then merge release work back into `develop`.
+- Tag stable releases with semantic versions (for example: `0.22.0`), then merge release work back into `develop`.
 
 ## License
 This repository is licensed under the MIT License.  
