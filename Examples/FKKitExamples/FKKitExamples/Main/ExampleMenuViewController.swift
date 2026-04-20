@@ -79,6 +79,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKSkeletonExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "SwipeAction",
+          subtitle: "Native left/right multi-button swipe actions for table and collection lists",
+          make: { FKSwipeActionExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "TextField",
           subtitle: "Formatted input, validation, style customization, callbacks, and global defaults",
           make: { FKTextFieldExampleViewController() }

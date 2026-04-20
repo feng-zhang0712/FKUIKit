@@ -8,6 +8,72 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.27.0] - 2026-04-21
+
+### Added (FKUIKit FKSwipeAction)
+- Added a new native swipe-action module at `Sources/FKUIKit/Components/SwipeAction/` with layered source structure:
+  - `Core`
+  - `SwipeButton`
+  - `Cell`
+  - `Manager`
+  - `Configuration`
+  - `Animation`
+  - `Extension`
+  - `Protocol`
+- Added `FKSwipeAction` and `FKSwipeActionController` to provide reusable, non-invasive list swipe behavior for:
+  - `UITableViewCell`
+  - `UICollectionViewCell`
+- Added dual-direction swipe support:
+  - left reveal actions
+  - right reveal actions
+- Added multi-button action configuration with built-in presets:
+  - `delete`
+  - `edit`
+  - `pin`
+  - `mark`
+  - `favorite`
+  - `more`
+- Added per-action style model `FKSwipeActionItemStyle` with support for:
+  - text-only / image-only / image+text actions
+  - fixed-width and adaptive-width layouts
+  - per-button color/font/insets/corner/icon settings
+- Added behavior and appearance models:
+  - `FKSwipeActionBehaviorConfiguration`
+  - `FKSwipeActionAppearance`
+  - `FKSwipeActionConfiguration`
+- Added global manager and namespace controls:
+  - `FKSwipeActionManager.shared`
+  - `FKSwipeAction.defaultConfiguration`
+  - `FKSwipeAction.closeAll(animated:)`
+  - `FKSwipeAction.setGloballyEnabled(_:)`
+- Added dangerous-action confirmation flow for destructive actions and automatic state mutex (open one closes others).
+- Added module-level documentation at `Sources/FKUIKit/Components/SwipeAction/README.md`.
+
+### Added (Examples)
+- Added full FKSwipeAction demo suite under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/SwipeAction/FKSwipeActionExamplesHubViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/SwipeAction/FKSwipeActionTableExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/SwipeAction/FKSwipeActionCollectionExampleViewController.swift`
+- Added `SwipeAction` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - table right-swipe multi-button actions
+  - collection left-swipe multi-button actions
+  - text/image/mixed action content
+  - fixed and adaptive button widths
+  - per-cell swipe enable/disable
+  - auto-close on scroll
+  - delete confirmation and callback handling
+  - global style and behavior configuration
+
+### Changed (FKUIKit FKSwipeAction)
+- Completed professional English API and implementation comments across all SwipeAction source files for open-source readability and maintainability.
+- Updated built-in action factories to accept optional titles (`String?`) for icon-only action scenarios while preserving default labels.
+- Fixed delete confirmation action title fallback when custom title is `nil`.
+
+### Changed (Documentation)
+- Updated root `README.md` to include `SwipeAction` in module structure, FKUIKit component list, and FKUIKit module docs navigation.
+- Updated SPM version reference in root `README.md` from `0.26.0` to `0.27.0`.
+
 ## [0.26.0] - 2026-04-21
 
 ### Added (FKUIKit FKMultiPicker)
