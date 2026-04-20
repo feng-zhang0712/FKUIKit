@@ -3,7 +3,8 @@
 A modular UIKit component library for iOS.
 
 - `FKUIKit`: foundational UI components and presentation infrastructure
-- `FKCompositeKit`: composed UI modules built on top of `FKUIKit` (filters, networking helpers, etc.)
+- `FKCoreKit`: foundational non-UI capabilities (networking, logging, permissions, utilities, etc.)
+- `FKCompositeKit`: composed UI modules built on top of `FKUIKit` and `FKCoreKit`
 
 ## Requirements
 
@@ -28,13 +29,15 @@ In Xcode:
 | Product | Import | Notes |
 |---|---|---|
 | FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKCompositeKit | `import FKCompositeKit` | composite components and utilities, depends on `FKUIKit` |
+| FKCoreKit | `import FKCoreKit` | core non-UI modules and shared infrastructure utilities |
+| FKCompositeKit | `import FKCompositeKit` | composite UI modules and higher-level integrations, depends on `FKUIKit` and `FKCoreKit` |
 
 Dependency graph:
 
 ```text
 FKUIKit
-FKCompositeKit   → FKUIKit
+FKCoreKit
+FKCompositeKit   → FKUIKit + FKCoreKit
 ```
 
 ### Local package (development)
@@ -97,7 +100,7 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 
 - Repository has been renamed from `FKUIKit` to `FKKit`.
 - SwiftPM package name is now `FKKit`.
-- Products are consolidated to `FKUIKit` and `FKCompositeKit`.
+- Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
 ## Recent updates (0.11.0)
