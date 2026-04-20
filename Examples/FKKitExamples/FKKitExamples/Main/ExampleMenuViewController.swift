@@ -59,6 +59,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKEmptyStateExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "MultiPicker",
+          subtitle: "Multi-level cascading picker with built-in region and custom data linkage",
+          make: { FKMultiPickerExampleViewController() }
+        ),
+        ExampleMenuItem(
           title: "Presentation",
           subtitle: "Anchored panel with mask",
           make: { FKPresentationExampleViewController() }
