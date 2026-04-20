@@ -103,6 +103,18 @@ let filterHost = FKFilterBarHost(filterBar: filterBar)
 - Products are consolidated to `FKUIKit`, `FKCoreKit`, and `FKCompositeKit`.
 - Example app structure has been refactored to the new `FKKitExamples` layout.
 
+## Recent updates (0.19.0)
+
+- **`FKBusinessKit`** (in `FKCoreKit`): pure-native Swift business capability module with singleton entry (`FKBusinessKit.shared`) and protocol-oriented architecture.
+  - **Version management**: app metadata, remote version check, optional/forced update decision, and built-in update prompt logic.
+  - **Global analytics**: page/click/custom events, common parameter injection, file-backed buffering, batch flush, and retry/drop policy.
+  - **In-app i18n**: runtime language switching independent of system language, localized string resolution, and observer-based UI refresh.
+  - **Lifecycle monitor**: centralized app lifecycle stream (`active/inactive/background/terminated`) with disposable observation token.
+  - **Deeplink routing**: host/path pattern matching, query parsing, and route dispatch for deeplink/universal link flows.
+  - **Business utils**: time/number formatting, sensitive-data masking, global alert de-duplication, and startup task orchestration.
+- **Examples**: **FKBusinessKit** demo at `Examples/FKKitExamples/.../FKCoreKit/BusinessKit/`; menu entry under **FKCoreKit**.
+- **Documentation**: English module README at `Sources/FKCoreKit/BusinessKit/README.md`, plus full API/source doc comments across BusinessKit files.
+
 ## Recent updates (0.18.0)
 
 - **`FKSecurity`** (in `FKCoreKit`): pure-native Swift security & cryptography module (Hash/AES/RSA/Base64-HEX-URL/HMAC/random/masking/wipe/anti-debug hints) with protocol-oriented services and async-first APIs. Documentation: `Sources/FKCoreKit/Security/README.md`.

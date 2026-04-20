@@ -80,6 +80,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKAsyncExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "FKBusinessKit",
+          subtitle: "Version, tracking, i18n, lifecycle, deeplink, device info, business utils",
+          make: { FKBusinessKitExampleViewController() }
+        ),
+        ExampleMenuItem(
           title: "FKFileManager",
           subtitle: "Sandbox/file ops, read/write, resumable download, upload, cache and ZIP APIs",
           make: { FKFileManagerExampleViewController() }

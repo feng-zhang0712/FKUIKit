@@ -8,6 +8,36 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.19.0] - 2026-04-20
+
+### Added (FKCoreKit FKBusinessKit)
+- **`FKBusinessKit`**: pure-native Swift business capability module under `Sources/FKCoreKit/BusinessKit/` with singleton entry (`FKBusinessKit.shared`) and protocol-oriented architecture.
+- **Version management**: local app metadata (`bundleID`/version/build), remote version provider abstraction, semantic version comparison, optional/forced update decision, and built-in update prompt presentation.
+- **Global analytics**: unified event models (`pageView`/`click`/`custom`), automatic common parameter merge (device/system/version/channel/environment), file-backed FIFO buffering, periodic + threshold flush, and retry/drop policy.
+- **In-app i18n**: runtime language switching independent of system language, persisted language selection, localized string lookup from language bundle, and observer/notification-based UI refresh hooks.
+- **Lifecycle monitor**: centralized `UIApplication` lifecycle observation with normalized states and disposable observation tokens.
+- **Deeplink router**: route registration/unregistration, host/path pattern matching (`*` wildcard segments), query parameter extraction, and source-aware routing context.
+- **Device/app info**: bundle ID, app version/build, system version, hardware model identifier, screen size, channel, and environment exposure.
+- **Business utilities**: time formatting + relative time, number formatting + compact units, sensitive-data masking (phone/ID/email/generic), global alert de-duplication, and startup task orchestration.
+- **Concurrency alignment**: Swift 6-safe async signatures and sendability adjustments for version checks, flush callbacks, startup task execution, and demo uploader state handling.
+
+### Added (Documentation)
+- New module guide: `Sources/FKCoreKit/BusinessKit/README.md` (GitHub-style structure with copy-paste examples, architecture notes, and API reference).
+- Completed English documentation comments across all BusinessKit source files (Core/Version/Track/I18n/Lifecycle/Deeplink/Utils/Model).
+
+### Added (Examples)
+- **`FKBusinessKitExampleViewController`** under `Examples/FKKitExamples/.../FKCoreKit/BusinessKit/` covering:
+  - app info lookup
+  - closure + async version checks
+  - analytics tracking + flush
+  - language switch + localization lookup
+  - lifecycle monitoring
+  - deeplink/universal link routing
+  - formatter and masking utilities
+  - alert de-duplication
+  - startup task orchestration
+- **Example menu**: **FKBusinessKit** entry under **FKCoreKit**.
+
 ## [0.17.0] - 2026-04-20
 
 ### Added (FKCoreKit FKFileManager)
@@ -388,7 +418,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.18.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.19.0...HEAD
+[0.19.0]: https://github.com/feng-zhang0712/FKKit/compare/0.18.0...0.19.0
 [0.18.0]: https://github.com/feng-zhang0712/FKKit/compare/0.17.0...0.18.0
 [0.17.0]: https://github.com/feng-zhang0712/FKKit/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/feng-zhang0712/FKKit/compare/0.15.0...0.16.0
