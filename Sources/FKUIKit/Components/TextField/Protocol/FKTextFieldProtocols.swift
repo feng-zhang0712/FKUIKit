@@ -7,6 +7,9 @@
 import Foundation
 
 /// Formatter protocol used by `FKTextField`.
+///
+/// Conform to this protocol to provide custom formatting (e.g. business-specific grouping,
+/// masking, or locale-aware behavior) without modifying the core text field.
 public protocol FKTextFieldFormatting {
   /// Formats the provided text using the rule.
   ///
@@ -18,6 +21,9 @@ public protocol FKTextFieldFormatting {
 }
 
 /// Validator protocol used by `FKTextField`.
+///
+/// Conform to this protocol to provide custom validation rules (e.g. server-driven checks,
+/// complex domain constraints) while keeping `FKTextField` testable and pluggable.
 public protocol FKTextFieldValidating {
   /// Validates the text under the active rule.
   ///
@@ -34,6 +40,9 @@ public protocol FKTextFieldValidating {
 }
 
 /// API contract for configurable custom text fields.
+///
+/// This protocol exists to keep configuration APIs consistent across `UITextField`/`UITextView`
+/// variants and to simplify dependency injection in larger codebases.
 @MainActor
 public protocol FKTextFieldConfigurable: AnyObject {
   /// Applies a full configuration.

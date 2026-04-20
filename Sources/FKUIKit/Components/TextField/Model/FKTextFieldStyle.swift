@@ -7,22 +7,35 @@
 import UIKit
 
 /// Visual style for a specific `FKTextField` state.
+///
+/// This model describes the layer-level appearance of the input surface, including:
+/// border, corner radius, background, and optional shadow.
 public struct FKTextFieldStateStyle {
   /// Border color.
   public var borderColor: UIColor
   /// Border width.
+  ///
+  /// Default is `1`. Values less than `0` are not meaningful.
   public var borderWidth: CGFloat
   /// Corner radius.
+  ///
+  /// Default is `10`.
   public var cornerRadius: CGFloat
   /// Background color.
+  ///
+  /// Default is `secondarySystemBackground`.
   public var backgroundColor: UIColor
   /// Optional shadow color.
   public var shadowColor: UIColor?
   /// Shadow opacity.
+  ///
+  /// Use `0` to disable shadow.
   public var shadowOpacity: Float
   /// Shadow offset.
   public var shadowOffset: CGSize
   /// Shadow blur radius.
+  ///
+  /// Maps to `CALayer.shadowRadius`.
   public var shadowRadius: CGFloat
 
   /// Creates a state style.
@@ -48,6 +61,9 @@ public struct FKTextFieldStateStyle {
 }
 
 /// Full style group for normal/focused/error states.
+///
+/// `FKTextField` switches between these styles automatically based on focus and
+/// validation state.
 public struct FKTextFieldStyle {
   /// Style used in normal state.
   public var normal: FKTextFieldStateStyle
@@ -86,6 +102,9 @@ public struct FKTextFieldStyle {
 
 public extension FKTextFieldStyle {
   /// Default style.
+  ///
+  /// This is intended as a sensible baseline and can be customized globally via
+  /// `FKTextFieldManager.shared.defaultStyle` or per-instance via configuration.
   static var `default`: FKTextFieldStyle {
     FKTextFieldStyle(
       normal: FKTextFieldStateStyle(borderColor: .separator),

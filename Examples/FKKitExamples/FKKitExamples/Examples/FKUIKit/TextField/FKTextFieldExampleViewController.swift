@@ -1,13 +1,15 @@
 //
 // FKTextFieldExampleViewController.swift
 //
-// Complete copy-ready demo for FKTextField scenarios.
+// Complete copy-ready demo for FKTextField composite scenarios.
 //
 
 import UIKit
 import FKUIKit
 
-/// Shared setup helpers for FKTextField demos.
+// MARK: - Global configuration
+
+/// Shared setup helpers for FKTextField demo screens.
 enum FKTextFieldDemoSupport {
   private static var didConfigureGlobalStyle = false
 
@@ -26,13 +28,20 @@ enum FKTextFieldDemoSupport {
   }
 }
 
-/// End-to-end examples covering formatting, validation, callbacks, and styling.
+// MARK: - View controller
+
+/// A single screen that covers formatting, validation, callbacks, and UI customization.
+///
+/// This file is intentionally self-contained so it can be copied into other projects.
 final class FKTextFieldExampleViewController: UIViewController {
 
   private let scrollView = UIScrollView()
   private let contentStack = UIStackView()
   private let callbackLogLabel = UILabel()
-  private var errorLabels: [ObjectIdentifier: UILabel] = [:]
+
+  // Cached references for demo interactions.
+  private var clearables: [() -> Void] = []
+  private weak var firstAutoFocusTarget: UIView?
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -41,6 +50,17 @@ final class FKTextFieldExampleViewController: UIViewController {
     view.backgroundColor = .systemGroupedBackground
     setupLayout()
     buildExamples()
+    configureNavigationActions()
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    // Demonstrate auto focus for verification code input.
+    if let target = firstAutoFocusTarget as? UIKeyInput {
+      _ = (target as? UIView)?.becomeFirstResponder()
+    } else {
+      firstAutoFocusTarget?.becomeFirstResponder()
+    }
   }
 }
 
@@ -77,243 +97,362 @@ private extension FKTextFieldExampleViewController {
   }
 
   func buildExamples() {
-    makePhoneExample()
-    makeIDCardExample()
-    makeBankCardExample()
-    makeVerificationCodeExample()
-    makePasswordExample()
-    makeAmountExample()
-    makeEmailExample()
-    makeCustomLimitExample()
-    makeCustomStyleExample()
-    makeValidationErrorTipExample()
-    makeClearAndRightViewExample()
+    addFeatureSectionFormattedInputs()
+    addFeatureSectionVerificationCodes()
+    addFeatureSectionPassword()
+    addFeatureSectionTextViewCounter()
+    addFeatureSectionCustomUIAndCallbacks()
   }
 
-  func makePhoneExample() {
-    let field = FKTextField.make(formatType: .phoneNumber, placeholder: "Phone number (138 1234 5678)")
-    bindCommonCallbacks(field, scenario: "Phone")
-    addFieldSection(
-      title: "Phone Number Formatted Input",
-      subtitle: "Automatically groups digits into 3-4-4 format.",
-      field: field
+  // MARK: - Feature sections
+
+  func addFeatureSectionFormattedInputs() {
+    let section = makeSectionContainer(
+      title: "Formatted Inputs",
+      subtitle: "Phone / ID card / bank card formatting + validation and filtering (no emoji/special/space)."
     )
-  }
 
-  func makeIDCardExample() {
-    let field = FKTextField(
+    let phone = FKTextField.make(formatType: .phoneNumber, placeholder: "Phone (3-4-4)")
+      .chain { $0.clearButtonMode = .whileEditing }
+    bind(field: phone, name: "Phone")
+    registerClearable { [weak phone] in phone?.clear() }
+
+    let id = FKTextField(
       inputRule: FKTextFieldInputRule(
         formatType: .idCard,
-        maxLength: 18
+        maxLength: 18,
+        allowsWhitespace: false,
+        allowsEmoji: false,
+        allowsSpecialCharacters: false
       )
     )
-    field.placeholder = "ID card (15/18)"
-    bindCommonCallbacks(field, scenario: "IDCard")
-    addFieldSection(
-      title: "ID Card Input with Validation",
-      subtitle: "Supports 15/18 format and built-in checksum validation for 18-digit IDs.",
-      field: field
+    id.placeholder = "ID card (15/18, checksum validated)"
+    bind(field: id, name: "IDCard")
+    registerClearable { [weak id] in id?.clear() }
+
+    let bank = FKTextField(
+      inputRule: FKTextFieldInputRule(
+        formatType: .bankCard,
+        maxLength: 24,
+        allowsWhitespace: false,
+        allowsEmoji: false,
+        allowsSpecialCharacters: false
+      )
     )
+    bank.placeholder = "Bank card (grouped by 4)"
+    bind(field: bank, name: "BankCard")
+    registerClearable { [weak bank] in bank?.clear() }
+
+    let validateButton = makeActionButton(title: "Validate & Shake Invalid") { [weak self, weak phone, weak id, weak bank] in
+      guard let self else { return }
+      // Demonstrate explicit validation feedback (e.g. after submit).
+      let candidates: [(String, FKTextField?)] = [("Phone", phone), ("IDCard", id), ("BankCard", bank)]
+      for (name, f) in candidates {
+        guard let f else { continue }
+        if f.validationResult.isValid == false {
+          f.shakeForValidationFailure()
+          self.appendLog("\(name) invalid -> shake triggered")
+        }
+      }
+    }
+
+    section.addArrangedSubview(makeLabeledField("Phone number", field: phone))
+    section.addArrangedSubview(makeLabeledField("ID card", field: id))
+    section.addArrangedSubview(makeLabeledField("Bank card", field: bank))
+    section.addArrangedSubview(validateButton)
+    contentStack.addArrangedSubview(section)
   }
 
-  func makeBankCardExample() {
-    let field = FKTextField.make(formatType: .bankCard, placeholder: "Bank card number")
-    bindCommonCallbacks(field, scenario: "BankCard")
-    addFieldSection(
-      title: "Bank Card Number Formatted Input",
-      subtitle: "Automatically groups card digits by 4.",
-      field: field
+  func addFeatureSectionVerificationCodes() {
+    let section = makeSectionContainer(
+      title: "Verification Codes",
+      subtitle: "4/6-digit numeric input with auto focus, AutoFill and completion callback."
     )
-  }
 
-  func makeVerificationCodeExample() {
-    let field = FKTextField(
+    // 6-digit formatted input (classic).
+    let formattedOTP = FKTextField(
       inputRule: FKTextFieldInputRule(
         formatType: .verificationCode(length: 6, allowsAlphabet: false),
-        autoDismissKeyboardOnComplete: true
-      )
-    )
-    field.placeholder = "6-digit verification code"
-    bindCommonCallbacks(field, scenario: "OTP")
-    field.onInputCompleted = { [weak self] code in
-      self?.appendLog("OTP completed: \(code)")
-    }
-    addFieldSection(
-      title: "Verification Code Input",
-      subtitle: "Numeric-only fixed-length input with completion callback.",
-      field: field
-    )
-  }
-
-  func makePasswordExample() {
-    let field = FKTextField(
-      inputRule: FKTextFieldInputRule(
-        formatType: .password(minLength: 8, maxLength: 20, validatesStrength: true)
-      )
-    )
-    field.placeholder = "Password (8+ with strength check)"
-    bindCommonCallbacks(field, scenario: "Password")
-    addFieldSection(
-      title: "Password Input with Show/Hide Toggle",
-      subtitle: "Includes built-in secure/plain toggle and strength validation.",
-      field: field
-    )
-  }
-
-  func makeAmountExample() {
-    let field = FKTextField(
-      inputRule: FKTextFieldInputRule(
-        formatType: .amount(maxIntegerDigits: 10, decimalDigits: 2)
-      )
-    )
-    field.placeholder = "Amount (thousands separated)"
-    bindCommonCallbacks(field, scenario: "Amount")
-    addFieldSection(
-      title: "Amount Input with Thousands Separator",
-      subtitle: "Automatically formats integer part and limits decimal precision.",
-      field: field
-    )
-  }
-
-  func makeEmailExample() {
-    let field = FKTextField.make(formatType: .email, placeholder: "Email address")
-    bindCommonCallbacks(field, scenario: "Email")
-    addFieldSection(
-      title: "Email Input with Format Validation",
-      subtitle: "Realtime email format validation with clear error message callback.",
-      field: field
-    )
-  }
-
-  func makeCustomLimitExample() {
-    let field = FKTextField(
-      inputRule: FKTextFieldInputRule(
-        formatType: .alphaNumeric,
-        maxLength: 12,
         allowsWhitespace: false,
         allowsEmoji: false,
         allowsSpecialCharacters: false,
-        debounceInterval: 0.12,
-        minimumInputInterval: 0.03
+        autoDismissKeyboardOnComplete: true
       )
     )
-    field.placeholder = "Max 12 chars, no emoji/special/space"
-    bindCommonCallbacks(field, scenario: "CustomLimit")
-    addFieldSection(
-      title: "Custom Input Limit (Length, No Emoji/Special)",
-      subtitle: "Demonstrates strict filtering, length limit, debounce, and anti-burst input interval.",
-      field: field
-    )
+    formattedOTP.placeholder = "OTP (formatted type, 6 digits)"
+    formattedOTP.onInputCompleted = { [weak self] code in
+      self?.appendLog("OTP finished (FKTextField): \(code)")
+    }
+    bind(field: formattedOTP, name: "OTP-Formatted")
+    registerClearable { [weak formattedOTP] in formattedOTP?.clear() }
+
+    // 4-digit slot input with underlines.
+    var cfg4 = FKCodeTextField.Configuration(length: 4, slotStyle: .underlines)
+    cfg4.slotSpacing = 12
+    cfg4.underlineHeight = 2
+    let slot4 = FKCodeTextField(configuration: cfg4)
+    slot4.translatesAutoresizingMaskIntoConstraints = false
+    slot4.heightAnchor.constraint(equalToConstant: 52).isActive = true
+    slot4.onCodeCompleted = { [weak self] code in
+      self?.appendLog("OTP finished (slot 4): \(code)")
+    }
+    registerClearable { [weak slot4] in slot4?.clearCode() }
+
+    // 6-digit slot input with boxes.
+    var cfg6 = FKCodeTextField.Configuration(length: 6, slotStyle: .boxes)
+    cfg6.slotSpacing = 10
+    cfg6.cornerRadius = 10
+    let slot6 = FKCodeTextField(configuration: cfg6)
+    slot6.translatesAutoresizingMaskIntoConstraints = false
+    slot6.heightAnchor.constraint(equalToConstant: 52).isActive = true
+    slot6.onCodeCompleted = { [weak self, weak slot6] code in
+      self?.appendLog("OTP finished (slot 6): \(code)")
+      // Demonstrate error feedback for wrong code.
+      if code != "123456" {
+        slot6?.setErrorState(true, shakes: true)
+      }
+    }
+    registerClearable { [weak slot6] in slot6?.clearCode() }
+
+    // Auto focus the first code control on appear.
+    if firstAutoFocusTarget == nil {
+      firstAutoFocusTarget = slot4
+    }
+
+    section.addArrangedSubview(makeLabeledField("OTP (FKTextField)", field: formattedOTP))
+    section.addArrangedSubview(makeLabeledCustom("OTP 4 (slot underlines)", view: slot4))
+    section.addArrangedSubview(makeLabeledCustom("OTP 6 (slot boxes, AutoFill)", view: slot6))
+    contentStack.addArrangedSubview(section)
   }
 
-  func makeCustomStyleExample() {
-    var style = FKTextFieldStyle.default
-    style.normal.cornerRadius = 14
-    style.normal.borderColor = .systemTeal
-    style.focused.borderColor = .systemIndigo
-    style.error.borderColor = .systemRed
-    style.normal.backgroundColor = .systemBackground
-    style.textColor = .label
-    style.placeholderColor = .systemTeal
-
-    let attributedPlaceholder = NSAttributedString(
-      string: "Styled placeholder",
-      attributes: [
-        .font: UIFont.italicSystemFont(ofSize: 14),
-        .foregroundColor: UIColor.systemTeal.withAlphaComponent(0.8),
-      ]
+  func addFeatureSectionPassword() {
+    let section = makeSectionContainer(
+      title: "Password Input",
+      subtitle: "Built-in show/hide toggle, strength validation, toggle callback and clear support."
     )
 
-    let field = FKTextField(
-      configuration: FKTextFieldConfiguration(
-        inputRule: FKTextFieldInputRule(formatType: .alphaNumeric, maxLength: 16),
-        style: style,
-        attributedPlaceholder: attributedPlaceholder
+    let password = FKTextField(
+      inputRule: FKTextFieldInputRule(
+        formatType: .password(minLength: 8, maxLength: 20, validatesStrength: true),
+        allowsWhitespace: false,
+        allowsEmoji: false,
+        allowsSpecialCharacters: false
       )
     )
-    bindCommonCallbacks(field, scenario: "CustomStyle")
-    addFieldSection(
-      title: "Custom UI Style (Border, Corner, Placeholder)",
-      subtitle: "Demonstrates per-instance style override from global defaults.",
-      field: field
-    )
+    password.placeholder = "Password (8+ with strength rule)"
+    password.onPasswordVisibilityToggled = { [weak self] isVisible in
+      self?.appendLog("Password toggle tapped -> visible: \(isVisible)")
+    }
+    bind(field: password, name: "Password")
+    registerClearable { [weak password] in password?.clear() }
+
+    section.addArrangedSubview(makeLabeledField("Password", field: password))
+    contentStack.addArrangedSubview(section)
   }
 
-  func makeValidationErrorTipExample() {
-    let field = FKTextField.make(formatType: .email, placeholder: "Type invalid email to see error")
-      .chain { $0.clearButtonMode = .whileEditing }
-    bindCommonCallbacks(field, scenario: "ValidationTip")
-    addFieldSection(
-      title: "Input Validation & Error Message Display",
-      subtitle: "Error label updates in realtime through validation callbacks.",
-      field: field
+  func addFeatureSectionTextViewCounter() {
+    let section = makeSectionContainer(
+      title: "Text View with Counter",
+      subtitle: "A UITextView subclass with placeholder, realtime counter and max length interception."
     )
+
+    let tv = FKCountTextView(
+      configuration: FKCountTextView.Configuration(
+        maxLength: 120,
+        showsCounter: true,
+        placeholder: "Multi-line input (max 120)"
+      )
+    )
+    tv.font = .systemFont(ofSize: 15)
+    tv.onTextChanged = { [weak self] text in
+      self?.appendLog("TextView didChange -> \(text.count) chars")
+    }
+    tv.onOverflowAttempt = { [weak self] _ in
+      self?.appendLog("TextView overflow -> rejected + shake")
+    }
+    tv.translatesAutoresizingMaskIntoConstraints = false
+    tv.heightAnchor.constraint(equalToConstant: 140).isActive = true
+    registerClearable { [weak tv] in tv?.text = "" }
+
+    section.addArrangedSubview(makeLabeledCustom("Count text view", view: tv))
+    contentStack.addArrangedSubview(section)
   }
 
-  func makeClearAndRightViewExample() {
-    let field = FKTextField.make(formatType: .phoneNumber, placeholder: "Phone with actions")
-    field.clearButtonMode = .whileEditing
+  func addFeatureSectionCustomUIAndCallbacks() {
+    let section = makeSectionContainer(
+      title: "Custom UI + Callbacks + Auto Dismiss",
+      subtitle: "Custom border/corner/placeholder/icons, counter + inline error, emoji filtering, and auto dismiss keyboard on completion."
+    )
 
-    let rightButton = UIButton(type: .system)
-    rightButton.setImage(UIImage(systemName: "paperplane.fill"), for: .normal)
-    rightButton.tintColor = .systemBlue
-    rightButton.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
-    rightButton.addAction(UIAction { [weak self, weak field] _ in
-      guard let self, let field else { return }
-      self.appendLog("Right icon tapped -> raw value: \(field.rawText)")
+    // Custom regex + grouping.
+    let customRegex = FKTextField(
+      inputRule: FKTextFieldInputRule(
+        formatType: .custom(
+          regex: "[A-Za-z0-9]",
+          maxLength: 12,
+          separator: "-",
+          groupPattern: [4, 4, 4]
+        ),
+        allowsWhitespace: false,
+        allowsEmoji: false,
+        allowsSpecialCharacters: false
+      )
+    )
+    customRegex.placeholder = "Serial (XXXX-XXXX-XXXX)"
+    bind(field: customRegex, name: "CustomRegex")
+    registerClearable { [weak customRegex] in customRegex?.clear() }
+
+    // Counter + inline error + auto shake when invalid.
+    let configuration = FKTextFieldConfiguration(
+      inputRule: FKTextFieldInputRule(
+        formatType: .email,
+        maxLength: 64,
+        allowsWhitespace: false,
+        allowsEmoji: false,
+        allowsSpecialCharacters: true,
+        autoDismissKeyboardOnComplete: true
+      ),
+      inlineMessage: FKTextFieldInlineMessageConfiguration(showsErrorMessage: true),
+      counter: FKTextFieldCounterConfiguration(isEnabled: true),
+      validationFeedback: FKTextFieldValidationFeedbackConfiguration(shakesOnInvalid: true),
+      placeholder: "Email (counter + inline error + auto shake)"
+    )
+    let email = FKTextField(configuration: configuration)
+    bind(field: email, name: "Email+Inline")
+    registerClearable { [weak email] in email?.clear() }
+
+    // Custom left icon + clear + custom right icon.
+    let actionField = FKTextField.make(formatType: .phoneNumber, placeholder: "Phone with left/right icons")
+    actionField.clearButtonMode = .whileEditing
+    bind(field: actionField, name: "ActionField")
+    registerClearable { [weak actionField] in actionField?.clear() }
+
+    let leftIcon = UIImageView(image: UIImage(systemName: "phone.fill"))
+    leftIcon.tintColor = .secondaryLabel
+    leftIcon.frame = CGRect(x: 0, y: 0, width: 22, height: 22)
+    actionField.leftView = leftIcon
+    actionField.leftViewMode = .always
+
+    let sendButton = UIButton(type: .system)
+    sendButton.setImage(UIImage(systemName: "paperplane.fill"), for: .normal)
+    sendButton.tintColor = .systemBlue
+    sendButton.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
+    sendButton.addAction(UIAction { [weak self, weak actionField] _ in
+      guard let self, let actionField else { return }
+      self.appendLog("Right icon tapped -> raw: \(actionField.rawText)")
     }, for: .touchUpInside)
-    field.rightView = rightButton
-    field.rightViewMode = .always
+    actionField.rightView = sendButton
+    actionField.rightViewMode = .always
 
-    bindCommonCallbacks(field, scenario: "Clear+RightView")
-    addFieldSection(
-      title: "Clear Button & Right Icon View",
-      subtitle: "Shows clear button usage and a custom right action icon.",
-      field: field
-    )
+    section.addArrangedSubview(makeLabeledField("Custom regex", field: customRegex))
+    section.addArrangedSubview(makeLabeledField("Email (inline error + counter)", field: email))
+    section.addArrangedSubview(makeLabeledField("Icons + clear + right action", field: actionField))
+    contentStack.addArrangedSubview(section)
   }
 
-  func addFieldSection(title: String, subtitle: String, field: FKTextField) {
-    let container = UIStackView()
-    container.axis = .vertical
-    container.spacing = 8
+  // MARK: - Navigation actions
 
-    container.addArrangedSubview(makeSectionTitle(title))
-    container.addArrangedSubview(makeSectionSubtitle(subtitle))
-
-    field.translatesAutoresizingMaskIntoConstraints = false
-    field.heightAnchor.constraint(equalToConstant: 44).isActive = true
-    container.addArrangedSubview(field)
-
-    let errorLabel = UILabel()
-    errorLabel.font = .preferredFont(forTextStyle: .caption1)
-    errorLabel.textColor = .systemRed
-    errorLabel.numberOfLines = 0
-    errorLabel.text = " "
-    errorLabels[ObjectIdentifier(field)] = errorLabel
-    container.addArrangedSubview(errorLabel)
-
-    contentStack.addArrangedSubview(container)
+  func configureNavigationActions() {
+    navigationItem.rightBarButtonItems = [
+      UIBarButtonItem(
+        title: "Clear",
+        image: nil,
+        primaryAction: UIAction { [weak self] _ in
+          self?.clearAll()
+        },
+        menu: nil
+      ),
+      UIBarButtonItem(
+        title: "Dismiss",
+        image: nil,
+        primaryAction: UIAction { [weak self] _ in
+          self?.view.endEditing(true)
+          self?.appendLog("Keyboard dismissed")
+        },
+        menu: nil
+      ),
+    ]
   }
 
-  func bindCommonCallbacks(_ field: FKTextField, scenario: String) {
-    field.onFormattedResult = { [weak self] result in
-      self?.appendLog("\(scenario) formatted -> \(result.formattedText)")
+  func clearAll() {
+    clearables.forEach { $0() }
+    appendLog("All inputs cleared")
+  }
+
+  func registerClearable(_ block: @escaping () -> Void) {
+    clearables.append(block)
+  }
+
+  // MARK: - Callbacks
+
+  func bind(field: FKTextField, name: String) {
+    field.onTextDidChange = { [weak self] raw, formatted in
+      self?.appendLog("\(name) didChange -> raw: \(raw), formatted: \(formatted)")
     }
-    field.onTextDidChange = { [weak self] raw, _ in
-      self?.appendLog("\(scenario) raw -> \(raw)")
+    field.onInputCompleted = { [weak self] raw in
+      self?.appendLog("\(name) didFinish -> \(raw)")
     }
-    field.onValidationResult = { [weak self] validation in
-      self?.appendLog("\(scenario) valid -> \(validation.isValid)")
+    field.onValidationResult = { [weak self] result in
+      self?.appendLog("\(name) validation -> \(result.isValid ? "valid" : "invalid")")
     }
-    field.onErrorMessage = { [weak self, weak field] message in
-      guard let self, let field else { return }
-      self.errorLabels[ObjectIdentifier(field)]?.text = message ?? " "
+    field.onErrorMessage = { [weak self] message in
+      if let message {
+        self?.appendLog("\(name) error -> \(message)")
+      }
     }
   }
 
   func appendLog(_ text: String) {
     callbackLogLabel.text = text
+  }
+
+  // MARK: - UI helpers
+
+  func makeSectionContainer(title: String, subtitle: String) -> UIStackView {
+    let container = UIStackView()
+    container.axis = .vertical
+    container.spacing = 10
+    container.addArrangedSubview(makeSectionTitle(title))
+    container.addArrangedSubview(makeSectionSubtitle(subtitle))
+    return container
+  }
+
+  func makeLabeledField(_ title: String, field: FKTextField) -> UIStackView {
+    field.translatesAutoresizingMaskIntoConstraints = false
+    field.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+    let row = UIStackView()
+    row.axis = .vertical
+    row.spacing = 6
+    row.addArrangedSubview(makeMinorLabel(title))
+    row.addArrangedSubview(field)
+    return row
+  }
+
+  func makeLabeledCustom(_ title: String, view: UIView) -> UIStackView {
+    let row = UIStackView()
+    row.axis = .vertical
+    row.spacing = 6
+    row.addArrangedSubview(makeMinorLabel(title))
+    row.addArrangedSubview(view)
+    return row
+  }
+
+  func makeMinorLabel(_ text: String) -> UILabel {
+    let label = UILabel()
+    label.font = .preferredFont(forTextStyle: .subheadline)
+    label.textColor = .secondaryLabel
+    label.text = text
+    return label
+  }
+
+  func makeActionButton(title: String, action: @escaping () -> Void) -> UIButton {
+    let b = UIButton(type: .system)
+    b.setTitle(title, for: .normal)
+    b.backgroundColor = .secondarySystemFill
+    b.layer.cornerRadius = 8
+    b.heightAnchor.constraint(equalToConstant: 36).isActive = true
+    b.addAction(UIAction { _ in action() }, for: .touchUpInside)
+    return b
   }
 
   func makeSectionTitle(_ text: String) -> UILabel {
@@ -333,6 +472,8 @@ private extension FKTextFieldExampleViewController {
     return label
   }
 }
+
+// MARK: - Chain helper
 
 private extension FKTextField {
   /// Lightweight chain helper used for demo readability.

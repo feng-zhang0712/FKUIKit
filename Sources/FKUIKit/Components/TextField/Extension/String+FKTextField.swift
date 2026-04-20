@@ -6,6 +6,10 @@
 
 import Foundation
 
+/// String utilities used by `FKTextField` formatters and validators.
+///
+/// These helpers are intentionally lightweight and allocation-friendly to keep input
+/// processing fast in list-heavy UIs.
 extension String {
   /// Returns a string that keeps only decimal digits.
   var fk_digitsOnly: String {
@@ -24,16 +28,23 @@ extension String {
 
   /// Returns whether the string contains emoji scalar.
   var fk_containsEmoji: Bool {
+    // Emoji detection is heuristic-based on scalar properties and covers common emoji ranges.
     unicodeScalars.contains { $0.properties.isEmojiPresentation || $0.properties.isEmoji }
   }
 
   /// Returns a grouped representation.
+  ///
+  /// - Parameters:
+  ///   - separator: Separator inserted between groups (default is a space).
+  ///   - pattern: Group sizes. If the pattern ends, the last size repeats.
+  /// - Returns: A grouped string used for UI display.
   func fk_grouped(separator: Character = " ", pattern: [Int]) -> String {
     guard !pattern.isEmpty else { return self }
     var output = ""
     var index = startIndex
     var patternIndex = 0
     while index < endIndex {
+      // Pick the current group length; once pattern is exhausted, reuse the last length.
       let groupLength = pattern[min(patternIndex, pattern.count - 1)]
       guard groupLength > 0 else { break }
       let nextIndex = self.index(index, offsetBy: groupLength, limitedBy: endIndex) ?? endIndex
@@ -50,6 +61,9 @@ extension String {
   }
 
   /// Truncates string to a maximum count.
+  ///
+  /// - Parameter count: Maximum character count. Values less than `0` return an empty string.
+  /// - Returns: Truncated string that is safe for UI and validation rules.
   func fk_truncated(to count: Int) -> String {
     guard count >= 0 else { return "" }
     if self.count <= count {

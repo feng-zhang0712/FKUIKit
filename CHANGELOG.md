@@ -8,6 +8,65 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.25.0] - 2026-04-20
+
+### Added (FKUIKit FKTextField)
+- Added a new one-stop formatted input component module at `Sources/FKUIKit/Components/TextField/` with layered structure:
+  - `Core`
+  - `Formatter`
+  - `Validator`
+  - `Configuration`
+  - `Model`
+  - `Protocol`
+  - `Extension`
+  - `Animation`
+  - `CodeInput`
+  - `CountInput`
+- Added a protocol-oriented formatted input field `FKTextField` with pluggable formatter/validator architecture:
+  - built-in formatting types for phone, ID card, bank card, verification code, password, amount, email, numeric/alphabetic/alphanumeric, and custom regex
+  - realtime validation callbacks and structured result models
+  - one-line setup APIs via `FKTextField.make(...)` and `FKTextFieldInputRule`
+- Added dedicated OTP component `FKCodeTextField`:
+  - 4/6-digit style support
+  - box / underline slot rendering
+  - iOS one-time-code AutoFill support
+  - completion callback and error-state shake feedback
+- Added multiline counter component `FKCountTextView`:
+  - placeholder support
+  - realtime character counting
+  - max-length enforcement with overflow callback
+- Added behavior configuration models:
+  - `FKTextFieldLayoutConfiguration`
+  - `FKTextFieldInlineMessageConfiguration`
+  - `FKTextFieldCounterConfiguration`
+  - `FKTextFieldValidationFeedbackConfiguration`
+- Added shake animation helper at `Animation/UIView+FKTextFieldShake.swift`.
+- Added module-level documentation at `Sources/FKUIKit/Components/TextField/README.md`.
+
+### Changed (FKUIKit FKTextField)
+- Integrated inline error message presentation and optional right-side counter display into `FKTextField`.
+- Added password visibility toggle callback (`onPasswordVisibilityToggled`) for external interaction analytics/state sync.
+- Improved text rect/inset handling for better cursor alignment and UIKit editing rect compatibility.
+- Improved default formatter and validator documentation coverage and internal readability for open-source contribution workflows.
+
+### Added (Examples)
+- Added a comprehensive FKTextField showcase page at:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/TextField/FKTextFieldExampleViewController.swift`
+- Added `TextField` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - phone / ID card / bank card formatted inputs
+  - verification code input (`FKTextField` + `FKCodeTextField`)
+  - password visibility toggle and validation callbacks
+  - multiline count input (`FKCountTextView`)
+  - custom regex formatting
+  - custom left/right icon views
+  - clear and dismiss actions
+  - validation shake feedback
+  - global style configuration usage
+
+### Changed (Documentation)
+- Updated root `README.md` to include FKTextField in module structure, FKUIKit component list, module docs navigation, and release version alignment (`0.25.0`).
+
 ## [0.24.0] - 2026-04-20
 
 ### Added (FKUIKit FKCornerShadow)
