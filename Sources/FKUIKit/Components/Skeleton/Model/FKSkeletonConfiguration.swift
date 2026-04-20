@@ -17,10 +17,16 @@ public struct FKSkeletonConfiguration: Sendable {
   /// Highlight color swept across during shimmer, or mixed for breathing.
   public var highlightColor: UIColor
 
+  /// Optional gradient colors used by shimmer or pulse, falling back to `[base, highlight, base]`.
+  public var gradientColors: [UIColor]?
+
   // MARK: - Shape
 
   /// Default corner radius applied to skeleton blocks when `inheritsCornerRadius` is `false`.
   public var cornerRadius: CGFloat
+
+  /// Optional border width for placeholder stroke rendering.
+  public var borderWidth: CGFloat
 
   /// When `true`, skeleton blocks inherit the host view's `layer.cornerRadius`.
   public var inheritsCornerRadius: Bool
@@ -36,6 +42,30 @@ public struct FKSkeletonConfiguration: Sendable {
   /// Active animation style.
   public var animationMode: FKSkeletonAnimationMode
 
+  /// High-level style semantic mapped to animation mode.
+  public var style: FKSkeletonStyle {
+    get {
+      switch animationMode {
+      case .none:
+        return .solid
+      case .shimmer:
+        return .gradient
+      case .pulse, .breathing:
+        return .pulse
+      }
+    }
+    set {
+      switch newValue {
+      case .solid:
+        animationMode = .none
+      case .gradient:
+        animationMode = .shimmer
+      case .pulse:
+        animationMode = .pulse
+      }
+    }
+  }
+
   /// Minimum opacity of the highlight during breathing (0…1).
   public var breathingMinOpacity: CGFloat
 
@@ -49,6 +79,9 @@ public struct FKSkeletonConfiguration: Sendable {
 
   /// Default height of a single text line block in presets.
   public var lineHeight: CGFloat
+
+  /// Default spacing used by custom placeholder builders and presets.
+  public var itemSpacing: CGFloat
 
   // MARK: - Transition
 
@@ -68,7 +101,9 @@ public struct FKSkeletonConfiguration: Sendable {
         ? UIColor(white: 0.45, alpha: 1)
         : UIColor(white: 1, alpha: 1)
     },
+    gradientColors: [UIColor]? = nil,
     cornerRadius: CGFloat = 6,
+    borderWidth: CGFloat = 0,
     inheritsCornerRadius: Bool = true,
     animationDuration: TimeInterval = 1.4,
     shimmerDirection: FKSkeletonShimmerDirection = .leftToRight,
@@ -77,11 +112,14 @@ public struct FKSkeletonConfiguration: Sendable {
     defaultTextLineCount: Int = 4,
     lineSpacing: CGFloat = 8,
     lineHeight: CGFloat = 14,
+    itemSpacing: CGFloat = 8,
     transitionDuration: TimeInterval = 0.25
   ) {
     self.baseColor = baseColor
     self.highlightColor = highlightColor
+    self.gradientColors = gradientColors
     self.cornerRadius = max(0, cornerRadius)
+    self.borderWidth = max(0, borderWidth)
     self.inheritsCornerRadius = inheritsCornerRadius
     self.animationDuration = max(0.1, animationDuration)
     self.shimmerDirection = shimmerDirection
@@ -90,6 +128,7 @@ public struct FKSkeletonConfiguration: Sendable {
     self.defaultTextLineCount = max(1, defaultTextLineCount)
     self.lineSpacing = max(0, lineSpacing)
     self.lineHeight = max(1, lineHeight)
+    self.itemSpacing = max(0, itemSpacing)
     self.transitionDuration = max(0, transitionDuration)
   }
 }

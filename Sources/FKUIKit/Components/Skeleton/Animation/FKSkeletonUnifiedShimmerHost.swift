@@ -32,9 +32,11 @@ final class FKSkeletonUnifiedShimmerHost: UIView {
   }
 
   func apply(configuration config: FKSkeletonConfiguration) {
-    let base = config.baseColor.cgColor
-    let highlight = config.highlightColor.cgColor
-    gradientLayer.colors = [base, highlight, base]
+    let gradientPalette = config.gradientColors?.isEmpty == false
+      ? (config.gradientColors ?? [config.baseColor, config.highlightColor, config.baseColor])
+      : [config.baseColor, config.highlightColor, config.baseColor]
+    let colors = gradientPalette.map { $0.cgColor }
+    gradientLayer.colors = colors
     gradientLayer.locations = [0, 0.5, 1]
     applyDirection(config.shimmerDirection)
   }
@@ -61,22 +63,14 @@ final class FKSkeletonUnifiedShimmerHost: UIView {
     gradientLayer.removeAllAnimations()
     switch config.animationMode {
     case .shimmer:
-      let animation = CABasicAnimation(keyPath: "locations")
-      animation.fromValue = [-1.0, -0.5, 0.0]
-      animation.toValue   = [1.0,  1.5,  2.0]
-      animation.duration  = config.animationDuration
-      animation.repeatCount = .infinity
-      animation.isRemovedOnCompletion = false
+      let animation = FKSkeletonAnimationFactory.shimmer(duration: config.animationDuration)
       gradientLayer.add(animation, forKey: "shimmer")
-    case .breathing:
-      let animation = CABasicAnimation(keyPath: "opacity")
-      animation.fromValue = config.breathingMinOpacity
-      animation.toValue = 1.0
-      animation.duration = max(0.15, config.animationDuration / 2)
-      animation.autoreverses = true
-      animation.repeatCount = .infinity
-      animation.isRemovedOnCompletion = false
-      gradientLayer.add(animation, forKey: "breathing")
+    case .pulse, .breathing:
+      let animation = FKSkeletonAnimationFactory.pulse(
+        duration: config.animationDuration,
+        minOpacity: Float(config.breathingMinOpacity)
+      )
+      gradientLayer.add(animation, forKey: "pulse")
     case .none:
       break
     }

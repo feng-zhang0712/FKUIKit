@@ -8,6 +8,52 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.21.0] - 2026-04-20
+
+### Added (FKUIKit FKSkeleton)
+- Added a layered module structure for `FKSkeleton` under `Sources/FKUIKit/Components/Skeleton/`:
+  - `Core`
+  - `Animation`
+  - `Manager`
+  - `Extension`
+  - `Model`
+  - `Cell`
+  - `Preset`
+- Added automatic view-tree skeleton management via `FKSkeletonManager.shared` with:
+  - `fk_showAutoSkeleton` / `fk_hideAutoSkeleton`
+  - `fk_setSkeletonLoading`
+  - `fk_withSkeletonLoading`
+- Added view-level customization capabilities:
+  - `fk_skeletonConfigurationOverride`
+  - `fk_skeletonShape`
+  - `fk_isSkeletonExcluded`
+  - `FKSkeletonDisplayOptions`
+- Added style and animation extensions:
+  - `FKSkeletonStyle`
+  - `FKSkeletonAnimationMode.pulse`
+  - `FKSkeletonConfiguration.gradientColors`
+  - `FKSkeletonConfiguration.borderWidth`
+- Added module-level README for FKSkeleton at:
+  - `Sources/FKUIKit/Components/Skeleton/README.md`
+
+### Changed (FKUIKit FKSkeleton)
+- Reorganized existing Skeleton source files into functional directories while preserving public API behavior.
+- Aligned animation implementation with reusable factory helpers and unified style semantics.
+- Improved Swift concurrency diagnostics handling for skeleton manager singleton usage.
+
+### Changed (Examples)
+- Refactored `FKSkeletonExampleViewController` into a complete copy-ready showcase that covers:
+  - basic `UIView` overlay skeleton on `UIButton` / `UILabel` / `UIImageView`
+  - `UITableView` skeleton with dedicated skeleton cells
+  - `UITableView` skeleton overlay on existing cells
+  - `UICollectionView` skeleton with dedicated skeleton cells
+  - `UICollectionView` skeleton overlay on existing items
+  - gradient and pulse animation examples
+  - global style configuration
+  - custom color/radius/speed configuration
+  - excluded subviews and `UIStackView` auto skeleton
+  - manual and async loading-state control patterns
+
 ## [0.20.1] - 2026-04-20
 
 ### Added (FKUIKit FKBadge)
@@ -470,7 +516,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.20.1...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.21.0...HEAD
+[0.21.0]: https://github.com/feng-zhang0712/FKKit/compare/0.20.1...0.21.0
 [0.20.1]: https://github.com/feng-zhang0712/FKKit/compare/0.20.0...0.20.1
 [0.20.0]: https://github.com/feng-zhang0712/FKKit/compare/0.19.0...0.20.0
 [0.19.0]: https://github.com/feng-zhang0712/FKKit/compare/0.18.0...0.19.0

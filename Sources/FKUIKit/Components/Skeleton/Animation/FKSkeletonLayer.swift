@@ -48,6 +48,8 @@ final class FKSkeletonLayer: CALayer {
     masksToBounds = true
     cornerCurve = .continuous
     backgroundColor = config.baseColor.cgColor
+    borderColor = config.baseColor.withAlphaComponent(0.85).cgColor
+    borderWidth = config.borderWidth
 
     if shimmerSuppressed {
       gradientLayer.isHidden = true
@@ -56,9 +58,11 @@ final class FKSkeletonLayer: CALayer {
     }
 
     gradientLayer.isHidden = config.animationMode == .none
-    let base = config.baseColor.cgColor
-    let highlight = config.highlightColor.cgColor
-    gradientLayer.colors = [base, highlight, base]
+    let gradientPalette = config.gradientColors?.isEmpty == false
+      ? (config.gradientColors ?? [config.baseColor, config.highlightColor, config.baseColor])
+      : [config.baseColor, config.highlightColor, config.baseColor]
+    let colors = gradientPalette.map { $0.cgColor }
+    gradientLayer.colors = colors
     gradientLayer.opacity = 1
     applyDirection(config.shimmerDirection)
   }
@@ -90,7 +94,7 @@ final class FKSkeletonLayer: CALayer {
     switch config.animationMode {
     case .shimmer:
       startShimmer(duration: config.animationDuration)
-    case .breathing:
+    case .pulse, .breathing:
       startBreathing(config: config)
     case .none:
       break
@@ -102,23 +106,15 @@ final class FKSkeletonLayer: CALayer {
   }
 
   private func startShimmer(duration: TimeInterval) {
-    let animation = CABasicAnimation(keyPath: "locations")
-    animation.fromValue = [-1.0, -0.5, 0.0]
-    animation.toValue   = [1.0,  1.5,  2.0]
-    animation.duration  = duration
-    animation.repeatCount = .infinity
-    animation.isRemovedOnCompletion = false
+    let animation = FKSkeletonAnimationFactory.shimmer(duration: duration)
     gradientLayer.add(animation, forKey: "shimmer")
   }
 
   private func startBreathing(config: FKSkeletonConfiguration) {
-    let animation = CABasicAnimation(keyPath: "opacity")
-    animation.fromValue = config.breathingMinOpacity
-    animation.toValue = 1.0
-    animation.duration = max(0.15, config.animationDuration / 2)
-    animation.autoreverses = true
-    animation.repeatCount = .infinity
-    animation.isRemovedOnCompletion = false
-    gradientLayer.add(animation, forKey: "breathing")
+    let animation = FKSkeletonAnimationFactory.pulse(
+      duration: config.animationDuration,
+      minOpacity: Float(config.breathingMinOpacity)
+    )
+    gradientLayer.add(animation, forKey: "pulse")
   }
 }

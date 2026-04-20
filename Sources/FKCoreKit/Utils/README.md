@@ -33,34 +33,7 @@
 
 The module is implemented with system frameworks only (`Foundation`, `UIKit`, `Network`, `AudioToolbox`, `AVFoundation`) and does not require Objective-C bridging or third-party dependencies.
 
-Latest release: **0.21.0**
-
-### Release Highlights (0.21.0)
-- Reorganized **FKSkeleton** module into layered architecture under `Sources/FKUIKit/Components/Skeleton/`:
-  - `Core`
-  - `Animation`
-  - `Manager`
-  - `Extension`
-  - `Model`
-  - `Cell`
-  - `Preset`
-- Added automatic view-tree skeleton generation and lifecycle manager:
-  - `FKSkeletonManager.shared`
-  - `fk_showAutoSkeleton` / `fk_hideAutoSkeleton`
-  - `fk_setSkeletonLoading` / `fk_withSkeletonLoading`
-- Added per-view customization capabilities:
-  - `fk_skeletonConfigurationOverride`
-  - `fk_skeletonShape`
-  - `fk_isSkeletonExcluded`
-- Added richer style and animation options:
-  - `FKSkeletonStyle`
-  - `FKSkeletonDisplayOptions`
-  - `gradientColors`, `borderWidth`, `pulse` animation mode
-- Added release-grade Skeleton module README:
-  - `Sources/FKUIKit/Components/Skeleton/README.md`
-- Upgraded example implementation:
-  - `Examples/FKKitExamples/.../FKUIKit/Skeleton/FKSkeletonExampleViewController.swift`  
-    (covers UIView/stack/table/collection/manual state/global style/custom animation/exclusion scenarios)
+Latest release: **0.20.1**
 
 ### Release Highlights (0.20.1)
 - Introduced a production-ready `FKBadge` module layout under `Sources/FKUIKit/Components/Badge/`:
