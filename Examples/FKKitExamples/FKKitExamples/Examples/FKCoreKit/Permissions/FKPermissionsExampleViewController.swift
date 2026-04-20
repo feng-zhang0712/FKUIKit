@@ -151,8 +151,10 @@ final class FKPermissionsExampleViewController: UIViewController {
   /// Demonstrates callback-based API for projects that are not fully async/await yet.
   @objc private func demoRequestNotificationsWithClosure() {
     FKPermissions.shared.request(.notifications) { [weak self] result in
-      guard let self else { return }
-      self.handleResult(result, featureName: "Notifications")
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        self.handleResult(result, featureName: "Notifications")
+      }
     }
   }
 
