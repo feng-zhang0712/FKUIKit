@@ -29,42 +29,42 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Foundational UI components and presentation infrastructure",
       items: [
         ExampleMenuItem(
-          title: "FKBar",
+          title: "Bar",
           subtitle: "Horizontal item bar with selection callbacks",
           make: { FKBarExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKBarPresentation",
+          title: "BarPresentation",
           subtitle: "Bar + anchored panel composite",
           make: { FKBarPresentationExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKBadge",
+          title: "Badge",
           subtitle: "Dot, numeric & text badges, anchors, animations, TabBarItem",
           make: { FKBadgeExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "FKButton",
+          title: "Button",
           subtitle: "Split demos: basics, layout, interaction, appearance, loading",
           make: { FKButtonExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "FKEmptyState",
+          title: "EmptyState",
           subtitle: "Hub: scenarios, phases, sandbox, retry→fail",
           make: { FKEmptyStateExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "FKPresentation",
+          title: "Presentation",
           subtitle: "Anchored panel with mask",
           make: { FKPresentationExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKRefresh",
+          title: "Refresh",
           subtitle: "Hub: default, GIF, hosted, delegate, settings, collection, scroll view, …",
           make: { FKRefreshExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "FKSkeleton",
+          title: "Skeleton",
           subtitle: "Overlay, presets, standalone blocks, table/collection skeleton cells, unified shimmer",
           make: { FKSkeletonExampleViewController() }
         ),
@@ -75,63 +75,63 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Core non-UI capabilities (networking, logging, utilities, etc.)",
       items: [
         ExampleMenuItem(
-          title: "FKAsync",
+          title: "Async",
           subtitle: "Main/background dispatch, delay cancel, debounce, throttle, groups, executors",
           make: { FKAsyncExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKBusinessKit",
+          title: "BusinessKit",
           subtitle: "Version, tracking, i18n, lifecycle, deeplink, device info, business utils",
           make: { FKBusinessKitExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKFileManager",
+          title: "FileManager",
           subtitle: "Sandbox/file ops, read/write, resumable download, upload, cache and ZIP APIs",
           make: { FKFileManagerExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKLogger",
+          title: "Logger",
           subtitle: "5-level logs, config, file persistence, crash capture, export/clear",
           make: { FKLoggerExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKNetwork",
+          title: "Network",
           subtitle: "GET/POST, async/await, upload/download, cache, cancel, parsing",
           make: { FKNetworkExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKPermissions",
+          title: "Permissions",
           subtitle: "Unified permission status/query/request, batch, denied handling, settings jump",
           make: { FKPermissionsExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKSecurity",
+          title: "Security",
           subtitle: "Hash, AES, RSA, Base64/HEX/URL, HMAC, random, masking, wipe, anti-debug",
           make: { FKSecurityExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKStorage",
+          title: "Storage",
           subtitle: "UserDefaults, Keychain, file, memory cache, TTL, purge, async",
           make: { FKStorageExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKUtils",
+          title: "Utils",
           subtitle: "Date, regex, number, string, device, UI, collection, image and common helpers",
           make: { FKUtilsExampleViewController() }
         ),
       ]
     ),
     KitEntry(
-      title: "FKCompositeKit",
+      title: "CompositeKit",
       subtitle: "Composed modules built on FKUIKit and FKCoreKit",
       items: [
         ExampleMenuItem(
-          title: "FKFilter",
+          title: "Filter",
           subtitle: "Composite dropdown filters (top bar + panels)",
           make: { FKFilterExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "FKListKit",
+          title: "ListKit",
           subtitle: "Plugin list: refresh, paging, skeleton, empty/error",
           make: { FKListKitTableExampleViewController() }
         ),
@@ -145,7 +145,7 @@ final class ExampleMenuViewController: UITableViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "FKKit Examples"
+    title = "Kit Examples"
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.cellLayoutMarginsFollowReadableWidth = true
   }

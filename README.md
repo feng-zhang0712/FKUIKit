@@ -107,6 +107,7 @@ Module docs:
 
 Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
+- `Sources/FKUIKit/Components/EmptyState/README.md`
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
 
@@ -137,7 +138,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.22.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.23.0")
 ],
 targets: [
   .target(

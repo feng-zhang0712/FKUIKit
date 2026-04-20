@@ -14,9 +14,15 @@ public extension UIScrollView {
   func fk_showEmptyState(
     _ model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
   ) {
-    fk_applyEmptyState(model, animated: animated, actionHandler: actionHandler)
+    fk_applyEmptyState(
+      model,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
   }
 
   /// Updates the existing overlay’s content without tearing down the view (no-op if never shown).
@@ -52,19 +58,28 @@ public extension UIScrollView {
     isEmpty: Bool,
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
   ) {
     var resolved = model
     if !isEmpty {
       resolved.phase = .content
     }
-    fk_applyEmptyState(resolved, animated: animated, actionHandler: actionHandler)
+    fk_applyEmptyState(
+      resolved,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
   }
 
   /// If `automaticallyShowsWhenContentFits` is enabled on the stored model, shows the empty state when `contentSize` fits in the visible area.
   ///
   /// Call from `scrollViewDidScroll` / `layoutSubviews` when using short content empty states.
-  func fk_refreshEmptyStateAutomatically(actionHandler: FKVoidHandler? = nil) {
+  func fk_refreshEmptyStateAutomatically(
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
+  ) {
     fk_emptyStateAssertMainThread()
     guard var model = fk_emptyStateModel, model.automaticallyShowsWhenContentFits else { return }
     let visibleHeight = bounds.height - adjustedContentInset.top - adjustedContentInset.bottom
@@ -72,7 +87,13 @@ public extension UIScrollView {
     if shouldShow, model.phase == .content {
       model.phase = .empty
     }
-    fk_updateEmptyStateVisibility(isEmpty: shouldShow, model: model, animated: true, actionHandler: actionHandler)
+    fk_updateEmptyStateVisibility(
+      isEmpty: shouldShow,
+      model: model,
+      animated: true,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
   }
 
   /// Shows the overlay when `itemCount == 0`; otherwise hides it (`phase = .content`).
@@ -82,19 +103,30 @@ public extension UIScrollView {
     itemCount: Int,
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
     if itemCount > 0 {
       var hidden = model
       hidden.phase = .content
-      fk_applyEmptyState(hidden, animated: animated, actionHandler: actionHandler)
+      fk_applyEmptyState(
+        hidden,
+        animated: animated,
+        actionHandler: actionHandler,
+        viewTapHandler: viewTapHandler
+      )
     } else {
       var emptyModel = model
       if emptyModel.phase == .content {
         emptyModel.phase = .empty
       }
-      fk_applyEmptyState(emptyModel, animated: animated, actionHandler: actionHandler)
+      fk_applyEmptyState(
+        emptyModel,
+        animated: animated,
+        actionHandler: actionHandler,
+        viewTapHandler: viewTapHandler
+      )
     }
   }
 }
@@ -113,9 +145,16 @@ public extension UITableView {
   func fk_updateEmptyStateForTable(
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
   ) {
-    fk_updateEmptyState(itemCount: fk_totalRowCount(), model: model, animated: animated, actionHandler: actionHandler)
+    fk_updateEmptyState(
+      itemCount: fk_totalRowCount(),
+      model: model,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
   }
 }
 

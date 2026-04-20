@@ -16,7 +16,7 @@ public protocol FKEmptyStateViewDelegate: AnyObject {
 
 // MARK: - FKEmptyStateView
 
-/// Full-screen overlay for empty, loading, or error UI.
+/// Full-screen overlay for empty, loading, error, or custom-state UI.
 ///
 /// Prefer adding to `UIViewController.view` or a `UIScrollView` subview — **not** `UITableView.backgroundView`, so refresh controls remain visible above table backgrounds.
 ///
@@ -29,6 +29,8 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   public weak var delegate: FKEmptyStateViewDelegate?
   /// Closure invoked when the primary button is tapped; use `[weak self]` at the call site to avoid cycles.
   public var actionHandler: FKVoidHandler?
+  /// Closure invoked when users tap the placeholder background area.
+  public var viewTapHandler: FKVoidHandler?
   /// Snapshot of the last `apply(_:animated:)` input (for debugging / re-application).
   public private(set) var model: FKEmptyStateModel = FKEmptyStateModel()
 
@@ -56,6 +58,8 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   private var imageHeightConstraint: NSLayoutConstraint?
   private var containerMaxWidthConstraint: NSLayoutConstraint?
   private var keyboardBottomConstraint: NSLayoutConstraint?
+  private var containerCenterYConstraint: NSLayoutConstraint?
+  private var containerTopConstraint: NSLayoutConstraint?
 
   // MARK: Lifecycle
 
@@ -160,6 +164,12 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     let centerY = containerView.centerYAnchor.constraint(equalTo: safeAreaLayoutGuide.centerYAnchor)
     centerY.priority = UILayoutPriority(750)
     centerY.isActive = true
+    containerCenterYConstraint = centerY
+
+    let topConstraint = containerView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor)
+    topConstraint.priority = UILayoutPriority(500)
+    topConstraint.isActive = false
+    containerTopConstraint = topConstraint
 
     NSLayoutConstraint.activate([
       blockingDimmingView.topAnchor.constraint(equalTo: topAnchor),
@@ -224,12 +234,13 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       break
     case .loading:
       applyLoadingPhase(model: model)
-    case .empty, .error:
+    case .empty, .error, .custom:
       applyContentPhase(model: model)
     }
 
     keyboardDismissTap.isEnabled = model.supportsTapToDismissKeyboard
     keyboardBottomConstraint?.isActive = model.adjustsPositionForKeyboard
+    updateContentPosition(with: model)
   }
 
   // MARK: Loading layout
@@ -248,22 +259,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     loadingIndicator.color = model.loadingTintColor
     loadingIndicator.startAnimating()
 
-    var buttonConfig = UIButton.Configuration.filled()
-    buttonConfig.title = model.buttonStyle.title
-    buttonConfig.baseBackgroundColor = model.buttonStyle.backgroundColor
-    buttonConfig.baseForegroundColor = model.buttonStyle.titleColor
-    buttonConfig.cornerStyle = .fixed
-    buttonConfig.contentInsets = NSDirectionalEdgeInsets(
-      top: model.buttonStyle.contentInsets.top,
-      leading: model.buttonStyle.contentInsets.left,
-      bottom: model.buttonStyle.contentInsets.bottom,
-      trailing: model.buttonStyle.contentInsets.right
-    )
-    actionButton.configuration = buttonConfig
-    actionButton.layer.cornerRadius = model.buttonStyle.cornerRadius
-    actionButton.layer.masksToBounds = true
-    actionButton.layer.borderWidth = model.buttonStyle.borderWidth
-    actionButton.layer.borderColor = model.buttonStyle.borderColor?.cgColor
+    applyButtonStyle(model: model, title: model.buttonStyle.title)
     actionButton.isHidden = true
 
     rebuildStack(orderedViews: [loadingIndicator, titleLabel, descriptionLabel, actionButton])
@@ -300,23 +296,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       }
     }
 
-    var buttonConfig = UIButton.Configuration.filled()
-    buttonConfig.title = buttonTitle
-    buttonConfig.baseBackgroundColor = model.buttonStyle.backgroundColor
-    buttonConfig.baseForegroundColor = model.buttonStyle.titleColor
-    buttonConfig.cornerStyle = .fixed
-    buttonConfig.contentInsets = NSDirectionalEdgeInsets(
-      top: model.buttonStyle.contentInsets.top,
-      leading: model.buttonStyle.contentInsets.left,
-      bottom: model.buttonStyle.contentInsets.bottom,
-      trailing: model.buttonStyle.contentInsets.right
-    )
-    actionButton.configuration = buttonConfig
-    actionButton.layer.cornerRadius = model.buttonStyle.cornerRadius
-    actionButton.layer.masksToBounds = true
-    actionButton.layer.borderWidth = model.buttonStyle.borderWidth
-    actionButton.layer.borderColor = model.buttonStyle.borderColor?.cgColor
-    actionButton.titleLabel?.font = model.buttonStyle.font
+    applyButtonStyle(model: model, title: buttonTitle)
     actionButton.isHidden = effectiveButtonHidden
     actionButton.isEnabled = true
 
@@ -394,6 +374,50 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     gradientLayer = layer
   }
 
+  /// Applies button styling while remaining compatible with iOS 13+.
+  private func applyButtonStyle(model: FKEmptyStateModel, title: String?) {
+    if #available(iOS 15.0, *) {
+      var buttonConfig = UIButton.Configuration.filled()
+      buttonConfig.title = title
+      buttonConfig.baseBackgroundColor = model.buttonStyle.backgroundColor
+      buttonConfig.baseForegroundColor = model.buttonStyle.titleColor
+      buttonConfig.cornerStyle = .fixed
+      buttonConfig.contentInsets = NSDirectionalEdgeInsets(
+        top: model.buttonStyle.contentInsets.top,
+        leading: model.buttonStyle.contentInsets.left,
+        bottom: model.buttonStyle.contentInsets.bottom,
+        trailing: model.buttonStyle.contentInsets.right
+      )
+      actionButton.configuration = buttonConfig
+      actionButton.setTitle(nil, for: .normal)
+    } else {
+      actionButton.configuration = nil
+      actionButton.setTitle(title, for: .normal)
+      actionButton.setTitleColor(model.buttonStyle.titleColor, for: .normal)
+      actionButton.contentEdgeInsets = model.buttonStyle.contentInsets
+      actionButton.backgroundColor = model.buttonStyle.backgroundColor
+    }
+    actionButton.titleLabel?.font = model.buttonStyle.font
+    actionButton.layer.cornerRadius = model.buttonStyle.cornerRadius
+    actionButton.layer.masksToBounds = true
+    actionButton.layer.borderWidth = model.buttonStyle.borderWidth
+    actionButton.layer.borderColor = model.buttonStyle.borderColor?.cgColor
+  }
+
+  /// Updates container constraints according to alignment and offset preferences.
+  private func updateContentPosition(with model: FKEmptyStateModel) {
+    switch model.contentAlignment {
+    case .center:
+      containerCenterYConstraint?.isActive = true
+      containerCenterYConstraint?.constant = model.verticalOffset
+      containerTopConstraint?.isActive = false
+    case .top:
+      containerCenterYConstraint?.isActive = false
+      containerTopConstraint?.isActive = true
+      containerTopConstraint?.constant = model.contentInsets.top + model.verticalOffset
+    }
+  }
+
   // MARK: UIGestureRecognizerDelegate
 
   public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -410,5 +434,6 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
 
   @objc private func handleBackgroundTap() {
     endEditing(true)
+    viewTapHandler?()
   }
 }

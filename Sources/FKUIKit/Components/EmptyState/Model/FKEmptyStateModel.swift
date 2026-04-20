@@ -26,6 +26,16 @@ public enum FKEmptyStateCustomPlacement: Equatable, Sendable {
   case belowDescription
 }
 
+// MARK: - Content alignment
+
+/// Vertical placement strategy for the placeholder content inside the host view.
+public enum FKEmptyStateContentAlignment: Equatable, Sendable {
+  /// Centers content vertically in the safe area.
+  case center
+  /// Pins content to the top safe area with a configurable offset.
+  case top
+}
+
 // MARK: - Preset scenarios
 
 /// High-level product scenarios used by `FKEmptyStateModel.scenario(_:)` to pre-fill copy and `FKEmptyStatePhase`.
@@ -132,6 +142,10 @@ public struct FKEmptyStateModel {
   public var contentInsets: UIEdgeInsets
   /// Max width of the centered content column.
   public var maxContentWidth: CGFloat
+  /// Vertical content alignment in the host view.
+  public var contentAlignment: FKEmptyStateContentAlignment
+  /// Additional Y offset for the content container (positive = lower, negative = higher).
+  public var verticalOffset: CGFloat
   /// Root view background behind gradient/dimming (defaults to opaque system color).
   public var backgroundColor: UIColor
   /// When non-empty, draws a `CAGradientLayer` under subviews.
@@ -192,6 +206,8 @@ public struct FKEmptyStateModel {
     verticalSpacing: CGFloat = 10,
     contentInsets: UIEdgeInsets = UIEdgeInsets(top: 24, left: 20, bottom: 24, right: 20),
     maxContentWidth: CGFloat = 320,
+    contentAlignment: FKEmptyStateContentAlignment = .center,
+    verticalOffset: CGFloat = 0,
     /// Opaque by default so the overlay hides underlying scroll content in any orientation (set `.clear` only if you intentionally need a see-through layer).
     backgroundColor: UIColor = .systemBackground,
     gradientColors: [UIColor] = [],
@@ -229,6 +245,8 @@ public struct FKEmptyStateModel {
     self.verticalSpacing = max(0, verticalSpacing)
     self.contentInsets = contentInsets
     self.maxContentWidth = max(180, maxContentWidth)
+    self.contentAlignment = contentAlignment
+    self.verticalOffset = verticalOffset
     self.backgroundColor = backgroundColor
     self.gradientColors = gradientColors
     self.gradientStartPoint = gradientStartPoint
@@ -323,6 +341,28 @@ public extension FKEmptyStateModel {
     }
   }
 
+  /// Returns a model for a custom business state identifier.
+  ///
+  /// - Parameters:
+  ///   - identifier: Domain-specific key, such as `"maintenance"` or `"geo_restricted"`.
+  ///   - title: Primary title.
+  ///   - description: Secondary message.
+  ///   - buttonTitle: Optional action title.
+  static func customState(
+    identifier: String,
+    title: String?,
+    description: String? = nil,
+    buttonTitle: String? = nil
+  ) -> FKEmptyStateModel {
+    FKEmptyStateModel(
+      phase: .custom(identifier),
+      title: title,
+      description: description,
+      buttonStyle: FKEmptyStateButtonStyle(title: buttonTitle),
+      isButtonHidden: buttonTitle == nil
+    )
+  }
+
   /// Returns a copy with `title` replaced.
   func withTitle(_ text: String?) -> Self {
     var copy = self
@@ -356,6 +396,14 @@ public extension FKEmptyStateModel {
   func withPhase(_ phase: FKEmptyStatePhase) -> Self {
     var copy = self
     copy.phase = phase
+    return copy
+  }
+
+  /// Returns a copy with top/center alignment and vertical offset.
+  func withLayout(alignment: FKEmptyStateContentAlignment, verticalOffset: CGFloat = 0) -> Self {
+    var copy = self
+    copy.contentAlignment = alignment
+    copy.verticalOffset = verticalOffset
     return copy
   }
 }

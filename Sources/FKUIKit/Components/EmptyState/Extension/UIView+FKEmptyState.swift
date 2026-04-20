@@ -50,7 +50,8 @@ public extension UIView {
   func fk_applyEmptyState(
     _ model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
     objc_setAssociatedObject(self, &FKEmptyStateHostKeys.model, FKEmptyStateModelBox(model), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
@@ -69,6 +70,7 @@ public extension UIView {
 
     let view = fk_ensureEmptyStateView()
     view.actionHandler = actionHandler
+    view.viewTapHandler = viewTapHandler
     view.apply(model, animated: false)
 
     let display = {
@@ -85,6 +87,42 @@ public extension UIView {
 
     fk_emptyStateApplyScrollInteraction(host: self, model: model)
     bringSubviewToFront(view)
+  }
+
+  /// Applies the global template with a specific phase in one line.
+  ///
+  /// Use this API when you only need to toggle `loading/empty/error/content` quickly.
+  func fk_setEmptyState(
+    phase: FKEmptyStatePhase,
+    animated: Bool = true,
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil
+  ) {
+    var model = FKEmptyStateManager.shared.templateModel
+    model.phase = phase
+    fk_applyEmptyState(
+      model,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
+  }
+
+  /// Applies the global template and lets the caller mutate a screen-local model copy.
+  func fk_setEmptyState(
+    animated: Bool = true,
+    actionHandler: FKVoidHandler? = nil,
+    viewTapHandler: FKVoidHandler? = nil,
+    configure: (inout FKEmptyStateModel) -> Void
+  ) {
+    var model = FKEmptyStateManager.shared.templateModel
+    configure(&model)
+    fk_applyEmptyState(
+      model,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: viewTapHandler
+    )
   }
 
   /// Hides the empty-state overlay and restores `UIScrollView.isScrollEnabled` when the receiver is a scroll view.

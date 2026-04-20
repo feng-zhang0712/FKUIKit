@@ -8,6 +8,51 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.23.0] - 2026-04-20
+
+### Added (FKUIKit FKEmptyState)
+- Added a production-ready module guide at `Sources/FKUIKit/Components/EmptyState/README.md` with complete usage, advanced customization, and API reference.
+- Added protocol-oriented presentation contract `FKEmptyStatePresentable` with UIKit host support.
+- Added global template manager `FKEmptyStateManager.shared` and one-line template-driven APIs:
+  - `fk_setEmptyState(phase:animated:actionHandler:viewTapHandler:)`
+  - `fk_setEmptyState(animated:actionHandler:viewTapHandler:configure:)`
+- Added custom business-state capability in `FKEmptyStatePhase`:
+  - `.custom(String)`
+- Added helper factories in `FKEmptyStateModel`:
+  - `customState(identifier:title:description:buttonTitle:)`
+  - `withLayout(alignment:verticalOffset:)`
+- Added placeholder background tap callback support (`viewTapHandler`) alongside primary button callbacks.
+
+### Changed (FKUIKit FKEmptyState)
+- Reorganized FKEmptyState sources into layered directories while preserving public behavior:
+  - `Core`
+  - `Model`
+  - `State`
+  - `Manager`
+  - `Protocol`
+  - `Extension`
+- Improved iOS compatibility for action button styling by adding an iOS 13/14 fallback path while keeping iOS 15+ configuration support.
+- Improved Swift concurrency diagnostics handling:
+  - annotated empty-state manager/protocol boundaries with main-actor isolation
+  - reduced shared mutable state warnings in singleton/protocol usage paths
+
+### Changed (Examples)
+- Refactored EmptyState examples into focused, copy-ready screens:
+  - `Core`
+  - `UIView`
+  - `UITableView`
+  - `UICollectionView`
+  - `Business`
+- Added full-coverage demo flows for:
+  - empty/loading/error/no-network states
+  - retry/refresh callbacks
+  - global style configuration
+  - custom business state rendering
+  - manual show/hide and auto-hide after data load
+
+### Changed (Documentation)
+- Updated root `README.md` with FKEmptyState module-doc navigation and release version alignment (`0.23.0`).
+
 ## [0.22.0] - 2026-04-20
 
 ### Added (FKUIKit FKRefresh)

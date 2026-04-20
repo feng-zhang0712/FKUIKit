@@ -8,7 +8,7 @@ import Foundation
 
 // MARK: - Phase
 
-/// The four presentation modes for `FKEmptyState` overlays.
+/// The presentation modes for `FKEmptyState` overlays.
 ///
 /// Map your view-model state to a phase, then build an `FKEmptyStateModel` with the same `phase`.
 ///
@@ -22,4 +22,9 @@ public enum FKEmptyStatePhase: Equatable, Sendable {
   case empty
   /// Request or transport failure — image + copy + **required** retry (enforced in `FKEmptyStateView`).
   case error
+  /// User-defined phase for domain-specific states (maintenance, geo-restricted, onboarding, etc.).
+  ///
+  /// Use this when `.empty` or `.error` semantics are not expressive enough while still rendering
+  /// via the same `FKEmptyStateView` layout pipeline.
+  case custom(String)
 }
