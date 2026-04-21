@@ -8,6 +8,49 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.31.0] - 2026-04-21
+
+### Added (FKUIKit FKCarousel)
+- Added a new native carousel module at `Sources/FKUIKit/Components/Carousel/` with layered source structure:
+  - `Core`
+  - `Cells`
+  - `Manager`
+  - `Extension`
+- Added `FKCarousel` with reusable item modeling and configurable slide behavior:
+  - `FKCarouselItem`
+  - `FKCarouselDirection`
+  - `FKCarouselConfiguration`
+  - `FKCarouselPageControl`
+- Added built-in reusable cell support:
+  - `FKCarouselImageCell`
+  - `FKCarouselCustomViewCell`
+- Added protocol-based image loading abstraction:
+  - `FKCarouselImageLoader`
+- Added global style/template control:
+  - `FKCarouselManager.shared`
+  - `FKCarouselGlobalDefaults`
+- Added one-line integration APIs on `UIView` via `UIView+FKCarousel`.
+- Added module-level documentation at `Sources/FKUIKit/Components/Carousel/README.md`.
+
+### Added (Examples)
+- Added complete FKCarousel demo suite under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Carousel/FKCarouselExamplesHubViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Carousel/FKCarouselComprehensiveExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Carousel/FKCarouselTableExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Carousel/FKCarouselCollectionExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Carousel/Core/FKCarouselDemoSupport.swift`
+- Added `Carousel` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - automatic and manual paging with direction control
+  - page indicator and looping behavior customization
+  - local/remote image carousel presentation
+  - custom hosted view carousel usage
+  - `UITableViewCell` / `UICollectionViewCell` reuse-safe carousel patterns
+
+### Changed (Documentation)
+- Updated root `README.md` to include `Carousel` in module structure, FKUIKit component list, and FKUIKit module docs navigation.
+- Updated SPM version reference in root `README.md` from `0.30.0` to `0.31.0`.
+
 ## [0.30.0] - 2026-04-21
 
 ### Added (FKUIKit FKLoadingAnimator)
@@ -998,7 +1041,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.30.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.31.0...HEAD
+[0.31.0]: https://github.com/feng-zhang0712/FKKit/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/feng-zhang0712/FKKit/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/feng-zhang0712/FKKit/compare/0.28.0...0.29.0
 [0.28.0]: https://github.com/feng-zhang0712/FKKit/compare/0.27.0...0.28.0

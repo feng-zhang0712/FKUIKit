@@ -54,6 +54,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKCornerShadowExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "Carousel",
+          subtitle: "Hub: infinite loop, auto-play, custom content, callbacks, and list adaptation",
+          make: { FKCarouselExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "EmptyState",
           subtitle: "Hub: scenarios, phases, sandbox, retry→fail",
           make: { FKEmptyStateExamplesHubViewController() }

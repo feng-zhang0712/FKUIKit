@@ -56,6 +56,7 @@ FKKit/
 │  │     ├─ Bar/
 │  │     ├─ BarPresentation/
 │  │     ├─ Button/
+│  │     ├─ Carousel/
 │  │     ├─ CornerShadow/
 │  │     ├─ EmptyState/
 │  │     ├─ ExpandableText/
@@ -107,6 +108,7 @@ Module docs:
 - `Bar`: composable horizontal bar/tab-like navigation container.
 - `Presentation`: presentation container and positioning utilities.
 - `BarPresentation`: bar-driven presentation coordinator.
+- `Carousel`: reusable carousel component with configurable direction/looping, item models, page control support, and extension points for image/custom view rendering.
 - `EmptyState`: loading/empty/error state overlay system.
 - `ExpandableText`: configurable long-text expand/collapse component with reusable-list state cache and pre-measurement support.
 - `LoadingAnimator`: multi-style loading animation component with fullscreen/embedded modes, determinate progress ring, dynamic style switching, and protocol-based custom animator extension.
@@ -121,6 +123,7 @@ Module docs:
 
 Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
+- `Sources/FKUIKit/Components/Carousel/README.md`
 - `Sources/FKUIKit/Components/CornerShadow/README.md`
 - `Sources/FKUIKit/Components/EmptyState/README.md`
 - `Sources/FKUIKit/Components/ExpandableText/README.md`
@@ -159,7 +162,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.30.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.31.0")
 ],
 targets: [
   .target(
