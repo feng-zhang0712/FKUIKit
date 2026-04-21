@@ -1,5 +1,11 @@
 # FKKit
 
+[![iOS](https://img.shields.io/badge/iOS-13.0%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org/)
+[![SPM](https://img.shields.io/badge/SPM-supported-brightgreen.svg)](https://swift.org/package-manager/)
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-supported-ee3322.svg)](https://cocoapods.org/)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
@@ -58,6 +64,7 @@ FKKit/
 │  │     ├─ Button/
 │  │     ├─ Carousel/
 │  │     ├─ CornerShadow/
+│  │     ├─ Divider/
 │  │     ├─ EmptyState/
 │  │     ├─ ExpandableText/
 │  │     ├─ LoadingAnimator/
@@ -113,6 +120,7 @@ Module docs:
 - `BarPresentation`: bar-driven presentation coordinator.
 - `Carousel`: reusable carousel component with configurable direction/looping, item models, page control support, and extension points for image/custom view rendering.
 - `EmptyState`: loading/empty/error state overlay system.
+- `Divider`: lightweight reusable divider for UIKit/SwiftUI with dashed, gradient, and edge-pinning support.
 - `ExpandableText`: configurable long-text expand/collapse component with reusable-list state cache and pre-measurement support.
 - `LoadingAnimator`: multi-style loading animation component with fullscreen/embedded modes, determinate progress ring, dynamic style switching, and protocol-based custom animator extension.
 - `MultiPicker`: native multi-level cascading picker with built-in region data and custom provider support.
@@ -130,6 +138,7 @@ Module docs:
 - `Sources/FKUIKit/Components/Badge/README.md`
 - `Sources/FKUIKit/Components/Carousel/README.md`
 - `Sources/FKUIKit/Components/CornerShadow/README.md`
+- `Sources/FKUIKit/Components/Divider/README.md`
 - `Sources/FKUIKit/Components/EmptyState/README.md`
 - `Sources/FKUIKit/Components/ExpandableText/README.md`
 - `Sources/FKUIKit/Components/LoadingAnimator/README.md`
@@ -170,7 +179,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.34.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.35.0")
 ],
 targets: [
   .target(

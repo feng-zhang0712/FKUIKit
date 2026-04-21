@@ -59,6 +59,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKCarouselExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "Divider",
+          subtitle: "Horizontal/vertical, dashed/gradient, auto pin, IB and SwiftUI divider demos",
+          make: { FKDividerExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "EmptyState",
           subtitle: "Hub: scenarios, phases, sandbox, retry→fail",
           make: { FKEmptyStateExamplesHubViewController() }

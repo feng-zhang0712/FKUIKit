@@ -8,6 +8,40 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.35.0] - 2026-04-21
+
+### Added (FKUIKit FKDivider)
+- Added a new lightweight divider module under `Sources/FKUIKit/Components/Divider/` with UIKit and SwiftUI support:
+  - `FKDivider`
+  - `FKDividerConfiguration`
+  - `FKDividerManager`
+  - `FKDividerView` (SwiftUI adapter)
+  - `UIView.fk_addDivider(...)` convenience API
+- Added support for horizontal/vertical directions, solid/dashed styles, dash pattern customization, gradient rendering, and 1-physical-pixel adaptation.
+- Added Interface Builder support via `@IBDesignable` and `@IBInspectable` bridge properties for visual setup in XIB/Storyboard.
+- Added global default configuration support through `FKDividerManager.shared.defaultConfiguration`.
+
+### Added (Examples)
+- Added complete FKDivider examples hub at:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Divider/FKDividerExamplesHubViewController.swift`
+- Added full scenario coverage including:
+  - horizontal/vertical solid dividers
+  - pixel-perfect rendering
+  - insets, thickness, color, dashed and dash-pattern variants
+  - gradient and auto-pinned edge dividers
+  - global configuration, IB simulation, SwiftUI integration
+  - dark mode and rotation adaptation demos
+- Added `Divider` entry in `ExampleMenuViewController` under `FKUIKit`.
+
+### Added (Documentation)
+- Added module-level documentation:
+  - `Sources/FKUIKit/Components/Divider/README.md`
+
+### Changed (Documentation)
+- Moved status badges from component READMEs to the root `README.md` for unified repository-level status display.
+- Updated root `README.md` to include `Divider` in module structure, FKUIKit component list, and module docs navigation.
+- Updated SPM reference version in root `README.md` from `0.34.0` to `0.35.0`.
+
 ## [0.34.0] - 2026-04-21
 
 ### Added (FKUIKit FKToast)
@@ -1178,7 +1212,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.34.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.35.0...HEAD
+[0.35.0]: https://github.com/feng-zhang0712/FKKit/compare/0.34.0...0.35.0
 [0.34.0]: https://github.com/feng-zhang0712/FKKit/compare/0.33.1...0.34.0
 [0.33.1]: https://github.com/feng-zhang0712/FKKit/compare/0.33.0...0.33.1
 [0.33.0]: https://github.com/feng-zhang0712/FKKit/compare/0.32.0...0.33.0
