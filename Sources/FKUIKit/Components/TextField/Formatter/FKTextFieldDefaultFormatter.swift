@@ -1,9 +1,3 @@
-//
-// FKTextFieldDefaultFormatter.swift
-//
-// Default built-in formatter implementation.
-//
-
 import Foundation
 
 /// Default formatter used by `FKTextField`.
@@ -30,7 +24,16 @@ public struct FKTextFieldDefaultFormatter: FKTextFieldFormatting {
 
     if !rule.allowsEmoji, candidate.fk_containsEmoji {
       // Remove emoji scalars early to avoid surprising grouping behavior.
-      candidate = candidate.unicodeScalars.filter { !($0.properties.isEmojiPresentation || $0.properties.isEmoji) }
+      candidate = candidate.unicodeScalars.filter { scalar in
+        if scalar.properties.isEmojiPresentation {
+          return false
+        }
+        // Do not drop ASCII digits/symbols that can form keycap emoji sequences.
+        if scalar.properties.isEmoji && !scalar.isASCII {
+          return false
+        }
+        return true
+      }
         .map(String.init)
         .joined()
       removedIllegalCharacters = true
@@ -39,6 +42,43 @@ public struct FKTextFieldDefaultFormatter: FKTextFieldFormatting {
     if !rule.allowsWhitespace {
       // Strip all whitespace (including newlines) to keep raw input stable.
       let filtered = candidate.replacingOccurrences(of: "\\s+", with: "", options: .regularExpression)
+      removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
+      candidate = filtered
+    }
+
+    // Apply an additional allowlist filter before per-format normalization.
+    switch rule.allowedInput {
+    case .any:
+      break
+    case .numeric:
+      let filtered = candidate.filter(\.isNumber)
+      removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
+      candidate = filtered
+    case .alphabetic:
+      let filtered = candidate.filter(\.isLetter)
+      removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
+      candidate = filtered
+    case .alphaNumeric:
+      let filtered = candidate.filter { $0.isLetter || $0.isNumber }
+      removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
+      candidate = filtered
+    case .chinese:
+      let filtered = candidate.unicodeScalars.filter { scalar in
+        // CJK Unified Ideographs + extensions A/B/C/D/E/F + Compatibility Ideographs.
+        switch scalar.value {
+        case 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF,
+             0x20000...0x2A6DF, 0x2A700...0x2B73F, 0x2B740...0x2B81F,
+             0x2B820...0x2CEAF, 0x2CEB0...0x2EBEF:
+          return true
+        default:
+          return false
+        }
+      }.map(String.init).joined()
+      removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
+      candidate = filtered
+    case let .regex(regex):
+      let predicate = NSPredicate(format: "SELF MATCHES %@", regex)
+      let filtered = candidate.filter { predicate.evaluate(with: String($0)) }
       removedIllegalCharacters = removedIllegalCharacters || (filtered != candidate)
       candidate = filtered
     }

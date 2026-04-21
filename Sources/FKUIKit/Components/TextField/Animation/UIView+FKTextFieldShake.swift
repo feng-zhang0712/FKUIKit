@@ -1,9 +1,3 @@
-//
-// UIView+FKTextFieldShake.swift
-//
-// Lightweight shake animation for validation feedback.
-//
-
 import UIKit
 
 /// Animation utilities for FKTextField and related inputs.

@@ -1,9 +1,3 @@
-//
-// FKTextFieldProtocols.swift
-//
-// Protocol abstractions for formatter and validator.
-//
-
 import Foundation
 
 /// Formatter protocol used by `FKTextField`.

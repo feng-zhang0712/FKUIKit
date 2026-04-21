@@ -1,9 +1,3 @@
-//
-// FKTextField+Convenience.swift
-//
-// Convenience APIs for one-line setup.
-//
-
 import UIKit
 
 public extension FKTextField {

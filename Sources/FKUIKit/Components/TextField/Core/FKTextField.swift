@@ -1,9 +1,3 @@
-//
-// FKTextField.swift
-//
-// Highly customizable formatted text field.
-//
-
 import UIKit
 
 /// A native, protocol-driven, zero-dependency formatted text field for UIKit.
@@ -40,6 +34,8 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   ///
   /// The value indicates whether the password is currently visible.
   public var onPasswordVisibilityToggled: ((Bool) -> Void)?
+  /// Closure called when the built-in clear button is tapped.
+  public var onClearButtonTapped: (() -> Void)?
 
   /// Raw text value without visual separators.
   ///
@@ -61,6 +57,12 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   /// if you still need delegate callbacks in your app.
   public weak var forwardingDelegate: UITextFieldDelegate?
 
+  /// Next field used by return-key focus chaining.
+  ///
+  /// When `configuration.inputRule.returnKeyBehavior == .next`, the field will attempt to move
+  /// focus to this next field; if `nil`, it resigns first responder.
+  public weak var nextTextField: FKTextField?
+
   /// Formatter implementation used to produce raw/formatted output.
   private let formatter: FKTextFieldFormatting
   /// Validator implementation used to produce validity and optional messages.
@@ -73,10 +75,24 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   private var textState = FKTextFieldState()
   /// Built-in password visibility toggle.
   private lazy var passwordToggleButton = UIButton(type: .system)
-  /// Built-in counter label used as `rightView` when enabled.
+  /// Built-in clear button rendered in the trailing accessory container.
+  private lazy var clearButton = UIButton(type: .system)
+  /// Size constraint for clear button touch target.
+  private var clearButtonWidthConstraint: NSLayoutConstraint?
+  /// Size constraint for clear button touch target.
+  private var clearButtonHeightConstraint: NSLayoutConstraint?
+  /// Built-in counter label rendered in the trailing accessory container.
   private lazy var counterLabel = UILabel()
+  /// Internal trailing container used as `rightView` to host multiple accessories.
+  private let trailingAccessoryStack = UIStackView()
   /// Inline error label rendered below the text area when enabled.
   private lazy var inlineErrorLabel = UILabel()
+  /// Underline layer used when `configuration.decoration.mode == .underline`.
+  private let underlineLayer = CALayer()
+  /// Size constraint for password toggle button touch target.
+  private var passwordButtonWidthConstraint: NSLayoutConstraint?
+  /// Size constraint for password toggle button touch target.
+  private var passwordButtonHeightConstraint: NSLayoutConstraint?
 
   /// Creates a text field with custom formatter and validator.
   public init(
@@ -143,6 +159,17 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
     applyStateStyle()
   }
 
+  /// Connects the receiver to the next field for return-key focus chaining.
+  ///
+  /// - Parameter next: The next field to focus when return is pressed.
+  public func linkNext(_ next: FKTextField?) {
+    nextTextField = next
+    // Keep return key UX consistent with chaining intent.
+    if next != nil, configuration.inputRule.returnKeyBehavior == .system {
+      configuration.inputRule.returnKeyBehavior = .next
+    }
+  }
+
   /// Triggers a shake animation for invalid input feedback.
   ///
   /// Call this when you want an explicit visual hint (e.g. after a submit action).
@@ -163,9 +190,37 @@ private extension FKTextField {
     smartDashesType = .no
     smartQuotesType = .no
     smartInsertDeleteType = .no
-    clearButtonMode = .whileEditing
+    // Prefer the custom clear button when enabled to avoid duplicated affordances.
+    clearButtonMode = configuration.accessories.clearButton.isEnabled ? .never : .whileEditing
     setupInlineViewsIfNeeded()
+    setupDecorationLayers()
+    setupTrailingAccessoryContainer()
     applyConfiguration()
+  }
+
+  /// Installs decoration layers (e.g. underline) once.
+  func setupDecorationLayers() {
+    underlineLayer.isHidden = true
+    layer.addSublayer(underlineLayer)
+  }
+
+  /// Installs the trailing accessory container once.
+  func setupTrailingAccessoryContainer() {
+    trailingAccessoryStack.axis = .horizontal
+    trailingAccessoryStack.alignment = .center
+    trailingAccessoryStack.distribution = .fill
+    trailingAccessoryStack.spacing = configuration.accessories.spacing
+    trailingAccessoryStack.isLayoutMarginsRelativeArrangement = true
+    trailingAccessoryStack.layoutMargins = UIEdgeInsets(
+      top: 0,
+      left: configuration.accessories.horizontalPadding,
+      bottom: 0,
+      right: configuration.accessories.horizontalPadding
+    )
+    setupAccessoryButtonSizingIfNeeded()
+    // Use rightView so the system continues to provide a stable text rect.
+    rightView = trailingAccessoryStack
+    rightViewMode = .never
   }
 
   /// Applies the current configuration to UIKit properties and internal subviews.
@@ -174,9 +229,11 @@ private extension FKTextField {
     font = configuration.style.font
     textColor = configuration.style.textColor
     borderStyle = .none
+    // Prefer the custom clear button when enabled to avoid duplicated affordances.
+    clearButtonMode = configuration.accessories.clearButton.isEnabled ? .never : .whileEditing
+    updateAccessoryButtonSizing()
     applyPlaceholder()
-    configurePasswordToggleIfNeeded()
-    configureCounterIfNeeded()
+    rebuildTrailingAccessories()
     applySecureTextEntry()
     applyStateStyle()
     invalidateIntrinsicContentSize()
@@ -207,41 +264,56 @@ private extension FKTextField {
     )
   }
 
-  /// Installs or removes the built-in password toggle based on the current format type.
-  func configurePasswordToggleIfNeeded() {
-    guard case .password = configuration.inputRule.formatType else {
-      if rightView == passwordToggleButton {
-        rightView = nil
-      }
-      return
+  /// Rebuilds the trailing accessory container based on current configuration and format type.
+  func rebuildTrailingAccessories() {
+    trailingAccessoryStack.arrangedSubviews.forEach { view in
+      trailingAccessoryStack.removeArrangedSubview(view)
+      view.removeFromSuperview()
     }
-    passwordToggleButton.setTitle("Show", for: .normal)
-    passwordToggleButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
-    passwordToggleButton.addTarget(self, action: #selector(togglePasswordVisible), for: .touchUpInside)
-    rightView = passwordToggleButton
-    rightViewMode = .always
-  }
 
-  /// Installs or removes the built-in counter label based on the current configuration.
-  func configureCounterIfNeeded() {
-    guard configuration.counter.isEnabled else {
-      if rightView == counterLabel {
-        rightView = nil
-      }
-      return
+    trailingAccessoryStack.spacing = configuration.accessories.spacing
+    trailingAccessoryStack.layoutMargins = UIEdgeInsets(
+      top: 0,
+      left: configuration.accessories.horizontalPadding,
+      bottom: 0,
+      right: configuration.accessories.horizontalPadding
+    )
+
+    // Clear button.
+    if configuration.accessories.clearButton.isEnabled {
+      clearButton.setImage(
+        configuredAccessoryImage(configuration.accessories.clearButton.image ?? UIImage(systemName: "xmark.circle.fill")),
+        for: .normal
+      )
+      clearButton.accessibilityLabel = configuration.accessories.clearButton.accessibilityLabel
+      clearButton.addTarget(self, action: #selector(didTapClearButton), for: .touchUpInside)
+      trailingAccessoryStack.addArrangedSubview(clearButton)
     }
-    guard case .password = configuration.inputRule.formatType else {
-      // Preserve custom rightView when provided by the host.
-      if rightView == nil || rightView == counterLabel {
-        counterLabel.font = configuration.counter.font
-        counterLabel.textColor = configuration.counter.color
-        counterLabel.textAlignment = .right
-        counterLabel.frame = CGRect(x: 0, y: 0, width: 62, height: 20)
-        rightView = counterLabel
-        rightViewMode = .always
-      }
-      return
+
+    // Counter.
+    if configuration.counter.isEnabled {
+      counterLabel.font = configuration.counter.font
+      counterLabel.textColor = configuration.counter.color
+      counterLabel.textAlignment = .right
+      trailingAccessoryStack.addArrangedSubview(counterLabel)
     }
+
+    // Password toggle (password mode only).
+    if case .password = configuration.inputRule.formatType, configuration.accessories.passwordToggle.isEnabled {
+      passwordToggleButton.setImage(
+        configuredAccessoryImage(configuration.accessories.passwordToggle.hiddenImage ?? UIImage(systemName: "eye.slash")),
+        for: .normal
+      )
+      passwordToggleButton.accessibilityLabel = configuration.accessories.passwordToggle.accessibilityLabel
+      passwordToggleButton.addTarget(self, action: #selector(togglePasswordVisible), for: .touchUpInside)
+      trailingAccessoryStack.addArrangedSubview(passwordToggleButton)
+    }
+
+    // When there are no accessories, do not occupy `rightView`.
+    let hasAccessories = !trailingAccessoryStack.arrangedSubviews.isEmpty
+    rightViewMode = hasAccessories ? .whileEditing : .never
+    applyAccessoryTintColor(using: currentStateStyle())
+    setNeedsLayout()
   }
 
   /// Applies secure text entry based on password mode and `isPasswordVisible`.
@@ -251,28 +323,101 @@ private extension FKTextField {
       return
     }
     isSecureTextEntry = !isPasswordVisible
-    passwordToggleButton.setTitle(isPasswordVisible ? "Hide" : "Show", for: .normal)
+    let image = isPasswordVisible
+      ? (configuration.accessories.passwordToggle.visibleImage ?? UIImage(systemName: "eye"))
+      : (configuration.accessories.passwordToggle.hiddenImage ?? UIImage(systemName: "eye.slash"))
+    passwordToggleButton.setImage(configuredAccessoryImage(image), for: .normal)
   }
 
   /// Applies the appropriate visual style for normal/focused/error state.
   func applyStateStyle() {
-    let stateStyle: FKTextFieldStateStyle
-    if textState.errorMessage != nil || !validationResult.isValid {
-      stateStyle = configuration.style.error
-    } else if isFirstResponder {
-      stateStyle = configuration.style.focused
-    } else {
-      stateStyle = configuration.style.normal
+    let stateStyle = currentStateStyle()
+
+    switch configuration.decoration.mode {
+    case .border:
+      underlineLayer.isHidden = true
+      layer.cornerRadius = stateStyle.cornerRadius
+      layer.borderWidth = stateStyle.borderWidth
+      layer.borderColor = stateStyle.borderColor.cgColor
+    case let .underline(thickness, _):
+      layer.cornerRadius = stateStyle.cornerRadius
+      layer.borderWidth = 0
+      layer.borderColor = UIColor.clear.cgColor
+      underlineLayer.isHidden = false
+      underlineLayer.backgroundColor = stateStyle.borderColor.cgColor
+      underlineLayer.cornerRadius = thickness / 2
     }
 
-    layer.cornerRadius = stateStyle.cornerRadius
-    layer.borderWidth = stateStyle.borderWidth
-    layer.borderColor = stateStyle.borderColor.cgColor
     layer.backgroundColor = stateStyle.backgroundColor.cgColor
     layer.shadowColor = stateStyle.shadowColor?.cgColor
     layer.shadowOpacity = stateStyle.shadowOpacity
     layer.shadowOffset = stateStyle.shadowOffset
     layer.shadowRadius = stateStyle.shadowRadius
+    applyAccessoryTintColor(using: stateStyle)
+  }
+
+  func currentStateStyle() -> FKTextFieldStateStyle {
+    if !isEnabled {
+      return configuration.style.disabled
+    }
+    if textState.errorMessage != nil || !validationResult.isValid {
+      return configuration.style.error
+    }
+    if isFirstResponder {
+      return configuration.style.focused
+    }
+    return configuration.style.normal
+  }
+
+  func applyAccessoryTintColor(using stateStyle: FKTextFieldStateStyle) {
+    let color: UIColor
+    switch configuration.accessories.tintBehavior {
+    case .fixed:
+      color = configuration.style.placeholderColor
+    case .followsBorderState:
+      color = stateStyle.borderColor
+    }
+    clearButton.tintColor = color
+    passwordToggleButton.tintColor = color
+  }
+
+  func configuredAccessoryImage(_ image: UIImage?) -> UIImage? {
+    guard let image else { return nil }
+    let symbolConfiguration = UIImage.SymbolConfiguration(
+      pointSize: configuration.accessories.iconSize,
+      weight: .regular
+    )
+    return image.applyingSymbolConfiguration(symbolConfiguration) ?? image
+  }
+
+  func setupAccessoryButtonSizingIfNeeded() {
+    guard clearButtonWidthConstraint == nil, clearButtonHeightConstraint == nil,
+          passwordButtonWidthConstraint == nil, passwordButtonHeightConstraint == nil else {
+      return
+    }
+    clearButton.translatesAutoresizingMaskIntoConstraints = false
+    passwordToggleButton.translatesAutoresizingMaskIntoConstraints = false
+    clearButton.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
+    passwordToggleButton.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
+
+    let side = max(20, configuration.accessories.iconSize + 8)
+    clearButtonWidthConstraint = clearButton.widthAnchor.constraint(equalToConstant: side)
+    clearButtonHeightConstraint = clearButton.heightAnchor.constraint(equalToConstant: side)
+    passwordButtonWidthConstraint = passwordToggleButton.widthAnchor.constraint(equalToConstant: side)
+    passwordButtonHeightConstraint = passwordToggleButton.heightAnchor.constraint(equalToConstant: side)
+
+    clearButtonWidthConstraint?.isActive = true
+    clearButtonHeightConstraint?.isActive = true
+    passwordButtonWidthConstraint?.isActive = true
+    passwordButtonHeightConstraint?.isActive = true
+  }
+
+  func updateAccessoryButtonSizing() {
+    let side = max(20, configuration.accessories.iconSize + 8)
+    clearButtonWidthConstraint?.constant = side
+    clearButtonHeightConstraint?.constant = side
+    passwordButtonWidthConstraint?.constant = side
+    passwordButtonHeightConstraint?.constant = side
   }
 
   /// Runs the full pipeline for a candidate text:
@@ -379,10 +524,18 @@ private extension FKTextField {
     onPasswordVisibilityToggled?(isPasswordVisible)
   }
 
+  /// Clears current content when the built-in clear button is tapped.
+  @objc func didTapClearButton() {
+    onClearButtonTapped?()
+    clear()
+    if configuration.accessories.clearButton.resignsFirstResponderOnTap {
+      resignFirstResponder()
+    }
+  }
+
   /// Updates the built-in counter label text when enabled.
   func updateCounterLabel() {
     guard configuration.counter.isEnabled else { return }
-    guard rightView == counterLabel else { return }
     let maxCount = configuration.counter.maxCount ?? configuration.inputRule.maxLength
     if let maxCount {
       counterLabel.text = "\(textState.rawText.count)/\(max(0, maxCount))"
@@ -418,6 +571,16 @@ extension FKTextField {
   /// Lays out the inline error label under the text area when enabled.
   public override func layoutSubviews() {
     super.layoutSubviews()
+
+    // Underline frame depends on bounds and is orthogonal to inline messaging.
+    if case let .underline(thickness, insets) = configuration.decoration.mode {
+      let height = max(1, thickness)
+      let y = bounds.height - height - max(0, insets.bottom)
+      let x = max(0, insets.left)
+      let width = max(0, bounds.width - x - max(0, insets.right))
+      underlineLayer.frame = CGRect(x: x, y: y, width: width, height: height)
+    }
+
     guard configuration.inlineMessage.showsErrorMessage, !inlineErrorLabel.isHidden else { return }
     let baseHeight = configuration.layout.textAreaHeight
     let y = baseHeight + configuration.layout.inlineMessageSpacing
@@ -483,10 +646,23 @@ extension FKTextField: UITextFieldDelegate {
 
   /// Handles return key and optionally dismisses keyboard.
   public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-    if configuration.inputRule.autoDismissKeyboardOnComplete {
+    switch configuration.inputRule.returnKeyBehavior {
+    case .system:
+      if configuration.inputRule.autoDismissKeyboardOnComplete {
+        textField.resignFirstResponder()
+      }
+      return forwardingDelegate?.textFieldShouldReturn?(textField) ?? true
+    case .dismiss:
       textField.resignFirstResponder()
+      return true
+    case .next:
+      if let nextTextField {
+        nextTextField.becomeFirstResponder()
+      } else {
+        textField.resignFirstResponder()
+      }
+      return true
     }
-    return forwardingDelegate?.textFieldShouldReturn?(textField) ?? true
   }
 
   /// Forwards `textFieldShouldBeginEditing` if provided.
@@ -497,6 +673,62 @@ extension FKTextField: UITextFieldDelegate {
   /// Forwards `textFieldDidBeginEditing` if provided.
   public func textFieldDidBeginEditing(_ textField: UITextField) {
     forwardingDelegate?.textFieldDidBeginEditing?(textField)
+  }
+}
+
+extension FKTextField {
+  public override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+    if action == #selector(paste(_:)) {
+      switch configuration.inputRule.pastePolicy {
+      case .allow, .allowIfValid:
+        return true
+      case .forbid:
+        return false
+      }
+    }
+    return super.canPerformAction(action, withSender: sender)
+  }
+
+  public override func paste(_ sender: Any?) {
+    guard configuration.inputRule.pastePolicy != .forbid else { return }
+    guard let pasted = UIPasteboard.general.string else { return }
+
+    // Respect IME composition.
+    if markedTextRange != nil {
+      super.paste(sender)
+      return
+    }
+
+    let current = text ?? ""
+    let selectionRange: NSRange
+    if let selectedTextRange,
+       let start = position(from: beginningOfDocument, offset: offset(from: beginningOfDocument, to: selectedTextRange.start)),
+       let end = position(from: beginningOfDocument, offset: offset(from: beginningOfDocument, to: selectedTextRange.end)),
+       let range = textRange(from: start, to: end) {
+      let location = offset(from: beginningOfDocument, to: range.start)
+      let length = offset(from: range.start, to: range.end)
+      selectionRange = NSRange(location: location, length: length)
+    } else {
+      selectionRange = NSRange(location: current.count, length: 0)
+    }
+
+    guard let r = Range(selectionRange, in: current) else { return }
+    let candidate = current.replacingCharacters(in: r, with: pasted)
+
+    if configuration.inputRule.pastePolicy == .allowIfValid {
+      let preview = formatter.format(text: candidate, rule: configuration.inputRule)
+      let previewValidation = validator.validate(rawText: preview.rawText, formattedText: preview.formattedText, rule: configuration.inputRule)
+      if !previewValidation.isValid, !preview.rawText.isEmpty {
+        fk_shake(
+          amplitude: configuration.validationFeedback.shakeAmplitude,
+          shakes: max(2, configuration.validationFeedback.shakeCount),
+          duration: max(0.2, configuration.validationFeedback.shakeDuration)
+        )
+        return
+      }
+    }
+
+    processIncomingText(candidate)
   }
 }
 

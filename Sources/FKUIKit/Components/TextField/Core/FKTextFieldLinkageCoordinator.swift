@@ -1,9 +1,3 @@
-//
-// FKTextFieldLinkageCoordinator.swift
-//
-// Multi-text-field linkage coordinator (OTP style).
-//
-
 import UIKit
 
 /// Coordinates multiple `FKTextField` instances for OTP-like flows.

@@ -1,9 +1,3 @@
-//
-// FKTextFieldFormatType.swift
-//
-// Built-in formatting and input-limit types for FKTextField.
-//
-
 import Foundation
 import UIKit
 

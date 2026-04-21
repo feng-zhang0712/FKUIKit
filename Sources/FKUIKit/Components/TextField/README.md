@@ -29,17 +29,19 @@
 - [Notes](#notes)
 - [License](#license)
 
+This document is organized from quick understanding to hands-on integration. If you are new to `FKTextField`, start with **Overview** and **Features**, then jump to **Basic Usage** for copy-ready examples. For production integration, review **Advanced Usage**, **Best Practices**, and **Performance Optimization**.
+
 ## Overview
-`FKTextField` is a highly customizable formatted input component built as a native `UITextField` subclass.
+`FKTextField` is a production-ready formatted input component implemented as a native `UITextField` subclass.
 
-It is designed for production iOS apps and open-source UI libraries that require:
+It is designed for iOS apps and UI libraries that need:
 - zero third-party dependencies,
-- protocol-oriented and testable architecture,
-- one-line formatter configuration,
-- realtime input filtering and validation,
-- reusable-list friendly behavior.
+- a protocol-oriented, testable architecture,
+- one-line format rule configuration,
+- realtime filtering, formatting, and validation,
+- reusable-list friendly behavior with predictable rendering.
 
-The component is implemented with UIKit/Foundation only and supports common business input scenarios such as phone, ID card, bank card, OTP, password, amount, email, and custom regex-driven formats.
+The component is built with UIKit/Foundation only and covers common business scenarios such as phone number, ID card, bank card, OTP, password, amount, email, and custom regex-driven input.
 
 ## Features
 - Pure native Swift implementation based on UIKit/Foundation.

@@ -1,9 +1,3 @@
-//
-// FKTextFieldDefaultValidator.swift
-//
-// Default validation implementation for FKTextField.
-//
-
 import Foundation
 
 /// Default validator used by `FKTextField`.

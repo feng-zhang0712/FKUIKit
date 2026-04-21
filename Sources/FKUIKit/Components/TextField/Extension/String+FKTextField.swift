@@ -1,9 +1,3 @@
-//
-// String+FKTextField.swift
-//
-// String helpers for FKTextField formatting.
-//
-
 import Foundation
 
 /// String utilities used by `FKTextField` formatters and validators.
@@ -11,6 +5,17 @@ import Foundation
 /// These helpers are intentionally lightweight and allocation-friendly to keep input
 /// processing fast in list-heavy UIs.
 extension String {
+  /// Returns whether a scalar should be treated as an emoji character for filtering.
+  ///
+  /// This intentionally excludes ASCII scalars (e.g. digits `0-9`) because some of them
+  /// can participate in emoji sequences (keycap) but should still be accepted as text input.
+  fileprivate static func fk_isEmojiScalar(_ scalar: UnicodeScalar) -> Bool {
+    if scalar.properties.isEmojiPresentation {
+      return true
+    }
+    return scalar.properties.isEmoji && !scalar.isASCII
+  }
+
   /// Returns a string that keeps only decimal digits.
   var fk_digitsOnly: String {
     filter(\.isNumber)
@@ -28,8 +33,8 @@ extension String {
 
   /// Returns whether the string contains emoji scalar.
   var fk_containsEmoji: Bool {
-    // Emoji detection is heuristic-based on scalar properties and covers common emoji ranges.
-    unicodeScalars.contains { $0.properties.isEmojiPresentation || $0.properties.isEmoji }
+    // Keep detection aligned with filtering logic so ASCII digits are not flagged as emoji.
+    unicodeScalars.contains { Self.fk_isEmojiScalar($0) }
   }
 
   /// Returns a grouped representation.

@@ -1,9 +1,3 @@
-//
-// FKCodeTextField.swift
-//
-// One-time code input field with box/underline styles.
-//
-
 import UIKit
 
 /// A native verification-code text field that renders each character in a separate slot.

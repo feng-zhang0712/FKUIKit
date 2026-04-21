@@ -8,6 +8,32 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.35.1] - 2026-04-22
+
+### Fixed (FKUIKit FKTextField)
+- Fixed emoji filtering regression that incorrectly removed ASCII digits (`0-9`) in formatted input flows.
+- Updated emoji-sanitization logic to preserve ASCII text while still removing emoji scalars when emoji input is disabled.
+
+### Changed (FKUIKit FKTextField)
+- Added accessory icon presentation controls in `FKTextFieldAccessoryConfiguration`:
+  - `iconSize`
+  - `horizontalPadding`
+  - `tintBehavior` (`.fixed` / `.followsBorderState`)
+- Updated built-in clear/toggle accessory rendering to:
+  - support configurable icon size and touch target sizing,
+  - increase horizontal inset from field borders,
+  - optionally follow border state color in normal/focused/error/disabled states.
+
+### Changed (Examples)
+- Refined `FKTextField` example hub with clearer character-allowance descriptions for each input type.
+- Added an explicit "any-character" input demo field.
+- Improved accessory icon demo spacing/sizing and added state-tint follow-up behavior showcase.
+- Fixed `XIB / Storyboard` demo crash by removing invalid runtime `NSCoder()` instantiation path.
+
+### Changed (Documentation)
+- Updated root `README.md` package reference from `0.35.0` to `0.35.1`.
+- Updated `Sources/FKUIKit/Components/TextField/README.md` with improved ToC transition copy and overview wording.
+
 ## [0.35.0] - 2026-04-21
 
 ### Added (FKUIKit FKDivider)

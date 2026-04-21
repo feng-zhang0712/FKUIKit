@@ -1,9 +1,3 @@
-//
-// FKTextFieldConfiguration.swift
-//
-// Configuration model for FKTextField.
-//
-
 import Foundation
 import UIKit
 
@@ -15,8 +9,51 @@ import UIKit
 /// - limited (max length),
 /// - completed (fixed-length modes).
 public struct FKTextFieldInputRule {
+  /// Describes an allowlist filter applied before formatting.
+  ///
+  /// This is useful for simple constraints (numbers/letters/Chinese/alphanumeric) without
+  /// needing a dedicated `formatType`.
+  public enum AllowedInput: Sendable, Equatable {
+    /// Allows any characters (subject to other rule flags like whitespace/emoji).
+    case any
+    /// Allows digits only.
+    case numeric
+    /// Allows letters only.
+    case alphabetic
+    /// Allows Chinese characters only (CJK Unified Ideographs + common extensions).
+    case chinese
+    /// Allows letters and digits only.
+    case alphaNumeric
+    /// Allows characters that match the provided *single-character* regex.
+    ///
+    /// The regex is evaluated per-character, so it should match a single character.
+    case regex(String)
+  }
+
+  /// Paste policy for the field.
+  public enum PastePolicy: Sendable, Equatable {
+    /// Allows paste as-is (input will still be filtered/formatted by the pipeline).
+    case allow
+    /// Disables paste completely.
+    case forbid
+    /// Allows paste only if the pasted content becomes valid after filtering/formatting.
+    case allowIfValid
+  }
+
+  /// Return key behavior.
+  public enum ReturnKeyBehavior: Sendable, Equatable {
+    /// Uses UIKit default behavior.
+    case system
+    /// Moves focus to the next configured field if available; otherwise dismisses.
+    case next
+    /// Always dismisses keyboard on return.
+    case dismiss
+  }
+
   /// Built-in format type.
   public var formatType: FKTextFieldFormatType
+  /// Additional allowlist filter applied before formatting.
+  public var allowedInput: AllowedInput
   /// Maximum raw text length override.
   ///
   /// If provided, this is applied on the raw value (without separators).
@@ -45,19 +82,27 @@ public struct FKTextFieldInputRule {
   ///
   /// This can mitigate extremely high-frequency input events in certain environments.
   public var minimumInputInterval: TimeInterval
+  /// Paste policy.
+  public var pastePolicy: PastePolicy
+  /// Return key behavior.
+  public var returnKeyBehavior: ReturnKeyBehavior
 
   /// Creates an input rule.
   public init(
     formatType: FKTextFieldFormatType,
+    allowedInput: AllowedInput = .any,
     maxLength: Int? = nil,
     allowsWhitespace: Bool = false,
     allowsEmoji: Bool = false,
     allowsSpecialCharacters: Bool = false,
     autoDismissKeyboardOnComplete: Bool = false,
     debounceInterval: TimeInterval = 0,
-    minimumInputInterval: TimeInterval = 0
+    minimumInputInterval: TimeInterval = 0,
+    pastePolicy: PastePolicy = .allow,
+    returnKeyBehavior: ReturnKeyBehavior = .system
   ) {
     self.formatType = formatType
+    self.allowedInput = allowedInput
     self.maxLength = maxLength
     self.allowsWhitespace = allowsWhitespace
     self.allowsEmoji = allowsEmoji
@@ -65,6 +110,8 @@ public struct FKTextFieldInputRule {
     self.autoDismissKeyboardOnComplete = autoDismissKeyboardOnComplete
     self.debounceInterval = max(0, debounceInterval)
     self.minimumInputInterval = max(0, minimumInputInterval)
+    self.pastePolicy = pastePolicy
+    self.returnKeyBehavior = returnKeyBehavior
   }
 }
 
@@ -93,6 +140,10 @@ public struct FKTextFieldConfiguration {
   ///
   /// Controls animations such as shake when validation becomes invalid.
   public var validationFeedback: FKTextFieldValidationFeedbackConfiguration
+  /// Decoration configuration (border vs underline).
+  public var decoration: FKTextFieldDecorationConfiguration
+  /// Accessory configuration (clear / password toggle).
+  public var accessories: FKTextFieldAccessoryConfiguration
   /// Optional attributed placeholder that has highest priority.
   ///
   /// When non-`nil`, this value overrides `placeholder` and placeholder style properties.
@@ -108,6 +159,8 @@ public struct FKTextFieldConfiguration {
     inlineMessage: FKTextFieldInlineMessageConfiguration = FKTextFieldInlineMessageConfiguration(),
     counter: FKTextFieldCounterConfiguration = FKTextFieldCounterConfiguration(),
     validationFeedback: FKTextFieldValidationFeedbackConfiguration = FKTextFieldValidationFeedbackConfiguration(),
+    decoration: FKTextFieldDecorationConfiguration = FKTextFieldDecorationConfiguration(),
+    accessories: FKTextFieldAccessoryConfiguration = FKTextFieldAccessoryConfiguration(),
     attributedPlaceholder: NSAttributedString? = nil,
     placeholder: String? = nil
   ) {
@@ -117,6 +170,8 @@ public struct FKTextFieldConfiguration {
     self.inlineMessage = inlineMessage
     self.counter = counter
     self.validationFeedback = validationFeedback
+    self.decoration = decoration
+    self.accessories = accessories
     self.attributedPlaceholder = attributedPlaceholder
     self.placeholder = placeholder
   }

@@ -1,9 +1,3 @@
-//
-// FKTextFieldStyle.swift
-//
-// Visual style descriptors for FKTextField.
-//
-
 import UIKit
 
 /// Visual style for a specific `FKTextField` state.
@@ -71,6 +65,8 @@ public struct FKTextFieldStyle {
   public var focused: FKTextFieldStateStyle
   /// Style used in invalid/error state.
   public var error: FKTextFieldStateStyle
+  /// Style used when the field is disabled (`isEnabled == false`).
+  public var disabled: FKTextFieldStateStyle
   /// Text color.
   public var textColor: UIColor
   /// Text font.
@@ -85,6 +81,7 @@ public struct FKTextFieldStyle {
     normal: FKTextFieldStateStyle,
     focused: FKTextFieldStateStyle,
     error: FKTextFieldStateStyle,
+    disabled: FKTextFieldStateStyle,
     textColor: UIColor = .label,
     font: UIFont = .systemFont(ofSize: 16),
     placeholderColor: UIColor = .secondaryLabel,
@@ -93,6 +90,7 @@ public struct FKTextFieldStyle {
     self.normal = normal
     self.focused = focused
     self.error = error
+    self.disabled = disabled
     self.textColor = textColor
     self.font = font
     self.placeholderColor = placeholderColor
@@ -109,7 +107,17 @@ public extension FKTextFieldStyle {
     FKTextFieldStyle(
       normal: FKTextFieldStateStyle(borderColor: .separator),
       focused: FKTextFieldStateStyle(borderColor: .systemBlue),
-      error: FKTextFieldStateStyle(borderColor: .systemRed)
+      error: FKTextFieldStateStyle(borderColor: .systemRed),
+      disabled: FKTextFieldStateStyle(
+        borderColor: .systemGray4,
+        borderWidth: 1,
+        cornerRadius: 10,
+        backgroundColor: .tertiarySystemBackground
+      ),
+      textColor: .label,
+      font: .systemFont(ofSize: 16),
+      placeholderColor: .secondaryLabel,
+      placeholderFont: .systemFont(ofSize: 16)
     )
   }
 }

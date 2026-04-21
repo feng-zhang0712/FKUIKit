@@ -1,9 +1,3 @@
-//
-// FKCountTextView.swift
-//
-// TextView with placeholder + realtime counter + max length enforcement.
-//
-
 import UIKit
 
 /// A native `UITextView` subclass with built-in:

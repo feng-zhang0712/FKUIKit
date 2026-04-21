@@ -1,9 +1,3 @@
-//
-// FKTextFieldManager.swift
-//
-// Global style manager for FKTextField.
-//
-
 import UIKit
 
 /// Global manager for default `FKTextField` configuration.

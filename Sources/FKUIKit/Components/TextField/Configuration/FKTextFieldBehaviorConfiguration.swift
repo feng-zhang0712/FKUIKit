@@ -1,9 +1,3 @@
-//
-// FKTextFieldBehaviorConfiguration.swift
-//
-// Behavior and layout configurations for FKTextField.
-//
-
 import UIKit
 
 /// Layout configuration for `FKTextField`.
@@ -118,6 +112,121 @@ public struct FKTextFieldValidationFeedbackConfiguration {
     self.shakeAmplitude = shakeAmplitude
     self.shakeCount = shakeCount
     self.shakeDuration = shakeDuration
+  }
+}
+
+/// Controls how the input surface is decorated (border vs underline).
+public struct FKTextFieldDecorationConfiguration: @unchecked Sendable {
+  /// Presentation mode for the input surface.
+  public enum Mode: @unchecked Sendable, Equatable {
+    /// Uses `CALayer` border and corner radius.
+    case border
+    /// Renders a bottom underline.
+    ///
+    /// The underline color can be driven by state styles, and the thickness/insets
+    /// are controlled by the associated values.
+    case underline(thickness: CGFloat, insets: UIEdgeInsets)
+  }
+
+  /// Decoration mode.
+  public var mode: Mode
+
+  /// Creates a decoration configuration.
+  public init(
+    mode: Mode = .border
+  ) {
+    self.mode = mode
+  }
+}
+
+/// Controls the built-in clear button behavior.
+public struct FKTextFieldClearButtonConfiguration: @unchecked Sendable {
+  /// Whether the clear button is enabled.
+  public var isEnabled: Bool
+  /// Image used by the clear button. When `nil`, a default SF Symbol is used.
+  public var image: UIImage?
+  /// Accessibility label for the clear button.
+  public var accessibilityLabel: String
+  /// Whether tapping the clear button resigns first responder.
+  public var resignsFirstResponderOnTap: Bool
+
+  /// Creates a clear button configuration.
+  public init(
+    isEnabled: Bool = true,
+    image: UIImage? = nil,
+    accessibilityLabel: String = "Clear text",
+    resignsFirstResponderOnTap: Bool = false
+  ) {
+    self.isEnabled = isEnabled
+    self.image = image
+    self.accessibilityLabel = accessibilityLabel
+    self.resignsFirstResponderOnTap = resignsFirstResponderOnTap
+  }
+}
+
+/// Controls the built-in password toggle button behavior.
+public struct FKTextFieldPasswordToggleConfiguration: @unchecked Sendable {
+  /// Whether the toggle button is enabled in password mode.
+  public var isEnabled: Bool
+  /// Image used when password is hidden. When `nil`, a default SF Symbol is used.
+  public var hiddenImage: UIImage?
+  /// Image used when password is visible. When `nil`, a default SF Symbol is used.
+  public var visibleImage: UIImage?
+  /// Accessibility label for the toggle.
+  public var accessibilityLabel: String
+
+  /// Creates a password toggle configuration.
+  public init(
+    isEnabled: Bool = true,
+    hiddenImage: UIImage? = nil,
+    visibleImage: UIImage? = nil,
+    accessibilityLabel: String = "Toggle password visibility"
+  ) {
+    self.isEnabled = isEnabled
+    self.hiddenImage = hiddenImage
+    self.visibleImage = visibleImage
+    self.accessibilityLabel = accessibilityLabel
+  }
+}
+
+/// Controls trailing accessory views (clear / counter / password toggle).
+public enum FKTextFieldAccessoryTintBehavior: Sendable, Equatable {
+  /// Accessory icons use `style.placeholderColor` and do not react to border state.
+  case fixed
+  /// Accessory icons follow the current border color of normal/focused/error/disabled state.
+  case followsBorderState
+}
+
+/// Controls trailing accessory views (clear / counter / password toggle).
+public struct FKTextFieldAccessoryConfiguration: @unchecked Sendable {
+  /// Clear button configuration.
+  public var clearButton: FKTextFieldClearButtonConfiguration
+  /// Password toggle configuration.
+  public var passwordToggle: FKTextFieldPasswordToggleConfiguration
+  /// Spacing between accessory items.
+  public var spacing: CGFloat
+  /// Base icon size for built-in clear/toggle symbols.
+  public var iconSize: CGFloat
+  /// Extra horizontal padding between accessory group and field border.
+  public var horizontalPadding: CGFloat
+  /// Icon tint behavior against state changes.
+  public var tintBehavior: FKTextFieldAccessoryTintBehavior
+
+  /// Creates an accessory configuration.
+  public init(
+    clearButton: FKTextFieldClearButtonConfiguration = FKTextFieldClearButtonConfiguration(),
+    passwordToggle: FKTextFieldPasswordToggleConfiguration = FKTextFieldPasswordToggleConfiguration(),
+    spacing: CGFloat = 6,
+    iconSize: CGFloat = 14,
+    horizontalPadding: CGFloat = 8,
+    tintBehavior: FKTextFieldAccessoryTintBehavior = .fixed
+  ) {
+    self.clearButton = clearButton
+    self.passwordToggle = passwordToggle
+    self.spacing = max(0, spacing)
+    self.iconSize = max(10, iconSize)
+    self.horizontalPadding = max(0, horizontalPadding)
+    self.tintBehavior = tintBehavior
   }
 }
 
