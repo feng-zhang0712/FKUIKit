@@ -66,6 +66,7 @@ FKKit/
 │  │     ├─ Refresh/
 │  │     ├─ Skeleton/
 │  │     ├─ StarRating/
+│  │     ├─ Sticky/
 │  │     ├─ SwipeAction/
 │  │     └─ TextField/
 │  └─ FKCompositeKit/
@@ -118,6 +119,7 @@ Module docs:
 - `Badge`: flexible badge display for views, bar items, and tab items.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 - `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
+- `Sticky`: high-performance sticky coordinator for generic views and list section headers with multi-target chaining, lifecycle callbacks, and safe-area-aware offsets.
 - `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
 - `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
@@ -132,6 +134,7 @@ Module docs:
 - `Sources/FKUIKit/Components/Refresh/README.md`
 - `Sources/FKUIKit/Components/Skeleton/README.md`
 - `Sources/FKUIKit/Components/StarRating/README.md`
+- `Sources/FKUIKit/Components/Sticky/README.md`
 - `Sources/FKUIKit/Components/SwipeAction/README.md`
 - `Sources/FKUIKit/Components/TextField/README.md`
 
@@ -162,7 +165,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.31.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.32.0")
 ],
 targets: [
   .target(

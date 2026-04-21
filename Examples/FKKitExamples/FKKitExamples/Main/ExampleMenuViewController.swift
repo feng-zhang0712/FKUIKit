@@ -99,6 +99,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKStarRatingExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "Sticky",
+          subtitle: "Hub: multi-target sticky, table/collection headers, callbacks, offsets, and runtime control",
+          make: { FKStickyExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "SwipeAction",
           subtitle: "Native left/right multi-button swipe actions for table and collection lists",
           make: { FKSwipeActionExamplesHubViewController() }

@@ -8,6 +8,51 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.32.0] - 2026-04-21
+
+### Added (FKUIKit FKSticky)
+- Added a new pure-native sticky module at `Sources/FKUIKit/Components/Sticky/` with layered source structure:
+  - `Core`
+  - `Protocol`
+  - `Extension`
+  - `Manager`
+- Added `FKStickyEngine` with protocol-oriented sticky orchestration for `UIScrollView`-based containers.
+- Added sticky models and state contracts:
+  - `FKStickyTarget`
+  - `FKStickyStyle`
+  - `FKStickyState`
+  - `FKStickyConfiguration`
+- Added global defaults and manager entry:
+  - `FKStickyManager.shared`
+  - `FKStickyGlobalDefaults`
+- Added one-line scroll integration APIs on `UIScrollView`:
+  - `fk_stickyEngine`
+  - `fk_handleStickyScroll()`
+  - `fk_reloadStickyLayout()`
+  - `fk_resetSticky()`
+- Added module-level documentation at `Sources/FKUIKit/Components/Sticky/README.md`.
+
+### Added (Examples)
+- Added complete FKSticky demo suite under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Sticky/FKStickyExamplesHubViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Sticky/FKStickyComprehensiveExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Sticky/FKStickyTableExampleViewController.swift`
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Sticky/FKStickyCollectionExampleViewController.swift`
+- Added `Sticky` entry in `ExampleMenuViewController` under `FKUIKit`.
+- Example coverage includes:
+  - multi-target chained sticky transitions for generic views
+  - sticky lifecycle callbacks (`willSticky`, `didSticky`, `didUnsticky`)
+  - dynamic sticky enable/disable at runtime
+  - `UITableView` grouped header sticky adaptation
+  - `UICollectionView` section header sticky adaptation
+
+### Fixed (FKUIKit FKSticky)
+- Fixed Swift concurrency diagnostic in associated-object key storage by isolating sticky association keys on the main actor.
+
+### Changed (Documentation)
+- Updated root `README.md` to include `Sticky` in module structure, FKUIKit component list, and FKUIKit module docs navigation.
+- Updated SPM version reference in root `README.md` from `0.31.0` to `0.32.0`.
+
 ## [0.31.0] - 2026-04-21
 
 ### Added (FKUIKit FKCarousel)
@@ -1041,7 +1086,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.31.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.32.0...HEAD
+[0.32.0]: https://github.com/feng-zhang0712/FKKit/compare/0.31.0...0.32.0
 [0.31.0]: https://github.com/feng-zhang0712/FKKit/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/feng-zhang0712/FKKit/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/feng-zhang0712/FKKit/compare/0.28.0...0.29.0
