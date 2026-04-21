@@ -1,144 +1,228 @@
 # FKKit
 
-A modular UIKit component library for iOS.
+[![iOS](https://img.shields.io/badge/iOS-13.0%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org/)
+[![SPM](https://img.shields.io/badge/SPM-supported-brightgreen.svg)](https://swift.org/package-manager/)
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-supported-ee3322.svg)](https://cocoapods.org/)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
-- `FKUIKit`: foundational UI components and presentation infrastructure
-- `FKCompositeKit`: composed UI modules built on top of `FKUIKit` (filters, networking helpers, etc.)
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Module Structure](#module-structure)
+- [Core Components](#core-components)
+  - [FKCoreKit](#fkcorekit)
+  - [FKUIKit](#fkuikit)
+  - [FKCompositeKit](#fkcompositekit)
+- [Requirements](#requirements)
+- [Installation (SPM)](#installation-spm)
+- [Usage](#usage)
+- [Branching & Collaboration (Recommended)](#branching--collaboration-recommended)
+- [License](#license)
+- [Changelog](#changelog)
 
-## Requirements
+## Overview
+FKKit is a modular, pure-native Swift component library for iOS applications.  
+It is built on top of Apple system frameworks and distributed via Swift Package Manager (SPM), with no third-party runtime dependencies.
 
-- iOS 15.0+
-- Swift 6.0+
-- Xcode (build with an iOS destination; `swift build` on macOS won’t work because of UIKit)
+The repository is organized into three product modules:
+- `FKCoreKit`
+- `FKUIKit`
+- `FKCompositeKit`
 
-## Swift Package Manager
+Each module focuses on a different layer of app development, from infrastructure and utilities to UI components and composite business widgets.
 
-Repository URL:
+## Features
+- Pure Swift implementation (Swift 6 language mode in package settings).
+- No third-party dependencies.
+- Swift Package Manager first-class integration.
+- Modular architecture with clear package products.
+- Protocol-oriented design in multiple components for extensibility and testability.
+- Example project included for direct integration reference.
 
-`git@github.com:feng-zhang0712/FKKit.git`
-
-In Xcode:
-
-1. **File → Add Package Dependencies…**
-2. Paste the repository URL and pick a version rule (e.g. *Up to Next Major*).
-3. Select the products you need.
-
-### Products and imports
-
-| Product | Import | Notes |
-|---|---|---|
-| FKUIKit | `import FKUIKit` | core reusable UIKit components (`FKBar`, `FKButton`, `FKPresentation`, `FKBadge`, `FKSkeleton`, `FKEmptyState`, `FKRefresh`, …) |
-| FKCompositeKit | `import FKCompositeKit` | composite components and utilities, depends on `FKUIKit` |
-
-Dependency graph:
+## Module Structure
 
 ```text
-FKUIKit
-FKCompositeKit   → FKUIKit
+FKKit/
+├─ Package.swift
+├─ Sources/
+│  ├─ FKCoreKit/
+│  │  ├─ Async/
+│  │  ├─ BusinessKit/
+│  │  ├─ FileManager/
+│  │  ├─ Logger/
+│  │  ├─ Network/
+│  │  ├─ Permissions/
+│  │  ├─ Security/
+│  │  ├─ Storage/
+│  │  └─ Utils/
+│  ├─ FKUIKit/
+│  │  └─ Components/
+│  │     ├─ Badge/
+│  │     ├─ Bar/
+│  │     ├─ BarPresentation/
+│  │     ├─ Button/
+│  │     ├─ Carousel/
+│  │     ├─ CornerShadow/
+│  │     ├─ Divider/
+│  │     ├─ EmptyState/
+│  │     ├─ ExpandableText/
+│  │     ├─ LoadingAnimator/
+│  │     ├─ MultiPicker/
+│  │     ├─ Presentation/
+│  │     ├─ Refresh/
+│  │     ├─ Skeleton/
+│  │     ├─ StarRating/
+│  │     ├─ Sticky/
+│  │     ├─ SwipeAction/
+│  │     ├─ Toast/
+│  │     ├─ TopNotification/
+│  │     └─ TextField/
+│  └─ FKCompositeKit/
+│     └─ Components/
+│        ├─ Base/
+│        ├─ Filter/
+│        └─ ListKit/
+└─ Examples/
 ```
 
-### Local package (development)
+## Core Components
 
-Use **Add Local…** and select the repository root (the folder that contains `Package.swift`).
+### FKCoreKit
+`FKCoreKit` provides foundational capabilities used across app layers:
 
-## Quick start
+- `Network`: URLSession-based networking stack (request models, interceptors, caching, upload/download helpers).
+- `Storage`: multi-backend storage abstraction (UserDefaults, Keychain, file, memory) with Codable support.
+- `Logger`: structured logging, formatting, file persistence, and diagnostics helpers.
+- `Permissions`: unified iOS permission management and status/request flow.
+- `Security`: crypto/security utilities (hash, AES/RSA helpers, encoding, signature helpers).
+- `FileManager`: file I/O, directory utilities, and transfer-oriented helpers.
+- `Async`: concurrency utilities (queues, cancellable task wrappers, debounce/throttle helpers).
+- `BusinessKit`: app/business infrastructure (version, deeplink, lifecycle, analytics, i18n helpers).
+- `Utils`: high-frequency utility APIs for date/string/number/device/UI/collection/common operations.
 
 ### FKUIKit
+`FKUIKit` contains reusable UIKit components for modern iOS interfaces:
 
-```swift
-import UIKit
-import FKUIKit
-
-let bar = FKBar()
-var config = FKBar.Configuration.default
-config.itemSpacing = 8
-bar.setConfiguration(config)
-```
-
-### FKBadge (UIView)
-
-```swift
-import FKUIKit
-
-badgeHostView.fk_badge.setAnchor(.topTrailing)
-badgeHostView.fk_badge.showCount(12)
-```
-
-### FKSkeleton (loading placeholders)
-
-```swift
-import FKUIKit
-
-contentView.fk_showSkeleton()
-// …load data…
-contentView.fk_hideSkeleton()
-```
-
-### FKRefresh (pull to refresh & load more)
-
-```swift
-import FKUIKit
-
-tableView.fk_addPullToRefresh { /* reload */ }
-tableView.fk_addLoadMore { /* next page */ }
-// When done: tableView.fk_pullToRefresh?.endRefreshing()
-```
+- `Button`: configurable button system with style/content/loading behavior.
+- `Bar`: composable horizontal bar/tab-like navigation container.
+- `Presentation`: presentation container and positioning utilities.
+- `BarPresentation`: bar-driven presentation coordinator.
+- `Carousel`: reusable carousel component with configurable direction/looping, item models, page control support, and extension points for image/custom view rendering.
+- `EmptyState`: loading/empty/error state overlay system.
+- `Divider`: lightweight reusable divider for UIKit/SwiftUI with dashed, gradient, and edge-pinning support.
+- `ExpandableText`: configurable long-text expand/collapse component with reusable-list state cache and pre-measurement support.
+- `LoadingAnimator`: multi-style loading animation component with fullscreen/embedded modes, determinate progress ring, dynamic style switching, and protocol-based custom animator extension.
+- `MultiPicker`: native multi-level cascading picker with built-in region data and custom provider support.
+- `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
+- `Refresh`: pull-to-refresh and load-more controls.
+- `Badge`: flexible badge display for views, bar items, and tab items, with corner/center anchoring, global visibility control, and customizable animations/styles.
+- `Skeleton`: skeleton loading system for views/lists/containers with animation options.
+- `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
+- `Sticky`: high-performance sticky coordinator for generic views and list section headers with multi-target chaining, lifecycle callbacks, and safe-area-aware offsets.
+- `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
+- `Toast`: lightweight global toast/snackbar presenter with queueing, style presets, custom content, and SwiftUI hosting support.
+- `TopNotification`: lightweight global top floating notification presenter with styles, priority preemption, progress updates, custom content, and SwiftUI hosting support.
+- `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
 ### FKCompositeKit
+`FKCompositeKit` builds business-facing composite components on top of `FKCoreKit` + `FKUIKit`:
 
+- `Base`: reusable base foundation for cells and controllers.
+- `Filter`: filter bar/panel/pill and multi-layout filtering components.
+- `ListKit`: list state/pagination coordination and plugin-style list assembly.
+
+This module currently focuses on source-level composable components; add internal docs in each directory as your team standard evolves.
+
+## Requirements
+- iOS 15.0+ (as declared in `Package.swift`)
+- macOS 10.15+ (package-level declaration for compatible builds)
+- Swift toolchain with Swift 6.3 support
+
+## Installation (SPM)
+
+### Xcode
+1. Open `File` -> `Add Package Dependencies...`
+2. Enter repository URL:
+   - `https://github.com/feng-zhang0712/FKKit.git`
+3. Select one or more products:
+   - `FKCoreKit`
+   - `FKUIKit`
+   - `FKCompositeKit`
+
+### Package.swift
 ```swift
-import FKCompositeKit
-
-let filterBar = FKFilterBarPresentation()
-let filterHost = FKFilterBarHost(filterBar: filterBar)
+dependencies: [
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.36.0")
+],
+targets: [
+  .target(
+    name: "YourTarget",
+    dependencies: [
+      .product(name: "FKCoreKit", package: "FKKit"),
+      .product(name: "FKUIKit", package: "FKKit"),
+      .product(name: "FKCompositeKit", package: "FKKit")
+    ]
+  )
+]
 ```
 
-## Migration notes (from FKUIKit repo)
+## Usage
 
-- Repository has been renamed from `FKUIKit` to `FKKit`.
-- SwiftPM package name is now `FKKit`.
-- Products are consolidated to `FKUIKit` and `FKCompositeKit`.
-- Example app structure has been refactored to the new `FKKitExamples` layout.
+Import only what you need:
 
-## Recent updates (0.11.0)
+```swift
+import FKCoreKit
+import FKUIKit
+import FKCompositeKit
+```
 
-- **`FKListKit`** (in `FKCompositeKit`): composition-based list plugin (**`FKListPlugin`**) that coordinates pagination (**`FKPageManager`**), list states (**`FKListStateManager`**), refresh/load-more, skeleton, and empty/error overlays for table/collection views.
-- **Examples**: `FKListKitTableExampleViewController` under `Examples/FKKitExamples/.../ListKit/` demonstrates initial skeleton, random mock data, empty/error scenarios, and a 3-page paging flow.
+Example quick integrations:
 
-## Recent updates (0.9.1)
+```swift
+// FKCoreKit
+let isEmail = FKUtils.Regex.isValidEmail("dev@example.com")
 
-- **Shared types**: closure aliases in `Types.swift` are now prefixed (**`FKVoidHandler`**, **`FKValueHandler`**, …); **`FKBar`** / **`FKBarPresentation`** completion parameters use them.
-- **`FKBar.Item.FKButtonSpec`**: title/subtitle maps use **`FKButton.LabelAttributes`**; images use **`FKButton.ImageAttributes`**.
-- **Examples**: Bar, BarPresentation, and Presentation sample screens updated (English copy; bar specs aligned with the types above). See `CHANGELOG.md` for migration notes.
+// FKUIKit
+someView.fk_showSkeleton()
 
-## Recent updates (0.9.0)
+// FKCompositeKit
+let pageManager = FKPageManager()
+```
 
-- **`FKEmptyState`**: unified placeholders for **loading**, **empty**, and **error** (plus **content** to hide the overlay) on `UIView` / `UIScrollView`. Includes `FKEmptyStateModel`, `FKEmptyStatePhase`, preset **`FKEmptyStateScenario`**, optional custom middle view, keyboard-safe layout, and refresh-control-aware loading skip. See `Sources/FKUIKit/Components/FKEmptyState/`.
-- **Examples**: `FKEmptyStateExamplesHubViewController` and related screens under `Examples/FKKitExamples/.../EmptyState/`.
-- **Example app menu**: grouped by **FKUIKit** / **FKCompositeKit**, sorted A→Z within each section.
+For complete usage and advanced APIs, refer to each module README in `Sources/...`.
 
 ## Branching & Collaboration (Recommended)
 
-This repo follows a lightweight workflow to keep `main` stable while you iterate on new APIs/structure.
-
-Branch roles:
-
-- `main`: stable history. It only receives changes after they have been validated and merged from `develop`.
-- `develop`: the integration branch for ongoing development. All new work should start from here.
-- `feature/*`: short-lived branches for a specific feature/refactor. Create from `develop` and open a PR back to `develop`.
-- `bugfix/*`: short-lived branches for targeted bug fixes (no new features). Create from `develop` and open a PR back to `develop`.
-- `hotfix/*` (optional): very short-lived fixes that must be applied to `main` immediately. After the fix lands on `main`, also merge it back to `develop`.
-
-Collaboration tips:
-
-- Prefer small PRs focused on one goal (one feature or one refactor).
-- Keep your `feature/*` / `bugfix/*` branch up to date with `develop` before requesting a review.
-- Use clear PR titles (for example: `feat: add FKFilter chips view`, `fix: correct FKBar selection alignment`).
-
-## Versioning
-
-This project follows SemVer. See `CHANGELOG.md` and git tags for releases.
+- Use `develop` as the integration branch.
+- Create feature branches from `develop` (for example: `feature/skeleton-auto-mode`).
+- Keep commits focused and use clear conventional-style messages.
+- Follow this commit format:
+  - `<type>(<scope>): <subject>`
+  - Example: `feat(ui): add auto skeleton exclusion options`
+- Recommended commit types:
+  - `feat`: new feature
+  - `fix`: bug fix
+  - `refactor`: internal refactor without behavior change
+  - `perf`: performance improvement
+  - `docs`: documentation updates
+  - `test`: tests added or updated
+  - `build`: build/dependency/tooling changes
+  - `chore`: maintenance tasks
+- Commit message rules:
+  - Use present tense and imperative mood (`add`, `fix`, `refactor`).
+  - Keep the subject concise (recommended <= 72 characters).
+  - Reference module scope whenever possible (for example: `core`, `ui`, `composite`, `examples`, `docs`).
+  - Add a body when context is needed (why, impact, migration notes).
+- Open pull requests into `develop` with:
+  - change summary
+  - test/verification notes
+  - migration notes when APIs change
+- Tag stable releases with semantic versions (for example: `0.25.0`), then merge release work back into `develop`.
 
 ## License
+This repository is licensed under the MIT License.  
+See [`LICENSE`](LICENSE) for details.
 
-[MIT License](LICENSE)
+## Changelog
+Release history and migration details are maintained in [`CHANGELOG.md`](CHANGELOG.md).
