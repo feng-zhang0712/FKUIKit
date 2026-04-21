@@ -1,8 +1,37 @@
 # FKBadge
 
-## Overview
-
 `FKBadge` is a native Swift badge component for UIKit apps. It provides red dots, numeric badges, and text badges with flexible styling, animation, and positioning, while keeping your original view hierarchy and constraints intact.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Supported Views](#supported-views)
+- [Badge Types](#badge-types)
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [Swift Package Manager](#swift-package-manager)
+- [Basic Usage](#basic-usage)
+  - [Red Dot Badge](#red-dot-badge)
+  - [Number Badge](#number-badge)
+  - [Text Badge](#text-badge)
+  - [TabBar Item Badge](#tabbar-item-badge)
+  - [Navigation Bar Item Badge](#navigation-bar-item-badge)
+- [Advanced Usage](#advanced-usage)
+  - [Custom Style (Color, Font, Corner, Border)](#custom-style-color-font-corner-border)
+  - [Position & Offset Adjustment](#position--offset-adjustment)
+  - [Animation Effects](#animation-effects)
+  - [Global Style Configuration](#global-style-configuration)
+  - [Update/Remove/Hide Badge](#updateremovehide-badge)
+- [API Reference](#api-reference)
+  - [Core Types](#core-types)
+  - [Main APIs](#main-apis)
+  - [`FKBadgeController` Highlights](#fkbadgecontroller-highlights)
+- [Best Practices](#best-practices)
+- [Notes](#notes)
+- [License](#license)
+
+## Overview
 
 The component is designed for large-scale iOS projects:
 

@@ -1,7 +1,3 @@
-//
-// FKBadgeUIViewSwizzling.swift
-//
-
 import UIKit
 import ObjectiveC
 
@@ -11,6 +7,8 @@ enum FKBadgeUIViewSwizzling {
   nonisolated(unsafe) private static var didInstall = false
 
   /// Re-anchors badges when any view moves in the hierarchy (add/remove superview, etc.).
+  ///
+  /// Safe to call repeatedly; installation is guarded by `didInstall`.
   static func installIfNeeded() {
     guard !didInstall else { return }
     didInstall = true
@@ -23,6 +21,7 @@ enum FKBadgeUIViewSwizzling {
       let methodB = class_getInstanceMethod(UIView.self, b)
     else { return }
 
+    // Exchange implementations so UIKit callback transparently triggers badge re-attachment logic.
     method_exchangeImplementations(methodA, methodB)
   }
 }
@@ -30,6 +29,7 @@ enum FKBadgeUIViewSwizzling {
 extension UIView {
   /// Swapped with `didMoveToSuperview`; forwards to the original implementation, then notifies badge attachments.
   @objc func fk_badge_replacement_didMoveToSuperview() {
+    // After swizzle, calling replacement invokes original implementation.
     fk_badge_replacement_didMoveToSuperview()
     FKBadgeController.handleTargetViewMoved(self)
   }
