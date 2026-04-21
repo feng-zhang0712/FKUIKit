@@ -8,6 +8,39 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.36.0] - 2026-04-22
+
+### Added (FKUIKit FKTopNotification)
+- Added a new lightweight global top floating notification module under `Sources/FKUIKit/Components/TopNotification/` with pure Swift UIKit implementation and SwiftUI interoperability:
+  - `FKTopNotification`
+  - `FKTopNotificationHandle`
+  - `FKTopNotificationConfiguration`
+  - `FKTopNotificationStyle` (`normal` / `success` / `error` / `warning` / `info`)
+  - `FKTopNotificationPriority` with preemption support
+  - `FKTopNotificationAction`
+  - progress notification support with real-time updates
+  - optional sound support on presentation
+- Added serialized queue presentation to prevent stacked overlays, plus high-priority preemption (interrupt and present first).
+- Added safe-area / notch / Dynamic Island aware top placement behavior:
+  - when a navigation bar is visible, notification is pinned below the navigation bar
+  - otherwise, notification is pinned below the top safe area inset
+
+### Added (Examples)
+- Added a complete FKTopNotification demo hub at:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/TopNotification/FKTopNotificationExamplesHubViewController.swift`
+- Added full scenario coverage including:
+  - five preset styles, subtitle, action button, custom color/icon
+  - custom UIView and SwiftUI content hosting
+  - progress notification with live updates
+  - queueing behavior and priority preemption
+  - swipe-to-dismiss, manual dismiss, custom duration, sound
+  - global configuration, dark mode, rotation, notch/Dynamic Island safe area
+- Added `TopNotification` entry in `ExampleMenuViewController` under `FKUIKit`.
+
+### Added (Documentation)
+- Added module-level documentation:
+  - `Sources/FKUIKit/Components/TopNotification/README.md`
+
 ## [0.35.1] - 2026-04-22
 
 ### Fixed (FKUIKit FKTextField)
@@ -1238,7 +1271,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.35.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.36.0...HEAD
+[0.36.0]: https://github.com/feng-zhang0712/FKKit/compare/0.35.1...0.36.0
+[0.35.1]: https://github.com/feng-zhang0712/FKKit/compare/0.35.0...0.35.1
 [0.35.0]: https://github.com/feng-zhang0712/FKKit/compare/0.34.0...0.35.0
 [0.34.0]: https://github.com/feng-zhang0712/FKKit/compare/0.33.1...0.34.0
 [0.33.1]: https://github.com/feng-zhang0712/FKKit/compare/0.33.0...0.33.1

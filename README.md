@@ -76,6 +76,7 @@ FKKit/
 │  │     ├─ Sticky/
 │  │     ├─ SwipeAction/
 │  │     ├─ Toast/
+│  │     ├─ TopNotification/
 │  │     └─ TextField/
 │  └─ FKCompositeKit/
 │     └─ Components/
@@ -132,6 +133,7 @@ Module docs:
 - `Sticky`: high-performance sticky coordinator for generic views and list section headers with multi-target chaining, lifecycle callbacks, and safe-area-aware offsets.
 - `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
 - `Toast`: lightweight global toast/snackbar presenter with queueing, style presets, custom content, and SwiftUI hosting support.
+- `TopNotification`: lightweight global top floating notification presenter with styles, priority preemption, progress updates, custom content, and SwiftUI hosting support.
 - `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
 Module docs:
@@ -149,6 +151,7 @@ Module docs:
 - `Sources/FKUIKit/Components/Sticky/README.md`
 - `Sources/FKUIKit/Components/SwipeAction/README.md`
 - `Sources/FKUIKit/Components/Toast/README.md`
+- `Sources/FKUIKit/Components/TopNotification/README.md`
 - `Sources/FKUIKit/Components/TextField/README.md`
 
 ### FKCompositeKit
@@ -179,7 +182,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.35.1")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.36.0")
 ],
 targets: [
   .target(
