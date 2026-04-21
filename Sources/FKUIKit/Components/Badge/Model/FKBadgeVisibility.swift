@@ -1,7 +1,3 @@
-//
-// FKBadgeVisibility.swift
-//
-
 import Foundation
 
 /// Overrides automatic visibility (for example global “do not disturb” or marketing overlays).

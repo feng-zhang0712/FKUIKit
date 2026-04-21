@@ -117,7 +117,7 @@ Module docs:
 - `MultiPicker`: native multi-level cascading picker with built-in region data and custom provider support.
 - `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
 - `Refresh`: pull-to-refresh and load-more controls.
-- `Badge`: flexible badge display for views, bar items, and tab items.
+- `Badge`: flexible badge display for views, bar items, and tab items, with corner/center anchoring, global visibility control, and customizable animations/styles.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 - `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
 - `Sticky`: high-performance sticky coordinator for generic views and list section headers with multi-target chaining, lifecycle callbacks, and safe-area-aware offsets.
@@ -167,7 +167,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.33.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.33.1")
 ],
 targets: [
   .target(

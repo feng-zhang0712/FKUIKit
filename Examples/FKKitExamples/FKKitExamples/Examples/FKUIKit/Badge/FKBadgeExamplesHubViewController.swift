@@ -2,7 +2,7 @@
 //  FKBadgeExamplesHubViewController.swift
 //  FKKitExamples
 //
-//  FKBadge 示例：Hub、各分类页面与共享布局工具（单文件组织）。
+//  FKBadge demos: hub, category screens, and shared layout helpers (single-file organization).
 //
 
 import UIKit
@@ -38,6 +38,8 @@ enum FKBadgeExampleSupport {
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
+      // Pin the stack to the scroll view's content layout, then lock its width to the scroll view.
+      // This keeps Auto Layout deterministic and allows vertical scrolling based on content height.
       contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 16),
       contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
       contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
@@ -82,6 +84,7 @@ enum FKBadgeExampleSupport {
     wrap.translatesAutoresizingMaskIntoConstraints = false
     wrap.addSubview(chip)
     NSLayoutConstraint.activate([
+      // Only constrain the leading edge; the chip keeps its intrinsic/fixed width.
       chip.leadingAnchor.constraint(equalTo: wrap.leadingAnchor),
       chip.topAnchor.constraint(equalTo: wrap.topAnchor),
       chip.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
@@ -145,6 +148,8 @@ enum FKBadgeExampleSupport {
       target.fk_badge.setAnchor(a, offset: UIOffset(horizontal: inset, vertical: -inset))
     case .bottomTrailing:
       target.fk_badge.setAnchor(a, offset: UIOffset(horizontal: -inset, vertical: -inset))
+    case .center:
+      target.fk_badge.setAnchor(a, offset: .zero)
     }
     target.fk_badge.showCount(7)
   }
@@ -172,11 +177,6 @@ final class FKBadgeExamplesHubViewController: UITableViewController {
   }
 
   private let rows: [Row] = [
-    Row(
-      title: "Complete copy-ready demo",
-      subtitle: "Single screen covering all core FKBadge scenarios",
-      controllerType: FKBadgeCompleteExampleViewController.self
-    ),
     Row(
       title: "Basics & numbers",
       subtitle: "Interface style, dot, numeric counts, text badges",
@@ -424,7 +424,7 @@ final class FKBadgeExampleAnchorsViewController: UIViewController {
   }
 
   private func buildAnchorInteractiveSection() {
-    let box = FKBadgeExampleSupport.sectionContainer(title: "Anchors: four corners + inset (single target)")
+    let box = FKBadgeExampleSupport.sectionContainer(title: "Anchors: four corners + center + inset (single target)")
 
     anchorDemoHost.backgroundColor = .secondarySystemFill
     anchorDemoHost.layer.cornerRadius = 12
@@ -436,13 +436,14 @@ final class FKBadgeExampleAnchorsViewController: UIViewController {
     anchorDemoHost.addSubview(anchorDemoTarget)
 
     let seg = UISegmentedControl(items: [
-      "TR", "TL", "BR", "BL",
+      "TR", "TL", "BR", "BL", "C",
     ])
     let anchors: [(String, FKBadgeAnchor)] = [
       ("TR", .topTrailing),
       ("TL", .topLeading),
       ("BR", .bottomTrailing),
       ("BL", .bottomLeading),
+      ("C", .center),
     ]
     seg.selectedSegmentIndex = 0
     seg.addAction(UIAction { [weak self] a in

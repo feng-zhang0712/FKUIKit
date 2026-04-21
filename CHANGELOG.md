@@ -8,6 +8,20 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.33.1] - 2026-04-21
+
+### Changed (FKUIKit FKBadge)
+- Added `FKBadgeAnchor.center` and corresponding layout handling in `FKBadgeController`, enabling center-pinned badge overlays in addition to corner anchors.
+- Added `center` coverage in FKBadge examples (`FKBadgeExamplesHubViewController`) through interactive anchor switching.
+- Completed professional Apple-style API and implementation comments across all FKBadge source files, covering public APIs, core private flows, layout, animation, and boundary behavior notes.
+
+### Changed (Examples)
+- Removed the legacy `FKBadgeCompleteExampleViewController.swift` from the FKBadge example set in favor of the focused hub-based demo structure.
+
+### Changed (Documentation)
+- Added a Table of Contents to `Sources/FKUIKit/Components/Badge/README.md`.
+- Updated root `README.md` package reference from `0.33.0` to `0.33.1`.
+
 ## [0.33.0] - 2026-04-21
 
 ### Added (FKCompositeKit Base)
@@ -1119,7 +1133,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.33.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.33.1...HEAD
+[0.33.1]: https://github.com/feng-zhang0712/FKKit/compare/0.33.0...0.33.1
 [0.33.0]: https://github.com/feng-zhang0712/FKKit/compare/0.32.0...0.33.0
 [0.32.0]: https://github.com/feng-zhang0712/FKKit/compare/0.31.0...0.32.0
 [0.31.0]: https://github.com/feng-zhang0712/FKKit/compare/0.30.0...0.31.0
