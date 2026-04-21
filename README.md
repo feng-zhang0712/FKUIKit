@@ -71,6 +71,7 @@ FKKit/
 │  │     └─ TextField/
 │  └─ FKCompositeKit/
 │     └─ Components/
+│        ├─ Base/
 │        ├─ Filter/
 │        └─ ListKit/
 └─ Examples/
@@ -141,6 +142,7 @@ Module docs:
 ### FKCompositeKit
 `FKCompositeKit` builds business-facing composite components on top of `FKCoreKit` + `FKUIKit`:
 
+- `Base`: reusable base foundation for cells and controllers.
 - `Filter`: filter bar/panel/pill and multi-layout filtering components.
 - `ListKit`: list state/pagination coordination and plugin-style list assembly.
 
@@ -165,7 +167,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.32.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.33.0")
 ],
 targets: [
   .target(

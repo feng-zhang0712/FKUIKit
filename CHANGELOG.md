@@ -8,6 +8,39 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.33.0] - 2026-04-21
+
+### Added (FKCompositeKit Base)
+- Added a reusable, industrial-grade base foundation under `Sources/FKCompositeKit/Components/Base/`:
+  - `Cell/FKBaseTableViewCell.swift`
+  - `Cell/FKBaseCollectionViewCell.swift`
+  - `Controller/FKBaseViewController.swift`
+  - `Controller/FKBaseNavigationController.swift`
+  - `Controller/FKBaseTabBarController.swift`
+- Base cell features include:
+  - unified init flow for code and XIB usage
+  - container-based content layout and insets
+  - override hooks: `setupUI()`, `setupStyle()`, `bindData(_:)`
+  - surface helpers for corner/border/shadow/background
+  - typed dequeue helpers with idempotent registration (`UITableView.fkDequeueCell`, `UICollectionView.fkDequeueCell`)
+- Base controller features include:
+  - standardized lifecycle entry points: `setupUI()`, `setupConstraints()`, `setupBindings()`
+  - built-in loading / empty / error overlays and toast messages
+  - keyboard observation and tap-to-dismiss keyboard support
+  - navigation behavior hooks (non-invasive by default)
+  - orientation and status bar style customization points
+
+### Added (Examples)
+- Added Base module demos under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKCompositeKit/Base/`
+- Added `Base` entry in `ExampleMenuViewController` under `FKCompositeKit`.
+
+### Fixed (Swift Concurrency)
+- Eliminated Swift 6 concurrency diagnostics from the new base modules by:
+  - avoiding shared mutable global state for associated-object keys in base cell helpers
+  - keeping base navigation-bar styling non-invasive by default
+  - parsing keyboard notifications inside observer closures to avoid sendability diagnostics
+
 ## [0.32.0] - 2026-04-21
 
 ### Added (FKUIKit FKSticky)
@@ -1086,7 +1119,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.32.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.33.0...HEAD
+[0.33.0]: https://github.com/feng-zhang0712/FKKit/compare/0.32.0...0.33.0
 [0.32.0]: https://github.com/feng-zhang0712/FKKit/compare/0.31.0...0.32.0
 [0.31.0]: https://github.com/feng-zhang0712/FKKit/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/feng-zhang0712/FKKit/compare/0.29.0...0.30.0

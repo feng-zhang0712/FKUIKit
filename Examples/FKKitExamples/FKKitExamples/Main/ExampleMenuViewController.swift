@@ -171,6 +171,11 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Composed modules built on FKUIKit and FKCoreKit",
       items: [
         ExampleMenuItem(
+          title: "Base",
+          subtitle: "Controller foundation demos: lifecycle, navigation and tab bar infrastructure",
+          make: { FKBaseExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "Filter",
           subtitle: "Composite dropdown filters (top bar + panels)",
           make: { FKFilterExampleViewController() }
