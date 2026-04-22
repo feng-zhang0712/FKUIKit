@@ -1,7 +1,3 @@
-//
-// FKStickyCollectionExampleViewController.swift
-//
-
 import FKUIKit
 import UIKit
 

@@ -8,6 +8,39 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.37.1] - 2026-04-22
+
+### Added (FKUIKit FKStickyHeader)
+- Added `FKStickyHeader` module under `Sources/FKUIKit/Components/StickyHeader/`:
+  - `FKStickyEngine` (sticky computation and lifecycle dispatch)
+  - `FKStickyConfiguration` (type-safe configuration: sticky offset, transition curve/distance, enable toggles)
+  - `FKStickyTarget` (target model with progress/state/style callbacks)
+  - `UIScrollView+FKStickyView` (one-line enable APIs for `UITableView` / `UICollectionView`, global defaults integration)
+  - `FKStickyHeaderSwiftUIView` (SwiftUI bridge)
+- Supported sticky behavior coverage:
+  - multi-section push-off interaction (next header pushes current sticky header)
+  - custom sticky reference offset to avoid navigation bars/top overlays
+  - progress-driven transition animation callback (alpha/scale/background, etc.)
+  - lifecycle callbacks (`willSticky` / `didSticky` / `didUnsticky`)
+  - runtime controls (enable/disable, force active sticky target)
+
+### Changed (FKUIKit FKStickyHeader)
+- Improved integration stability for lazy header creation and reuse in table/collection lists.
+- Optimized scrolling performance by avoiding per-frame target rebuild while keeping layout updates stable at 60fps.
+
+### Added (Examples)
+- Added a full `FKStickyHeader` scenario hub under:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/StickyHeader/`
+- Added coverage including:
+  - UITableView single/multi-section sticky
+  - UICollectionView multi-section sticky
+  - waterfall layout sticky
+  - custom offset, animations, state callbacks, runtime toggle
+  - dark mode, rotation, and performance (FPS indicator)
+
+### Changed (Examples)
+- Replaced legacy `Sticky` examples with `StickyHeader` examples and updated navigation entry.
+
 ## [0.37.0] - 2026-04-22
 
 ### Added (FKUIKit FKBlurView)

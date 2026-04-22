@@ -74,7 +74,7 @@ FKKit/
 │  │     ├─ Refresh/
 │  │     ├─ Skeleton/
 │  │     ├─ StarRating/
-│  │     ├─ Sticky/
+│  │     ├─ StickyHeader/
 │  │     ├─ SwipeAction/
 │  │     ├─ Toast/
 │  │     ├─ TopNotification/
@@ -121,7 +121,7 @@ FKKit/
 - `Badge`: flexible badge display for views, bar items, and tab items, with corner/center anchoring, global visibility control, and customizable animations/styles.
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 - `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
-- `Sticky`: high-performance sticky coordinator for generic views and list section headers with multi-target chaining, lifecycle callbacks, and safe-area-aware offsets.
+- `StickyHeader`: high-performance sticky section header coordinator for UIKit lists (UITableView/UICollectionView/UIScrollView), with push-off interaction, lifecycle callbacks, safe-area-aware offsets, and SwiftUI bridging.
 - `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
 - `Toast`: lightweight global toast/snackbar presenter with queueing, style presets, custom content, and SwiftUI hosting support.
 - `TopNotification`: lightweight global top floating notification presenter with styles, priority preemption, progress updates, custom content, and SwiftUI hosting support.

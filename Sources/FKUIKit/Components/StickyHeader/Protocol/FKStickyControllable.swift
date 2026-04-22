@@ -1,11 +1,6 @@
-//
-// FKStickyControllable.swift
-//
-
 import UIKit
 
 /// Public operations exposed by a sticky engine.
-@MainActor
 public protocol FKStickyControllable: AnyObject {
   /// Applies configuration and re-evaluates sticky layout.
   func apply(configuration: FKStickyConfiguration)
@@ -21,6 +16,9 @@ public protocol FKStickyControllable: AnyObject {
 
   /// Updates enabled state for a target.
   func setTargetEnabled(_ isEnabled: Bool, forID id: String)
+
+  /// Forces one target to sticky state and disables others.
+  func setActiveStickyTarget(withID id: String?)
 
   /// Enables or disables sticky engine.
   func setEnabled(_ isEnabled: Bool)

@@ -109,7 +109,7 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKStarRatingExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "Sticky",
+          title: "StickyView",
           subtitle: "Hub: multi-target sticky, table/collection headers, callbacks, offsets, and runtime control",
           make: { FKStickyExamplesHubViewController() }
         ),

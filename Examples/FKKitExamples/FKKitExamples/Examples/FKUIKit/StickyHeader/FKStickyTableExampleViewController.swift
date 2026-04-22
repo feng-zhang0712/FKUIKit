@@ -1,7 +1,3 @@
-//
-// FKStickyTableExampleViewController.swift
-//
-
 import FKUIKit
 import UIKit
 

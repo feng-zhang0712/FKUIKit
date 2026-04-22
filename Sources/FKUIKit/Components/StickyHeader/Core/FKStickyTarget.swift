@@ -1,7 +1,3 @@
-//
-// FKStickyTarget.swift
-//
-
 import UIKit
 
 /// A sticky candidate registered into ``FKStickyEngine``.
@@ -12,7 +8,7 @@ public struct FKStickyTarget {
   /// Returns current target view each update tick.
   ///
   /// Keep this closure lightweight because it runs during scroll callbacks.
-  public let viewProvider: @MainActor () -> UIView?
+  public let viewProvider: () -> UIView?
 
   /// Absolute threshold in scroll content coordinates.
   ///
@@ -29,10 +25,13 @@ public struct FKStickyTarget {
   public var isEnabled: Bool
 
   /// Optional style switch callback.
-  public var onStyleChanged: (@MainActor (_ style: FKStickyStyle, _ view: UIView) -> Void)?
+  public var onStyleChanged: ((_ style: FKStickyStyle, _ view: UIView) -> Void)?
+
+  /// Optional transition callback with curve-applied progress in `[0, 1]`.
+  public var onTransition: ((_ progress: CGFloat, _ view: UIView) -> Void)?
 
   /// Optional sticky phase callback.
-  public var onStateChanged: (@MainActor (_ state: FKStickyState) -> Void)?
+  public var onStateChanged: ((_ state: FKStickyState) -> Void)?
 
   /// Creates a sticky target.
   ///
@@ -44,16 +43,18 @@ public struct FKStickyTarget {
   ///   - fixedTopInset: Optional target-specific top inset override.
   ///   - isEnabled: Whether sticky calculation is active.
   ///   - onStyleChanged: Style callback.
+  ///   - onTransition: Transition progress callback.
   ///   - onStateChanged: State callback.
   public init(
     id: String,
-    viewProvider: @escaping @MainActor () -> UIView?,
+    viewProvider: @escaping () -> UIView?,
     threshold: CGFloat,
     activationOffset: CGFloat = 0,
     fixedTopInset: CGFloat? = nil,
     isEnabled: Bool = true,
-    onStyleChanged: (@MainActor (_ style: FKStickyStyle, _ view: UIView) -> Void)? = nil,
-    onStateChanged: (@MainActor (_ state: FKStickyState) -> Void)? = nil
+    onStyleChanged: ((_ style: FKStickyStyle, _ view: UIView) -> Void)? = nil,
+    onTransition: ((_ progress: CGFloat, _ view: UIView) -> Void)? = nil,
+    onStateChanged: ((_ state: FKStickyState) -> Void)? = nil
   ) {
     self.id = id
     self.viewProvider = viewProvider
@@ -62,12 +63,13 @@ public struct FKStickyTarget {
     self.fixedTopInset = fixedTopInset
     self.isEnabled = isEnabled
     self.onStyleChanged = onStyleChanged
+    self.onTransition = onTransition
     self.onStateChanged = onStateChanged
   }
 }
 
 /// Sticky lifecycle events.
-public enum FKStickyState: Sendable {
+public enum FKStickyState {
   /// Before target enters sticky state.
   case willSticky(id: String)
   /// Target entered sticky state.
