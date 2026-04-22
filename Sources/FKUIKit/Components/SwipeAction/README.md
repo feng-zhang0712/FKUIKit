@@ -1,341 +1,346 @@
 # FKSwipeAction
 
-`FKSwipeAction` is a pure native Swift swipe-action component for high-volume iOS list scenarios.
-It is built only with `UIKit` / `Foundation` APIs, supports both left and right swipe directions, and is optimized for reusable cells in production table/collection views.
+[![iOS](https://img.shields.io/badge/iOS-13.0%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org/)
+[![SPM](https://img.shields.io/badge/Swift%20Package%20Manager-supported-brightgreen.svg)](https://swift.org/package-manager/)
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-supported-brightgreen.svg)](https://cocoapods.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](../../../../LICENSE)
+
+High-performance, non-invasive swipe actions (WeChat/QQ-like) for **UITableView** and **UICollectionView**, with a lightweight **SwiftUI** bridge. Implemented with **pure Swift + UIKit**, no third-party dependencies.
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
-- [Supported Components](#supported-components)
-  - [UITableView Swipe Action](#uitableview-swipe-action)
-  - [UICollectionView Swipe Action](#uicollectionview-swipe-action)
-  - [Left/Right Double Direction Swipe](#leftright-double-direction-swipe)
-- [Core Capabilities](#core-capabilities)
-  - [Multiple Custom Buttons](#multiple-custom-buttons)
-  - [Image/Text/Image+Text Button Style](#imagetextimagetext-button-style)
-  - [Elastic Swipe Animation](#elastic-swipe-animation)
-  - [State Mutex & Auto Close](#state-mutex--auto-close)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Basic Usage](#basic-usage)
-  - [Setup Swipe Buttons for UITableViewCell](#setup-swipe-buttons-for-uitableviewcell)
-  - [Setup Swipe Buttons for UICollectionViewCell](#setup-swipe-buttons-for-uicollectionviewcell)
-  - [Left Swipe & Right Swipe](#left-swipe--right-swipe)
-  - [Button Click Event Callback](#button-click-event-callback)
-- [Advanced Usage](#advanced-usage)
-  - [Custom Button Style (Color/Font/Size/Width)](#custom-button-style-colorfontsizewidth)
-  - [Global Swipe Style Configuration](#global-swipe-style-configuration)
-  - [Disable Swipe for Specific Cell](#disable-swipe-for-specific-cell)
-  - [Dangerous Action Confirmation (Delete)](#dangerous-action-confirmation-delete)
-  - [Dynamic Update Swipe Buttons](#dynamic-update-swipe-buttons)
-  - [Auto Close Swipe State](#auto-close-swipe-state)
+  - [Swift Package Manager](#swift-package-manager)
+  - [CocoaPods](#cocoapods)
+- [Usage](#usage)
+  - [Quick Start](#quick-start)
+  - [UICollectionView Support](#uicollectionview-support)
+  - [Custom Action Buttons](#custom-action-buttons)
+  - [Swipe Direction](#swipe-direction)
+  - [Multiple Expand Toggle](#multiple-expand-toggle)
+  - [State Callback](#state-callback)
+  - [Global Configuration](#global-configuration)
+  - [SwiftUI Support](#swiftui-support)
 - [API Reference](#api-reference)
-- [Performance Optimization](#performance-optimization)
-- [Best Practices](#best-practices)
-- [Notes](#notes)
 - [License](#license)
 
 ## Overview
 
-`FKSwipeAction` provides a lightweight, protocol-friendly swipe action layer for list cells without replacing your existing `UITableView` / `UICollectionView` architecture.
+`FKSwipeAction` provides **multi-button swipe actions** for list items, similar to what you see in WeChat/QQ.
 
-Design goals:
+Unlike UIKit’s built-in patterns (which typically require implementing delegate APIs, customizing cell behaviors, or accepting limited styling), FKSwipeAction focuses on:
 
-- Zero third-party dependency
-- Minimal integration cost (one-line setup per cell)
-- High-performance interaction for large reusable lists
-- Extensible API for business-specific actions and styling
+- **Non-invasive integration**: enable swipe actions with **one line** on an existing `UITableView` / `UICollectionView`.
+- **No cell subclassing**: works with your existing cells and list architecture.
+- **Fully customizable actions**: title/icon/layout/width/corner/gradient background/callback per button.
+- **Smooth interaction**: rubber-banding, snapping open/close, optional “only one open at a time”.
 
 ## Features
 
-- Pure native implementation (`Swift 5.9+`, `UIKit`, `Foundation`)
-- Left and right swipe directions on the same cell
-- Unlimited action buttons on each side
-- Text-only, image-only, or image + text action content
-- Adaptive or fixed button width
-- Per-button style customization (color/font/insets/corner radius/icon size)
-- Built-in action presets (`delete`, `edit`, `pin`, `mark`, `favorite`, `more`)
-- Optional dangerous-action confirmation alert
-- Open-state mutex: opening one cell closes others
-- Supports auto-close when list scrolling starts
-- Non-invasive extension APIs for existing cells
-
-## Supported Components
-
-### UITableView Swipe Action
-
-Use `UITableViewCell` extension APIs to configure, open, close, or disable swipe actions.
-
-### UICollectionView Swipe Action
-
-Use `UICollectionViewCell` extension APIs with the same configuration model and behavior controls.
-
-### Left/Right Double Direction Swipe
-
-Each cell can define both:
-
-- `leftActions` (reveal when swiping right)
-- `rightActions` (reveal when swiping left)
-
-## Core Capabilities
-
-### Multiple Custom Buttons
-
-Configure any number of actions on each side using `FKSwipeActionItem`.
-
-### Image/Text/Image+Text Button Style
-
-Each action button supports:
-
-- Title-only
-- Image-only
-- Title + image
-
-### Elastic Swipe Animation
-
-Built-in spring animation for open/close transitions and overscroll elasticity for natural gestures.
-
-### State Mutex & Auto Close
-
-- Optional exclusive open state (`allowsOnlyOneOpenCell`)
-- Auto-close all opened cells when list scroll begins (`closesOnScroll`)
+- **Non-invasive enablement** for `UITableView` and `UICollectionView` (no subclassing required)
+- **Multiple action buttons** per side
+- **Per-button customization**
+  - Title, icon, font, text color
+  - Solid color / gradient background
+  - Width, corner radius
+  - Tap callback
+- **Bidirectional swipe**
+  - Swipe left to reveal right actions
+  - Swipe right to reveal left actions
+- **Snapping & rubber-band feel**
+  - Configurable open threshold
+  - Auto align to open/close on release
+- **Mutual exclusion**
+  - Default: only one cell stays open
+  - Can be disabled to allow multiple open cells
+- **Auto close**
+  - Tap outside to close
+  - Close on vertical scroll begin
+  - Close after action tapped (optional)
+- **State callback** for swipe start/end and action tap
+- **Thread-safe API surface**
+  - Can be called from any thread (UI work is scheduled onto main thread)
+- **Adaptive by default**
+  - Auto Layout friendly (buttons live behind `contentView` transform)
+  - Supports rotation, safe area, and varying cell heights
+- **SwiftUI bridge** for `List`/UIKit-backed scroll containers
 
 ## Requirements
 
-- Swift `5.9+`
-- iOS `13.0+` for `FKSwipeAction` APIs
-- `UIKit` + `Foundation` only
-- No Objective-C dependency and no third-party library dependency
+- iOS 13.0+
+- Swift 5.9+
+- Xcode 14+
 
 ## Installation
 
-### Option 1: Use FKKit via Swift Package Manager
+### Swift Package Manager
 
-Add FKKit dependency and import `FKUIKit`:
+Add FKKit to your project, then import `FKUIKit`.
+
+In Xcode:
+
+- `File` → `Add Packages...`
+- Paste your repository URL
+- Select the package and add it to your app target
+
+Or in `Package.swift`:
 
 ```swift
-import FKUIKit
+dependencies: [
+  .package(url: "https://your.repo.url/FKKit.git", from: "1.0.0")
+]
 ```
 
-### Option 2: Source Integration
-
-Copy the `Sources/FKUIKit/Components/SwipeAction` folder into your project and compile with your app target.
-
-## Basic Usage
-
-### Setup Swipe Buttons for UITableViewCell
+Then add `FKKit` (or `FKUIKit`) to your target dependencies:
 
 ```swift
-import UIKit
-import FKUIKit
+.target(
+  name: "YourApp",
+  dependencies: [
+    .product(name: "FKUIKit", package: "FKKit")
+  ]
+)
+```
 
-func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-  let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+### CocoaPods
 
-  cell.fk_configureSwipeActions(
-    left: [
-      .pin { _ in
-        print("Pin tapped")
-      }
-    ],
-    right: [
-      .more { _ in
-        print("More tapped")
-      },
-      .delete(requiresConfirmation: true) { _ in
-        print("Delete confirmed")
+Add to your `Podfile`:
+
+```ruby
+platform :ios, '13.0'
+use_frameworks!
+
+target 'YourApp' do
+  pod 'FKKit'
+end
+```
+
+Then install:
+
+```bash
+pod install
+```
+
+## Usage
+
+### Quick Start
+
+Enable swipe actions for a `UITableView` with **one line** (no cell subclassing required):
+
+```swift
+tableView.fk_enableSwipeActions { indexPath in
+  FKSwipeActionConfiguration(
+    rightActions: [
+      FKSwipeActionButton(
+        id: "delete",
+        title: "Delete",
+        background: .color(.systemRed),
+        width: 84
+      ) {
+        // handle delete
       }
     ]
   )
-
-  return cell
 }
 ```
 
-### Setup Swipe Buttons for UICollectionViewCell
+### UICollectionView Support
 
 ```swift
-import UIKit
-import FKUIKit
-
-func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-  let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
-
-  cell.fk_configureSwipeActions(
-    left: [.mark { _ in print("Mark tapped") }],
-    right: [.favorite { _ in print("Favorite tapped") }]
+collectionView.fk_enableSwipeActions { indexPath in
+  FKSwipeActionConfiguration(
+    rightActions: [
+      FKSwipeActionButton(
+        id: "more",
+        title: "More",
+        background: .horizontalGradient(leading: .systemBlue, trailing: .systemTeal),
+        width: 84
+      ) {
+        // handle more
+      }
+    ]
   )
-
-  return cell
 }
 ```
 
-### Left Swipe & Right Swipe
+### Custom Action Buttons
+
+Customize title/icon/layout/colors/gradients per action:
 
 ```swift
-var config = FKSwipeActionConfiguration(
-  leftActions: [.edit { _ in print("left side action") }],
-  rightActions: [.delete { _ in print("right side action") }]
-)
-
-cell.fk_configureSwipeAction(config)
-```
-
-### Button Click Event Callback
-
-```swift
-let customStyle = FKSwipeActionItemStyle(backgroundColor: .systemBlue)
-let archive = FKSwipeActionItem(
-  kind: .custom,
-  title: "Archive",
-  style: customStyle
-) { context in
-  print("Tapped item:", context.item.identifier)
-  print("Action side:", context.side)
-}
-```
-
-## Advanced Usage
-
-### Custom Button Style (Color/Font/Size/Width)
-
-```swift
-let style = FKSwipeActionItemStyle(
-  fixedWidth: 92,
-  cornerRadius: 12,
-  contentInsets: UIEdgeInsets(top: 8, left: 10, bottom: 8, right: 10),
-  imageTitleSpacing: 6,
-  backgroundColor: .black,
-  highlightedBackgroundColor: .darkGray,
+let pin = FKSwipeActionButton(
+  id: "pin",
+  title: "Pin",
+  icon: UIImage(systemName: "pin.fill"),
+  background: .color(.systemOrange),
+  font: .systemFont(ofSize: 14, weight: .semibold),
   titleColor: .white,
-  titleFont: .systemFont(ofSize: 13, weight: .bold),
-  imageTintColor: .white,
-  imageSize: CGSize(width: 18, height: 18)
+  layout: .iconTop,
+  width: 84,
+  cornerRadius: 12
+) {
+  // pin item
+}
+
+let share = FKSwipeActionButton(
+  id: "share",
+  title: "Share",
+  icon: UIImage(systemName: "square.and.arrow.up"),
+  background: .verticalGradient(top: .systemIndigo, bottom: .systemPurple),
+  layout: .iconLeading,
+  width: 96
+) {
+  // share item
+}
+```
+
+Use them in your configuration:
+
+```swift
+FKSwipeActionConfiguration(rightActions: [pin, share])
+```
+
+### Swipe Direction
+
+Choose allowed swipe directions:
+
+```swift
+// Only swipe left (reveal right actions)
+FKSwipeActionConfiguration(
+  rightActions: [...],
+  allowedDirections: [.left]
 )
 
-let item = FKSwipeActionItem(
-  kind: .custom,
-  title: "Custom",
-  image: UIImage(systemName: "star.fill"),
-  style: style
-) { _ in
-  print("Custom tapped")
-}
-```
+// Only swipe right (reveal left actions)
+FKSwipeActionConfiguration(
+  leftActions: [...],
+  allowedDirections: [.right]
+)
 
-### Global Swipe Style Configuration
-
-```swift
-FKSwipeAction.defaultConfiguration = FKSwipeActionConfiguration(
-  behavior: FKSwipeActionBehaviorConfiguration(
-    triggerMode: .edgeOnly(edgeWidth: 24),
-    allowsOnlyOneOpenCell: true,
-    closesOnScroll: true
-  ),
-  appearance: FKSwipeActionAppearance(
-    actionAreaBackgroundColor: .clear,
-    maskColor: UIColor.black.withAlphaComponent(0.04),
-    itemSpacing: 8,
-    actionInsets: UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
-  )
+// Both directions
+FKSwipeActionConfiguration(
+  leftActions: [...],
+  rightActions: [...],
+  allowedDirections: .both
 )
 ```
 
-### Disable Swipe for Specific Cell
+### Multiple Expand Toggle
+
+By default, FKSwipeAction keeps **only one cell open at a time** (mutual exclusion).
+To allow multiple cells to remain expanded:
 
 ```swift
-cell.fk_setSwipeActionEnabled(false)
+FKSwipeActionConfiguration(
+  rightActions: [...],
+  allowsOnlyOneOpen: false
+)
 ```
 
-### Dangerous Action Confirmation (Delete)
+### State Callback
+
+Listen to swipe start/end and button taps:
 
 ```swift
-let deleteAction = FKSwipeActionItem.delete(
-  requiresConfirmation: true
-) { _ in
-  print("Run delete request")
+FKSwipeActionConfiguration(
+  rightActions: [...],
+  onEvent: { event in
+    switch event {
+    case .willBeginSwipe(let indexPath, let direction):
+      print("Will begin swipe:", indexPath, direction)
+    case .didEndSwipe(let indexPath, let isOpen, let direction):
+      print("Did end swipe:", indexPath, "open:", isOpen, "direction:", String(describing: direction))
+    case .didTapAction(let indexPath, let actionID):
+      print("Tapped action:", actionID, "at", indexPath)
+    }
+  }
+)
+```
+
+### Global Configuration
+
+Set app-wide defaults once (e.g. at app launch), then override per list/cell when needed:
+
+```swift
+FKSwipeActionManager.globalDefaultConfiguration = FKSwipeActionConfiguration(
+  openThreshold: 48,
+  allowsOnlyOneOpen: true,
+  tapToClose: true,
+  autoCloseAfterAction: true,
+  usesRubberBand: true
+)
+```
+
+### SwiftUI Support
+
+In SwiftUI, `List` is typically backed by UIKit list views (varies by iOS version).
+FKSwipeAction provides a small background adapter that **non-invasively discovers** the underlying
+`UITableView`/`UICollectionView` and enables swipe actions:
+
+```swift
+import SwiftUI
+
+struct ContentView: View {
+  var body: some View {
+    List(0..<20, id: \.self) { row in
+      Text("Row \(row)")
+    }
+    .fk_swipeAction { indexPath in
+      FKSwipeActionConfiguration(
+        rightActions: [
+          FKSwipeActionButton(
+            id: "delete",
+            title: "Delete",
+            background: .color(.systemRed),
+            width: 84
+          ) {
+            // handle delete
+          }
+        ]
+      )
+    }
+  }
 }
-```
-
-### Dynamic Update Swipe Buttons
-
-```swift
-func applyState(isRead: Bool, to cell: UITableViewCell) {
-  let right: [FKSwipeActionItem] = isRead
-    ? [.mark(title: "Unread") { _ in print("mark unread") }]
-    : [.mark(title: "Read") { _ in print("mark read") }]
-
-  cell.fk_configureSwipeActions(right: right)
-}
-```
-
-### Auto Close Swipe State
-
-```swift
-// Enabled automatically when configuration.behavior.closesOnScroll is true.
-tableView.fk_enableSwipeActionAutoCloseOnScroll()
-
-// Manual close, for example after network completion.
-tableView.fk_closeAllSwipeActions(animated: true)
 ```
 
 ## API Reference
 
-Primary types:
+### Models
 
-- `FKSwipeAction`
+- `FKSwipeActionButton`
+  - `id`: Stable action identifier for callbacks
+  - `title`, `icon`
+  - `background`: `.color`, `.verticalGradient`, `.horizontalGradient`
+  - `layout`: `.title`, `.icon`, `.iconTop`, `.iconLeading`
+  - `width`, `cornerRadius`
+  - `handler`: Tap callback
+
 - `FKSwipeActionConfiguration`
-- `FKSwipeActionBehaviorConfiguration`
-- `FKSwipeActionAppearance`
-- `FKSwipeActionItem`
-- `FKSwipeActionItemStyle`
-- `FKSwipeActionSide`
-- `FKSwipeActionContext`
+  - `leftActions`, `rightActions`
+  - `allowedDirections`: `.left`, `.right`, `.both`
+  - `openThreshold`: Open distance threshold in points
+  - `allowsOnlyOneOpen`: Mutual exclusion toggle
+  - `tapToClose`, `autoCloseAfterAction`
+  - `usesRubberBand`, `animationDuration`
+  - `onEvent`: State callback (`willBeginSwipe`, `didEndSwipe`, `didTapAction`)
 
-Cell APIs:
+### UIKit Integration
 
-- `fk_configureSwipeAction(_:)`
-- `fk_configureSwipeActions(left:right:update:)`
-- `fk_setSwipeActionEnabled(_:)`
-- `fk_openSwipeAction(side:animated:)`
-- `fk_closeSwipeAction(animated:)`
+- `UITableView.fk_enableSwipeActions(configuration:provider:)`
+- `UICollectionView.fk_enableSwipeActions(configuration:provider:)`
+- `fk_setSwipeActionsEnabled(_:)`
+- `fk_closeSwipeActions(animated:)`
 
-Global / list APIs:
+### SwiftUI Integration
 
-- `FKSwipeAction.defaultConfiguration`
-- `FKSwipeAction.setGloballyEnabled(_:)`
-- `FKSwipeAction.closeAll(animated:)`
-- `UIScrollView.fk_enableSwipeActionAutoCloseOnScroll()`
-- `UIScrollView.fk_closeAllSwipeActions(animated:)`
-- `UIScrollView.fk_setSwipeActionEnabledForVisibleCells(_:)`
-
-## Performance Optimization
-
-`FKSwipeAction` is designed for large lists and frequent cell reuse:
-
-- Uses lightweight view hierarchy and transform-based horizontal motion
-- Keeps actions inside the cell host without replacing list container logic
-- Uses weak controller registry for state coordination to avoid retain cycles
-- Supports explicit close/reset behavior to prevent reused-cell state mismatch
-- Avoids third-party gesture/animation abstractions to reduce overhead
-
-## Best Practices
-
-- Configure swipe actions in `cellForRowAt` / `cellForItemAt`
-- Keep action handlers short and dispatch heavy work asynchronously
-- Rebuild actions based on current model state during cell reuse
-- Prefer concise labels and consistent action ordering for better UX
-- Use confirmation for destructive actions (`delete`) to reduce accidental taps
-- Use exclusive open mode (`allowsOnlyOneOpenCell`) in dense lists
-
-## Notes
-
-- `FKSwipeAction` is main-thread oriented; configure and update it on the main thread.
-- Confirmation alerts rely on locating the nearest parent `UIViewController` from the cell view.
-- Trigger mode supports full-width pan or edge-only pan.
-- If your product uses custom cell subview layering, verify that content subviews are inside the default cell view hierarchy so transform-based motion can apply correctly.
+- `View.fk_swipeAction(configuration:provider:)`
+- `FKSwipeActionAdapter`
 
 ## License
 
-This component is part of FKKit and is available under the [MIT License](../../../../LICENSE).
+FKSwipeAction is released under the **MIT License**. See `LICENSE`.
+
