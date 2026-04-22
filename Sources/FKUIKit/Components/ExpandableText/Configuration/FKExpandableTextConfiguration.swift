@@ -1,242 +1,173 @@
-//
-// FKExpandableTextConfiguration.swift
-//
-// Configuration models for FKExpandableText.
-//
-
 import UIKit
 
-/// Defines where the expand/collapse button should be displayed.
-public enum FKExpandableTextButtonPosition: Hashable {
-  /// Places the button inside the label area at bottom trailing.
-  case tailFollow
-  /// Places the button below text and aligns it to trailing edge.
-  case bottomTrailing
-}
-
-/// Option set that controls how expand/collapse can be triggered.
-public struct FKExpandableTextTriggerMode: OptionSet, Hashable, Sendable {
-  /// Bitmask raw value backing the trigger option set.
-  public let rawValue: Int
-
-  /// Creates a trigger mode from raw bitmask value.
-  ///
-  /// - Parameter rawValue: Raw option-set bitmask.
-  public init(rawValue: Int) {
-    self.rawValue = rawValue
-  }
-
-  /// Allows tap on button to toggle state.
-  public static let button = FKExpandableTextTriggerMode(rawValue: 1 << 0)
-  /// Allows tap on text label to toggle state.
-  public static let text = FKExpandableTextTriggerMode(rawValue: 1 << 1)
-  /// Allows both button and text as trigger source.
-  public static let all: FKExpandableTextTriggerMode = [.button, .text]
-}
-
-/// Text presentation style for expandable content.
-public struct FKExpandableTextTextStyle {
-  /// Primary font used to render the text body.
-  public var font: UIFont
-  /// Primary text color used to render the text body.
-  public var color: UIColor
-  /// Text alignment applied to all lines.
-  public var alignment: NSTextAlignment
-  /// Extra line spacing used in paragraph style. Minimum is `0`.
-  public var lineSpacing: CGFloat
-  /// Character spacing applied via `.kern`.
-  public var kern: CGFloat
-  /// Truncation mode used while collapsed.
-  public var lineBreakMode: NSLineBreakMode
-
-  /// Creates text style for expandable text body.
-  ///
-  /// - Parameters:
-  ///   - font: Text font. Default is `.systemFont(ofSize: 15)`.
-  ///   - color: Text color. Default is `.label`.
-  ///   - alignment: Paragraph alignment. Default is `.left`.
-  ///   - lineSpacing: Extra spacing between lines. Values below `0` are clamped.
-  ///   - kern: Character spacing.
-  ///   - lineBreakMode: Truncation mode used in collapsed state.
-  public init(
-    font: UIFont = .systemFont(ofSize: 15),
-    color: UIColor = .label,
-    alignment: NSTextAlignment = .left,
-    lineSpacing: CGFloat = 4,
-    kern: CGFloat = 0,
-    lineBreakMode: NSLineBreakMode = .byTruncatingTail
-  ) {
-    self.font = font
-    self.color = color
-    self.alignment = alignment
-    self.lineSpacing = max(0, lineSpacing)
-    self.kern = kern
-    self.lineBreakMode = lineBreakMode
-  }
-}
-
-/// Expand/collapse button visual style.
-public struct FKExpandableTextButtonStyle {
-  /// Button title shown while text is collapsed.
-  public var expandTitle: String
-  /// Button title shown while text is expanded.
-  public var collapseTitle: String
-  /// Title color for normal state.
-  public var titleColor: UIColor
-  /// Title color for highlighted state.
-  public var highlightedTitleColor: UIColor
-  /// Font used by button title.
-  public var font: UIFont
-  /// Optional icon displayed near title.
-  public var image: UIImage?
-  /// Optional tint color for icon. Falls back to `titleColor` when `nil`.
-  public var imageTintColor: UIColor?
-  /// Spacing between icon and title. Minimum is `0`.
-  public var imageTitleSpacing: CGFloat
-  /// Content insets applied to button tap area and layout.
-  public var contentInsets: UIEdgeInsets
-
-  /// Creates visual style for expand/collapse button.
-  ///
-  /// - Parameters:
-  ///   - expandTitle: Title for collapsed state.
-  ///   - collapseTitle: Title for expanded state.
-  ///   - titleColor: Normal title color.
-  ///   - highlightedTitleColor: Highlighted title color.
-  ///   - font: Title font.
-  ///   - image: Optional icon.
-  ///   - imageTintColor: Optional icon tint color.
-  ///   - imageTitleSpacing: Spacing between icon and title. Values below `0` are clamped.
-  ///   - contentInsets: Button content insets.
-  public init(
-    expandTitle: String = "Read more",
-    collapseTitle: String = "Collapse",
-    titleColor: UIColor = .systemBlue,
-    highlightedTitleColor: UIColor = .systemGray,
-    font: UIFont = .systemFont(ofSize: 14, weight: .semibold),
-    image: UIImage? = nil,
-    imageTintColor: UIColor? = nil,
-    imageTitleSpacing: CGFloat = 4,
-    contentInsets: UIEdgeInsets = .zero
-  ) {
-    self.expandTitle = expandTitle
-    self.collapseTitle = collapseTitle
-    self.titleColor = titleColor
-    self.highlightedTitleColor = highlightedTitleColor
-    self.font = font
-    self.image = image
-    self.imageTintColor = imageTintColor
-    self.imageTitleSpacing = max(0, imageTitleSpacing)
-    self.contentInsets = contentInsets
-  }
-}
-
-/// Layout and animation style for the component.
-public struct FKExpandableTextLayoutStyle {
-  /// Inner insets applied around text and button content.
-  public var contentInsets: UIEdgeInsets
-  /// Vertical spacing between text area and button in `.bottomTrailing` mode.
-  public var textButtonSpacing: CGFloat
-  /// Button placement mode.
-  public var buttonPosition: FKExpandableTextButtonPosition
-  /// Expand/collapse animation duration. Minimum is `0.1`.
-  public var animationDuration: TimeInterval
-
-  /// Creates layout and animation style for the component.
-  ///
-  /// - Parameters:
-  ///   - contentInsets: Insets around content.
-  ///   - textButtonSpacing: Vertical spacing between text and button.
-  ///   - buttonPosition: Placement mode for button.
-  ///   - animationDuration: Animation duration for state transitions.
-  public init(
-    contentInsets: UIEdgeInsets = .zero,
-    textButtonSpacing: CGFloat = 6,
-    buttonPosition: FKExpandableTextButtonPosition = .bottomTrailing,
-    animationDuration: TimeInterval = 0.25
-  ) {
-    self.contentInsets = contentInsets
-    self.textButtonSpacing = max(0, textButtonSpacing)
-    self.buttonPosition = buttonPosition
-    self.animationDuration = max(0.1, animationDuration)
-  }
-}
-
-/// Behavior options for interaction and state control.
-public struct FKExpandableTextBehavior {
-  /// Maximum number of lines in collapsed state. Minimum effective value is `1`.
-  public var collapsedNumberOfLines: Int
-  /// Allowed trigger sources for expand/collapse.
-  public var triggerMode: FKExpandableTextTriggerMode
-  /// Global interaction switch for this instance.
-  public var isInteractionEnabled: Bool
-  /// Whether to read/write state cache using `stateIdentifier`.
-  public var usesStateCache: Bool
-  /// Optional fixed state. When non-`nil`, interactive toggling is disabled.
-  public var fixedState: FKExpandableTextDisplayState?
-
-  /// Creates behavior options for state and interaction.
-  ///
-  /// - Parameters:
-  ///   - collapsedNumberOfLines: Collapsed max line count.
-  ///   - triggerMode: Trigger sources for state toggle.
-  ///   - isInteractionEnabled: Whether user interaction is enabled.
-  ///   - usesStateCache: Whether cache integration is enabled.
-  ///   - fixedState: Optional fixed display state.
-  public init(
-    collapsedNumberOfLines: Int = 3,
-    triggerMode: FKExpandableTextTriggerMode = .button,
-    isInteractionEnabled: Bool = true,
-    usesStateCache: Bool = true,
-    fixedState: FKExpandableTextDisplayState? = nil
-  ) {
-    self.collapsedNumberOfLines = max(1, collapsedNumberOfLines)
-    self.triggerMode = triggerMode
-    self.isInteractionEnabled = isInteractionEnabled
-    self.usesStateCache = usesStateCache
-    self.fixedState = fixedState
-  }
-}
-
-/// Full configuration for one FKExpandableText instance.
+/// Defines how `FKExpandableText` renders, truncates, animates, and reacts to user interaction.
+///
+/// Use this type to customize per-instance behavior while keeping integration non-invasive.
+/// The same configuration can be applied to both `UILabel` and `UITextView` entry points, and it
+/// also powers the SwiftUI bridge. The component implementation is compatible with iOS 13.0+,
+/// while package-level platform requirements still follow the repository configuration.
 public struct FKExpandableTextConfiguration {
-  /// Text rendering style.
-  public var textStyle: FKExpandableTextTextStyle
-  /// Expand/collapse button style.
-  public var buttonStyle: FKExpandableTextButtonStyle
-  /// Layout and animation style.
-  public var layoutStyle: FKExpandableTextLayoutStyle
-  /// Interaction and state behavior options.
-  public var behavior: FKExpandableTextBehavior
-
-  /// Creates the full configuration payload for one component instance.
-  ///
-  /// - Parameters:
-  ///   - textStyle: Text style.
-  ///   - buttonStyle: Button style.
-  ///   - layoutStyle: Layout and animation style.
-  ///   - behavior: Interaction behavior.
-  public init(
-    textStyle: FKExpandableTextTextStyle = FKExpandableTextTextStyle(),
-    buttonStyle: FKExpandableTextButtonStyle = FKExpandableTextButtonStyle(),
-    layoutStyle: FKExpandableTextLayoutStyle = FKExpandableTextLayoutStyle(),
-    behavior: FKExpandableTextBehavior = FKExpandableTextBehavior()
-  ) {
-    self.textStyle = textStyle
-    self.buttonStyle = buttonStyle
-    self.layoutStyle = layoutStyle
-    self.behavior = behavior
+  /// Defines where the expand or collapse action is rendered.
+  public enum ButtonPlacement {
+    /// The button is appended to the end of the last visible line.
+    case inlineTail
+    /// The button is rendered as a separate right-aligned line.
+    case trailingBottom
   }
 
-  /// Builder helper for one-line configuration.
+  /// Defines how the component responds to user taps.
+  public enum InteractionMode {
+    /// Only taps on the expand/collapse action are handled.
+    case buttonOnly
+    /// Tapping anywhere in the text area toggles the state.
+    case fullTextArea
+  }
+
+  /// Defines the animation style used when the rendered state changes.
+  public enum Animation {
+    /// No animation.
+    case none
+    /// UIKit curve-based animation.
+    case curve(duration: TimeInterval, options: UIView.AnimationOptions)
+    /// UIKit spring animation.
+    case spring(
+      duration: TimeInterval,
+      dampingRatio: CGFloat,
+      velocity: CGFloat,
+      options: UIView.AnimationOptions
+    )
+  }
+
+  /// Defines the rule used when rendering collapsed content.
+  public enum CollapseRule {
+    /// Truncate to a specific line count.
+    case lines(Int)
+    /// Do not truncate text body; this is useful if only a toggle button is desired.
+    case noBodyTruncation
+  }
+
+  /// Accessibility strings used for VoiceOver and other assistive technologies.
+  public struct Accessibility {
+    /// Label for the expand action.
+    public var expandLabel: String
+    /// Label for the collapse action.
+    public var collapseLabel: String
+    /// Hint for screen readers.
+    public var hint: String
+
+    /// Creates accessibility metadata for the expandable content.
+    ///
+    /// - Parameters:
+    ///   - expandLabel: Spoken label used while the content is collapsed.
+    ///   - collapseLabel: Spoken label used while the content is expanded.
+    ///   - hint: Additional hint describing the available interaction.
+    public init(
+      expandLabel: String = "Expand text",
+      collapseLabel: String = "Collapse text",
+      hint: String = "Double-tap to toggle text expansion."
+    ) {
+      self.expandLabel = expandLabel
+      self.collapseLabel = collapseLabel
+      self.hint = hint
+    }
+  }
+
+  /// Text inserted before the action in collapsed mode.
   ///
-  /// - Parameter updates: Mutation closure that updates a local configuration copy.
-  /// - Returns: A fully configured `FKExpandableTextConfiguration` value.
-  public static func build(
-    _ updates: (inout FKExpandableTextConfiguration) -> Void
-  ) -> FKExpandableTextConfiguration {
-    var configuration = FKExpandableTextConfiguration()
-    updates(&configuration)
-    return configuration
+  /// This is typically an ellipsis-like suffix such as `"… "` or `"..."`.
+  public var truncationToken: NSAttributedString
+  /// Rich text used as the expand action while content is collapsed.
+  public var expandActionText: NSAttributedString
+  /// Rich text used as the collapse action while content is expanded.
+  public var collapseActionText: NSAttributedString
+  /// Rule that determines how collapsed content is generated.
+  public var collapseRule: CollapseRule
+  /// Placement of the expand or collapse action.
+  public var buttonPlacement: ButtonPlacement
+  /// Tap interaction mode used by the rendered view.
+  public var interactionMode: InteractionMode
+  /// Indicates whether collapsing is disabled after the first successful expansion.
+  public var oneWayExpand: Bool
+  /// Animation applied when switching between collapsed and expanded states.
+  public var animation: Animation
+  /// Accessibility metadata used to describe the control to assistive technologies.
+  public var accessibility: Accessibility
+
+  /// Creates a configuration for expandable text rendering.
+  ///
+  /// - Parameters:
+  ///   - truncationToken: Text inserted before the expand action when the content is collapsed.
+  ///   - expandActionText: Attributed action displayed while the content is collapsed.
+  ///   - collapseActionText: Attributed action displayed while the content is expanded.
+  ///   - collapseRule: Rule that determines whether and how the body text is truncated.
+  ///   - buttonPlacement: Placement for the action text within the rendered output.
+  ///   - interactionMode: Tap behavior for the host view.
+  ///   - oneWayExpand: A Boolean value that disables collapsing after the first expansion.
+  ///   - animation: Animation used when state changes are rendered.
+  ///   - accessibility: Accessibility metadata used by assistive technologies.
+  ///
+  /// Use this initializer when screen-specific customization is needed. For app-wide defaults,
+  /// prefer assigning a shared value to `FKExpandableTextGlobalConfiguration.shared`.
+  public init(
+    truncationToken: NSAttributedString = NSAttributedString(string: "... "),
+    expandActionText: NSAttributedString = NSAttributedString(
+      string: "Read more",
+      attributes: [
+        .foregroundColor: UIColor.systemBlue,
+        .font: UIFont.preferredFont(forTextStyle: .body),
+      ]
+    ),
+    collapseActionText: NSAttributedString = NSAttributedString(
+      string: "Collapse",
+      attributes: [
+        .foregroundColor: UIColor.systemBlue,
+        .font: UIFont.preferredFont(forTextStyle: .body),
+      ]
+    ),
+    collapseRule: CollapseRule = .lines(3),
+    buttonPlacement: ButtonPlacement = .inlineTail,
+    interactionMode: InteractionMode = .buttonOnly,
+    oneWayExpand: Bool = false,
+    animation: Animation = .curve(duration: 0.25, options: [.curveEaseInOut]),
+    accessibility: Accessibility = .init()
+  ) {
+    self.truncationToken = truncationToken
+    self.expandActionText = expandActionText
+    self.collapseActionText = collapseActionText
+    self.collapseRule = collapseRule
+    self.buttonPlacement = buttonPlacement
+    self.interactionMode = interactionMode
+    self.oneWayExpand = oneWayExpand
+    self.animation = animation
+    self.accessibility = accessibility
+  }
+}
+
+/// Stores the global default configuration shared by `FKExpandableText` entry points.
+///
+/// Assigning `shared` lets you centralize product-wide styling without changing each integration
+/// site. Public UI APIs remain main-actor isolated, which keeps usage aligned with UIKit and
+/// SwiftUI threading expectations.
+@MainActor
+public enum FKExpandableTextGlobalConfiguration {
+  // Protects the shared configuration value during read and write access.
+  private static let lock = NSLock()
+  private static var _shared = FKExpandableTextConfiguration()
+
+  /// Shared default configuration used when no per-instance override is provided.
+  ///
+  /// Read this value to inspect current defaults, or assign a new configuration to update the
+  /// baseline styling and interaction behavior for subsequent integrations.
+  public static var shared: FKExpandableTextConfiguration {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return _shared
+    }
+    set {
+      lock.lock()
+      _shared = newValue
+      lock.unlock()
+    }
   }
 }
