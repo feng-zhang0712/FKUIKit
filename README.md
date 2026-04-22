@@ -61,6 +61,7 @@ FKKit/
 │  │     ├─ Badge/
 │  │     ├─ Bar/
 │  │     ├─ BarPresentation/
+│  │     ├─ BlurView/
 │  │     ├─ Button/
 │  │     ├─ Carousel/
 │  │     ├─ CornerShadow/
@@ -108,6 +109,7 @@ FKKit/
 - `Bar`: composable horizontal bar/tab-like navigation container.
 - `Presentation`: presentation container and positioning utilities.
 - `BarPresentation`: bar-driven presentation coordinator.
+- `BlurView`: high-performance blur component with system/custom pipelines, UIKit/SwiftUI adapters, image/view snapshot blur APIs, and IB/global-configuration support.
 - `Carousel`: reusable carousel component with configurable direction/looping, item models, page control support, and extension points for image/custom view rendering.
 - `EmptyState`: loading/empty/error state overlay system.
 - `Divider`: lightweight reusable divider for UIKit/SwiftUI with dashed, gradient, and edge-pinning support.
@@ -153,7 +155,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.36.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.37.0")
 ],
 targets: [
   .target(

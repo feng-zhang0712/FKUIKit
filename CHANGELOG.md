@@ -8,6 +8,43 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.37.0] - 2026-04-22
+
+### Added (FKUIKit FKBlurView)
+- Added a new high-performance blur module under `Sources/FKUIKit/Components/BlurView/`:
+  - `FKBlurView` (UIKit blur view with system/custom backends)
+  - `FKBlurConfiguration` (type-safe blur model with system styles, custom parameters, mode/backend selection)
+  - `FKBlurGlobalDefaults` (global baseline configuration)
+  - `FKSwiftUIBlurView` (SwiftUI adapter)
+- Added full blur capability coverage:
+  - system material styles (`light` / `dark` / `extraLight` / `systemMaterial` family, etc.)
+  - custom blur parameters (`blurRadius`, `saturation`, `brightness`, `tintColor`, `tintOpacity`)
+  - static and dynamic blur modes
+  - mask support (`maskPath`, rounded mask convenience)
+  - opacity control and Interface Builder bridges (`@IBDesignable`, `@IBInspectable`)
+- Added image and view blur extensions:
+  - `UIImage.fk_blurred(...)`
+  - `UIView.fk_blurredSnapshot(...)`
+  - `UIView.fk_blurredSnapshotAsync(...)`
+- Added shared processing core `FKBlurImageProcessor` to reuse Core Image/Metal blur pipeline across `UIImage+Blur` and `UIView+Blur`.
+
+### Changed (FKUIKit FKBlurView)
+- Added complete English API documentation comments for public APIs and key internal flows across blur sources.
+- Optimized custom image blur memory behavior by removing expensive pixel upsampling after downsample processing and restoring logical display size via `UIImage.scale`.
+
+### Added (Examples)
+- Added full FKBlurView example hub at:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/BlurView/FKBlurViewExamplesHubViewController.swift`
+- Added scenario coverage including:
+  - basic/system/custom blur demos
+  - static vs dynamic blur
+  - image blur and UIView snapshot blur (sync/async)
+  - rounded/circle/custom-mask blur
+  - opacity, global defaults, dark mode, rotation, and scroll performance
+  - SwiftUI integration and XIB/Storyboard demo path
+- Added `BlurView` entry to `Examples/.../Main/ExampleMenuViewController.swift`.
+- Fixed XIB/Storyboard demo crash when nib resource is missing by adding safe nib existence guard and fallback path.
+
 ## [0.36.0] - 2026-04-22
 
 ### Added (FKUIKit FKTopNotification)
@@ -1271,7 +1308,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.36.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.37.0...HEAD
+[0.37.0]: https://github.com/feng-zhang0712/FKKit/compare/0.36.0...0.37.0
 [0.36.0]: https://github.com/feng-zhang0712/FKKit/compare/0.35.1...0.36.0
 [0.35.1]: https://github.com/feng-zhang0712/FKKit/compare/0.35.0...0.35.1
 [0.35.0]: https://github.com/feng-zhang0712/FKKit/compare/0.34.0...0.35.0

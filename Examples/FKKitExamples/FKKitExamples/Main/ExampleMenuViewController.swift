@@ -44,6 +44,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKBadgeExamplesHubViewController() }
         ),
         ExampleMenuItem(
+          title: "BlurView",
+          subtitle: "High-performance blur view demos (UIKit / SwiftUI / IB)",
+          make: { FKBlurViewExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "Button",
           subtitle: "Split demos: basics, layout, interaction, appearance, loading",
           make: { FKButtonExamplesHubViewController() }
