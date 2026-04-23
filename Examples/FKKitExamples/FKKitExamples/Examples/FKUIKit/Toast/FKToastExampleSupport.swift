@@ -1,7 +1,7 @@
 import UIKit
 
-/// Shared UI helpers used by every UIKit demo page.
-enum FKToastDemoUI {
+/// Shared UI helpers used by every UIKit example page.
+enum FKToastExampleUI {
   static func makeScrollContent(in viewController: UIViewController) -> UIStackView {
     let scroll = UIScrollView()
     scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -74,12 +74,13 @@ enum FKToastDemoUI {
 }
 
 /// Base controller that provides a consistent scrollable surface.
-class FKToastDemoBaseViewController: UIViewController {
+class FKToastExampleBaseViewController: UIViewController {
   var contentStack: UIStackView!
 
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .systemGroupedBackground
-    contentStack = FKToastDemoUI.makeScrollContent(in: self)
+    contentStack = FKToastExampleUI.makeScrollContent(in: self)
   }
 }
+

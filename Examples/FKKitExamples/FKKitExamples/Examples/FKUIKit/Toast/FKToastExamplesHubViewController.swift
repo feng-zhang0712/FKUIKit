@@ -11,27 +11,27 @@ final class FKToastExamplesHubViewController: UITableViewController {
     Row(
       title: "Basic Toast",
       subtitle: "Position, multiline text, style, icon, custom view",
-      make: { FKToastBasicsDemoViewController() }
+      make: { FKToastBasicsExampleViewController() }
     ),
     Row(
       title: "Queue & Strategy",
       subtitle: "Burst queue, dedupe/coalesce, priority interruption",
-      make: { FKToastQueueStrategyDemoViewController() }
+      make: { FKToastQueueStrategyExampleViewController() }
     ),
     Row(
       title: "HUD",
       subtitle: "Loading, progress, success/failure, blocking and timeout",
-      make: { FKToastHUDDemoViewController() }
+      make: { FKToastHUDExampleViewController() }
     ),
     Row(
       title: "Snackbar",
       subtitle: "Actions, swipe dismiss, VoiceOver and announcement",
-      make: { FKToastSnackbarDemoViewController() }
+      make: { FKToastSnackbarExampleViewController() }
     ),
     Row(
       title: "Environment",
       subtitle: "Light/Dark, Dynamic Type, rotation, keyboard avoidance",
-      make: { FKToastEnvironmentDemoViewController() }
+      make: { FKToastEnvironmentExampleViewController() }
     ),
     Row(
       title: "SwiftUI Bridge",

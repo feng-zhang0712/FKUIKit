@@ -4,7 +4,7 @@ import FKUIKit
 import SwiftUI
 #endif
 
-final class FKToastSnackbarDemoViewController: FKToastDemoBaseViewController {
+final class FKToastSnackbarExampleViewController: FKToastExampleBaseViewController {
   private let announcementSwitch = UISwitch()
 
   override func viewDidLoad() {
@@ -27,15 +27,15 @@ final class FKToastSnackbarDemoViewController: FKToastDemoBaseViewController {
     actions.axis = .vertical
     actions.spacing = 8
     actions.addArrangedSubview(toggleRow)
-    actions.addArrangedSubview(FKToastDemoUI.row([
-      FKToastDemoUI.button("Show Action Snackbar") { [weak self] in
-        FKToastDemoPlaybook.showActionSnackbar(announcementEnabled: self?.announcementSwitch.isOn ?? true)
+    actions.addArrangedSubview(FKToastExampleUI.row([
+      FKToastExampleUI.button("Show Action Snackbar") { [weak self] in
+        FKToastExamplePlaybook.showActionSnackbarExample(announcementEnabled: self?.announcementSwitch.isOn ?? true)
       },
-      FKToastDemoUI.button("Clear Current") { FKToast.clearAll(animated: true) },
+      FKToastExampleUI.button("Clear Current") { FKToast.clearAll(animated: true) },
     ]))
 
     contentStack.addArrangedSubview(
-      FKToastDemoUI.section(
+      FKToastExampleUI.section(
         title: "Interactive Snackbar",
         description: "Shows primary and secondary actions, swipe dismiss, accessibility labels, and announcement on/off control.",
         body: actions
@@ -44,7 +44,7 @@ final class FKToastSnackbarDemoViewController: FKToastDemoBaseViewController {
   }
 }
 
-final class FKToastEnvironmentDemoViewController: FKToastDemoBaseViewController, UITextFieldDelegate {
+final class FKToastEnvironmentExampleViewController: FKToastExampleBaseViewController, UITextFieldDelegate {
   private let appearanceSegment = UISegmentedControl(items: ["System", "Light", "Dark"])
   private let keyboardField = UITextField()
 
@@ -63,15 +63,15 @@ final class FKToastEnvironmentDemoViewController: FKToastDemoBaseViewController,
       self?.overrideUserInterfaceStyle = sender.selectedSegmentIndex == 1 ? .light : (sender.selectedSegmentIndex == 2 ? .dark : .unspecified)
     }, for: .valueChanged)
 
-    let wrap = UIStackView(arrangedSubviews: [appearanceSegment, FKToastDemoUI.button("Show Adaptive Toast") {
+    let wrap = UIStackView(arrangedSubviews: [appearanceSegment, FKToastExampleUI.button("Show Adaptive Toast") {
       FKToast.show("Adaptive color and typography preview", style: .normal, kind: .toast)
-    }, FKToastDemoUI.row([
-      FKToastDemoUI.button("Show Material Blur") { FKToastDemoPlaybook.showVisualEffectDemo(liquidPreferred: false) },
-      FKToastDemoUI.button("Show Liquid Preferred") { FKToastDemoPlaybook.showVisualEffectDemo(liquidPreferred: true) },
+    }, FKToastExampleUI.row([
+      FKToastExampleUI.button("Show Material Blur") { FKToastExamplePlaybook.showVisualEffectExample(liquidPreferred: false) },
+      FKToastExampleUI.button("Show Liquid Preferred") { FKToastExamplePlaybook.showVisualEffectExample(liquidPreferred: true) },
     ])])
     wrap.axis = .vertical
     wrap.spacing = 8
-    contentStack.addArrangedSubview(FKToastDemoUI.section(
+    contentStack.addArrangedSubview(FKToastExampleUI.section(
       title: "Light / Dark + Dynamic Type",
       description: "Use iOS Settings > Accessibility > Display & Text Size > Larger Text, then trigger toasts to verify dynamic type, appearance adaptation, and blur fallback behavior.",
       body: wrap
@@ -83,12 +83,12 @@ final class FKToastEnvironmentDemoViewController: FKToastDemoBaseViewController,
     keyboardField.placeholder = "Tap to open keyboard, then show snackbar"
     keyboardField.delegate = self
 
-    let wrap = UIStackView(arrangedSubviews: [keyboardField, FKToastDemoUI.button("Show Keyboard-Avoiding Snackbar") {
+    let wrap = UIStackView(arrangedSubviews: [keyboardField, FKToastExampleUI.button("Show Keyboard-Avoiding Snackbar") {
       FKSnackbar.show("Keyboard is visible, snackbar should stay above it.", style: .info)
     }])
     wrap.axis = .vertical
     wrap.spacing = 8
-    contentStack.addArrangedSubview(FKToastDemoUI.section(
+    contentStack.addArrangedSubview(FKToastExampleUI.section(
       title: "Keyboard Avoidance",
       description: "Focus the text field to present the keyboard. The snackbar should reposition above the keyboard.",
       body: wrap
@@ -99,15 +99,15 @@ final class FKToastEnvironmentDemoViewController: FKToastDemoBaseViewController,
     let wrap = UIStackView()
     wrap.axis = .vertical
     wrap.spacing = 8
-    wrap.addArrangedSubview(FKToastDemoUI.button("Rotation Check Message") {
+    wrap.addArrangedSubview(FKToastExampleUI.button("Rotation Check Message") {
       FKToast.show("Rotate device between portrait and landscape while this message appears.", style: .warning, kind: .snackbar)
     })
-    wrap.addArrangedSubview(FKToastDemoUI.button("Multi-Scene Verification Hint") {
-      FKToast.show("Open a second scene/window and trigger demo there; each scene resolves its own top window.", style: .info, kind: .toast)
+    wrap.addArrangedSubview(FKToastExampleUI.button("Multi-Scene Verification Hint") {
+      FKToast.show("Open a second scene/window and trigger example there; each scene resolves its own top window.", style: .info, kind: .toast)
     })
-    contentStack.addArrangedSubview(FKToastDemoUI.section(
+    contentStack.addArrangedSubview(FKToastExampleUI.section(
       title: "Rotation + Multi Scene",
-      description: "For multi-scene testing on iPadOS, create a new window from app switcher and run this demo in both windows.",
+      description: "For multi-scene testing on iPadOS, create a new window from app switcher and run this example in both windows.",
       body: wrap
     ))
   }
@@ -139,13 +139,13 @@ private struct FKToastSwiftUISurface: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 12) {
-        Text("SwiftUI uses the same FKToastDemoPlaybook as UIKit.")
+        Text("SwiftUI uses the same FKToastExamplePlaybook as UIKit.")
           .font(.subheadline)
           .foregroundStyle(.secondary)
-        Button("Basic Placement Demo") { FKToastDemoPlaybook.showBasicPlacementAndStyle() }.buttonStyle(.borderedProminent)
-        Button("Queue + Coalesce Demo") { FKToastDemoPlaybook.burstQueueDemo(); FKToastDemoPlaybook.dedupeCoalesceDemo() }.buttonStyle(.bordered)
-        Button("HUD Progress Demo") { FKToastDemoPlaybook.showHUDProgress() }.buttonStyle(.bordered)
-        Button("Action Snackbar Demo") { FKToastDemoPlaybook.showActionSnackbar(announcementEnabled: true) }.buttonStyle(.bordered)
+        Button("Basic Placement Example") { FKToastExamplePlaybook.showBasicPlacementAndStyle() }.buttonStyle(.borderedProminent)
+        Button("Queue + Coalesce Example") { FKToastExamplePlaybook.burstQueueExample(); FKToastExamplePlaybook.dedupeCoalesceExample() }.buttonStyle(.bordered)
+        Button("HUD Progress Example") { FKToastExamplePlaybook.showHUDProgress() }.buttonStyle(.bordered)
+        Button("Action Snackbar Example") { FKToastExamplePlaybook.showActionSnackbarExample(announcementEnabled: true) }.buttonStyle(.bordered)
       }
       .padding(16)
     }
@@ -153,3 +153,4 @@ private struct FKToastSwiftUISurface: View {
   }
 }
 #endif
+
