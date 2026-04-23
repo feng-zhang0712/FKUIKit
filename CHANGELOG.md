@@ -8,6 +8,35 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.38.0] - 2026-04-23
+
+### Added (FKUIKit Toast)
+- Added a unified `Toast / HUD / Snackbar` solution under `Sources/FKUIKit/Components/Toast/`:
+  - `FKToast` (global entry point), `FKHUD`, `FKSnackbar` convenience APIs
+  - `FKToastConfiguration` (theme, layout, accessibility, queue policy, blur policy)
+  - `FKToastQueueActor` (thread-safe queue orchestration with dedupe/coalesce and priority preemption)
+  - SwiftUI bridging via `UIHostingController`
+- Added accessibility support:
+  - optional VoiceOver announcement
+  - action accessibility labels
+  - Dynamic Type friendly typography defaults
+- Added container-aware positioning:
+  - navigation bar aware top placement
+  - tab bar + safe area + keyboard aware bottom placement
+- Added optional material blur and liquid-glass-preferred visual effect with fallback policies.
+
+### Added (Examples)
+- Added a full demo hub at `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Toast/` covering:
+  - toast placement, multiline text, icons, custom views
+  - queue strategies (burst, coalesce/dedupe, priority interruption)
+  - HUD loading/progress/success/failure, blocking vs passthrough, manual dismiss, timeout
+  - snackbar actions, swipe dismiss, accessibility toggles
+  - keyboard avoidance and appearance (light/dark) verification
+  - SwiftUI trigger surface sharing the same playbook with UIKit pages
+
+### Changed (Documentation)
+- Rewrote `Sources/FKUIKit/Components/Toast/README.md` as an open-source ready English guide (overview, install, usage, accessibility, threading, FAQ, contributing).
+
 ## [0.37.1] - 2026-04-22
 
 ### Added (FKUIKit FKStickyHeader)

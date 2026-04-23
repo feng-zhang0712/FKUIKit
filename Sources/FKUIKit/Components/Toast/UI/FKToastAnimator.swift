@@ -2,18 +2,16 @@ import UIKit
 
 @MainActor
 enum FKToastAnimator {
-  // Entrance transition used by FKToastCenter.
   static func animateIn(
     view: UIView,
     kind: FKToastKind,
     position: FKToastPosition,
     style: FKToastAnimationStyle,
     duration: TimeInterval,
-    completion: (@Sendable () -> Void)? = nil
+    completion: (() -> Void)? = nil
   ) {
     switch style {
     case .fade:
-      // Simple alpha-in keeps motion minimal.
       view.alpha = 0
       UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
         view.alpha = 1
@@ -38,16 +36,24 @@ enum FKToastAnimator {
       } completion: { _ in
         completion?()
       }
+    case .scale:
+      view.alpha = 0
+      view.transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
+      UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+        view.alpha = 1
+        view.transform = .identity
+      } completion: { _ in
+        completion?()
+      }
     }
   }
 
-  // Exit transition used by FKToastCenter.
   static func animateOut(
     view: UIView,
     position: FKToastPosition,
     style: FKToastAnimationStyle,
     duration: TimeInterval,
-    completion: (@Sendable () -> Void)? = nil
+    completion: (() -> Void)? = nil
   ) {
     switch style {
     case .fade:
@@ -68,6 +74,13 @@ enum FKToastAnimator {
         case .bottom:
           view.transform = CGAffineTransform(translationX: 0, y: distance)
         }
+      } completion: { _ in
+        completion?()
+      }
+    case .scale:
+      UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseIn, .beginFromCurrentState]) {
+        view.alpha = 0
+        view.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
       } completion: { _ in
         completion?()
       }
