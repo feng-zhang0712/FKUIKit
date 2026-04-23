@@ -72,6 +72,9 @@ final class FKToastHUDDemoViewController: FKToastDemoBaseViewController {
       FKToastDemoUI.button("Progress 0→100") { FKToastDemoPlaybook.showHUDProgress() },
       FKToastDemoUI.button("Success/Failure Icons") { FKToastDemoPlaybook.showHUDEndStates() },
     ]))
+    actions.addArrangedSubview(FKToastDemoUI.button("Live Update Same HUD Instance") {
+      FKToastDemoPlaybook.showLiveHUDProgress()
+    })
     actions.addArrangedSubview(FKToastDemoUI.row([
       FKToastDemoUI.button("Manual Dismiss") { FKToast.clearAll(animated: true) },
       FKToastDemoUI.button("Timeout Fallback") { FKHUD.showLoading("Will auto timeout in 3s", interceptTouches: true, timeout: 3) },

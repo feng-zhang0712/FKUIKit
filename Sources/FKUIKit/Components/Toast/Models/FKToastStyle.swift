@@ -1,3 +1,4 @@
+import Foundation
 import UIKit
 
 /// Visual semantics for Toast/HUD/Snackbar rendering.
@@ -179,4 +180,14 @@ public enum FKToastBackgroundVisualEffect: Sendable, Equatable {
   case blur(style: FKBlurConfiguration.SystemStyle)
   /// Prefer liquid-glass visual style on supported systems and gracefully fallback otherwise.
   case liquidGlassPreferred
+}
+
+/// Sound behavior when an overlay is presented.
+public enum FKToastSound: Sendable, Equatable {
+  /// Disable sound playback.
+  case none
+  /// Play a lightweight built-in system sound.
+  case `default`
+  /// Play a custom sound file URL.
+  case custom(url: URL)
 }

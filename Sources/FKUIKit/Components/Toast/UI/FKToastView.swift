@@ -24,6 +24,10 @@ final class FKToastView: UIView {
     installInteractions(configuration: request.configuration)
   }
 
+  func updateDisplayedRequest(_ request: FKToastRequest) {
+    bindContent(request: request)
+  }
+
   required init?(coder: NSCoder) {
     return nil
   }

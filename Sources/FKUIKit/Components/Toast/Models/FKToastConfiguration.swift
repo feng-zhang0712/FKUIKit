@@ -165,6 +165,8 @@ public struct FKToastConfiguration: Sendable, Equatable {
   public var fallbackToSolidColorWhenReduceTransparencyEnabled: Bool
   /// Disable visual effects while Low Power Mode is enabled.
   public var disableVisualEffectInLowPowerMode: Bool
+  /// Sound behavior triggered when this request is presented.
+  public var sound: FKToastSound
   /// Localized fallback text payload.
   public var localizedText: FKToastLocalizedText
 
@@ -214,6 +216,7 @@ public struct FKToastConfiguration: Sendable, Equatable {
     visualEffectOpacity: CGFloat = 1,
     fallbackToSolidColorWhenReduceTransparencyEnabled: Bool = true,
     disableVisualEffectInLowPowerMode: Bool = false,
+    sound: FKToastSound = .none,
     localizedText: FKToastLocalizedText = .init()
   ) {
     self.kind = kind
@@ -257,6 +260,7 @@ public struct FKToastConfiguration: Sendable, Equatable {
     self.visualEffectOpacity = min(max(visualEffectOpacity, 0), 1)
     self.fallbackToSolidColorWhenReduceTransparencyEnabled = fallbackToSolidColorWhenReduceTransparencyEnabled
     self.disableVisualEffectInLowPowerMode = disableVisualEffectInLowPowerMode
+    self.sound = sound
     self.localizedText = localizedText
   }
 }

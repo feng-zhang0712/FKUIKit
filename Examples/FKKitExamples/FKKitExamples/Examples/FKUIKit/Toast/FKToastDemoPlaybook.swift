@@ -96,6 +96,23 @@ enum FKToastDemoPlaybook {
       FKHUD.showSuccess("Upload completed")
     }
   }
+  
+  static func showLiveHUDProgress() {
+    Task { @MainActor in
+      let totalDuration: TimeInterval = 5
+      let identifier = await FKToast.showAndReturnID(
+        builder: .init(
+          content: .titleSubtitle(title: "Uploading", subtitle: "0%"),
+          configuration: .init(kind: .hud, style: .info, duration: totalDuration, timeout: totalDuration, interceptTouches: true)
+        )
+      )
+      scheduleProgressUpdate(id: identifier, progress: 20, after: 1)
+      scheduleProgressUpdate(id: identifier, progress: 40, after: 2)
+      scheduleProgressUpdate(id: identifier, progress: 60, after: 3)
+      scheduleProgressUpdate(id: identifier, progress: 80, after: 4)
+      scheduleProgressUpdate(id: identifier, progress: 100, after: 4.8)
+    }
+  }
 
   /// Shows success and failure HUD status with auto dismiss.
   static func showHUDEndStates() {
@@ -144,5 +161,16 @@ enum FKToastDemoPlaybook {
         }
       )
     )
+  }
+
+  private static func scheduleProgressUpdate(id: UUID, progress: Int, after delay: TimeInterval) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+      Task { @MainActor in
+        _ = await FKToast.update(
+          id,
+          content: .titleSubtitle(title: "Uploading", subtitle: "\(progress)%")
+        )
+      }
+    }
   }
 }

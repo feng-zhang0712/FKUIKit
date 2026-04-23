@@ -1,3 +1,4 @@
+import AudioToolbox
 import UIKit
 
 @MainActor
@@ -87,6 +88,46 @@ final class FKToastCenter {
     )
   }
 
+  func update(id: UUID, content: FKToastContent, configuration: FKToastConfiguration? = nil) -> Bool {
+    guard let presentation = current[id] else { return false }
+    let previous = presentation.request
+    let updatedRequest = FKToastRequest(
+      id: previous.id,
+      content: content,
+      icon: previous.icon,
+      configuration: configuration ?? previous.configuration,
+      hooks: previous.hooks,
+      actionHandler: previous.actionHandler,
+      secondaryActionHandler: previous.secondaryActionHandler,
+      createdAt: previous.createdAt
+    )
+    presentation.request = updatedRequest
+    presentation.view.updateDisplayedRequest(updatedRequest)
+    Task { await queueActor.updateDisplayed(updatedRequest) }
+    return true
+  }
+
+  func updateProgress(id: UUID, progress: Double, title: String? = nil) -> Bool {
+    guard let presentation = current[id] else { return false }
+    let clampedProgress = min(max(progress, 0), 1)
+    let percent = Int((clampedProgress * 100).rounded())
+    let progressText = "\(percent)%"
+    let resolvedTitle: String = {
+      if let title, !title.isEmpty {
+        return title
+      }
+      switch presentation.request.content {
+      case let .titleSubtitle(currentTitle, _):
+        return currentTitle
+      case let .message(message):
+        return message
+      case .customView:
+        return presentation.request.configuration.localizedText.loadingText
+      }
+    }()
+    return update(id: id, content: .titleSubtitle(title: resolvedTitle, subtitle: progressText))
+  }
+
   private func presentNextIfNeeded() {
     let maxCount = defaultConfiguration.queue.maxConcurrentDisplayCount
     Task {
@@ -155,6 +196,7 @@ final class FKToastCenter {
     let presentation = FKToastPresentation(request: request, view: toastView, resolvedPosition: resolvedPosition, positionConstraint: positionConstraint, hostWindow: window)
     current[request.id] = presentation
     request.hooks.willShow?(request.id)
+    playSound(request.configuration.sound)
     FKToastAnimator.animateIn(
       view: toastView,
       kind: request.configuration.kind,
@@ -168,6 +210,21 @@ final class FKToastCenter {
       }
     }
     scheduleAutoDismiss(for: request.id, configuration: request.configuration)
+  }
+
+  private func playSound(_ sound: FKToastSound) {
+    switch sound {
+    case .none:
+      return
+    case .default:
+      AudioServicesPlaySystemSound(1001)
+    case let .custom(url):
+      var soundID: SystemSoundID = 0
+      AudioServicesCreateSystemSoundID(url as CFURL, &soundID)
+      guard soundID != 0 else { return }
+      AudioServicesPlaySystemSound(soundID)
+      AudioServicesDisposeSystemSoundID(soundID)
+    }
   }
 
   private func scheduleAutoDismiss(for id: UUID, configuration: FKToastConfiguration) {
@@ -378,7 +435,7 @@ final class FKToastCenter {
 }
 
 private final class FKToastPresentation {
-  let request: FKToastRequest
+  var request: FKToastRequest
   let view: FKToastView
   let resolvedPosition: FKToastPosition
   let positionConstraint: NSLayoutConstraint

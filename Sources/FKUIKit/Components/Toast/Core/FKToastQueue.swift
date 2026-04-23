@@ -89,6 +89,11 @@ actor FKToastQueueActor {
     displaying[id]
   }
 
+  func updateDisplayed(_ request: FKToastRequest) {
+    guard displaying[request.id] != nil else { return }
+    displaying[request.id] = request
+  }
+
   func clear() -> [UUID] {
     waiting.removeAll()
     let ids = Array(displaying.keys)

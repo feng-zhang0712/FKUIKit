@@ -125,13 +125,8 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "Toast",
-          subtitle: "Global toast/snackbar hints with queueing, styles, positions, custom view, and SwiftUI support",
+          subtitle: "Global Toast/HUD/Snackbar hints with queueing, styles, positions, custom view, and SwiftUI support",
           make: { FKToastExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "TopNotification",
-          subtitle: "Global top floating notifications with styles, queue, priority, progress, and SwiftUI support",
-          make: { FKTopNotificationExamplesHubViewController() }
         ),
       ].sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
     ),

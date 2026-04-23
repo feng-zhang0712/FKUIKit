@@ -4,6 +4,41 @@ import UIKit
 import SwiftUI
 #endif
 
+/// Handle for one specific Toast/HUD/Snackbar request.
+public final class FKToastHandle: @unchecked Sendable {
+  /// Request identifier associated with this handle.
+  public let id: UUID
+
+  init(id: UUID) {
+    self.id = id
+  }
+
+  /// Dismisses this request if it is currently visible or queued.
+  public func dismiss(reason: FKToastDismissReason = .manual, animated: Bool = true) {
+    FKToast.dismiss(id, reason: reason, animated: animated)
+  }
+
+  /// Updates visible content in-place for this request.
+  ///
+  /// - Parameters:
+  ///   - content: Updated content payload.
+  ///   - configuration: Optional updated configuration.
+  /// - Returns: `true` when the request is currently visible and updated.
+  public func update(content: FKToastContent, configuration: FKToastConfiguration? = nil) async -> Bool {
+    await FKToast.update(id, content: content, configuration: configuration)
+  }
+
+  /// Updates progress text (0%...100%) for this request.
+  ///
+  /// - Parameters:
+  ///   - progress: Progress value in range `0...1`.
+  ///   - title: Optional title override.
+  /// - Returns: `true` when updated successfully.
+  public func updateProgress(_ progress: Double, title: String? = nil) async -> Bool {
+    await FKToast.updateProgress(id, progress: progress, title: title)
+  }
+}
+
 /// Unified entry point for Toast, HUD, and Snackbar overlays.
 public enum FKToast {
   /// Global baseline used by convenience APIs.
@@ -149,6 +184,15 @@ public enum FKToast {
     return id
   }
 
+  /// Enqueues one request and returns a handle for later updates or dismissal.
+  ///
+  /// - Parameter builder: Builder containing content and behavior.
+  /// - Returns: A handle bound to the enqueued request.
+  public static func showAndReturnHandle(builder: FKToastBuilder) async -> FKToastHandle {
+    let id = await showAndReturnID(builder: builder)
+    return FKToastHandle(id: id)
+  }
+
   /// Removes current and pending overlays.
   ///
   /// - Parameter animated: Whether to animate active dismissals.
@@ -173,6 +217,42 @@ public enum FKToast {
   public static func dismiss(_ id: UUID, reason: FKToastDismissReason = .manual, animated: Bool = true) {
     Task { @MainActor in
       FKToastCenter.shared.dismiss(id: id, reason: reason, animated: animated)
+    }
+  }
+
+  /// Updates the content of an already visible overlay instance.
+  ///
+  /// - Parameters:
+  ///   - id: Identifier returned by `showAndReturnID(builder:)`.
+  ///   - content: Updated content payload rendered in the existing instance.
+  ///   - configuration: Optional configuration override. If `nil`, the original configuration is kept.
+  /// - Returns: `true` if the instance exists and was updated; otherwise `false`.
+  ///
+  /// This API does not re-enqueue a new request and does not change queue order.
+  public static func update(
+    _ id: UUID,
+    content: FKToastContent,
+    configuration: FKToastConfiguration? = nil
+  ) async -> Bool {
+    await MainActor.run {
+      FKToastCenter.shared.update(id: id, content: content, configuration: configuration)
+    }
+  }
+
+  /// Updates progress text (0%...100%) for one visible request.
+  ///
+  /// - Parameters:
+  ///   - id: Identifier returned by `showAndReturnID(builder:)`.
+  ///   - progress: Progress value in range `0...1`.
+  ///   - title: Optional title override.
+  /// - Returns: `true` if updated; otherwise `false`.
+  public static func updateProgress(
+    _ id: UUID,
+    progress: Double,
+    title: String? = nil
+  ) async -> Bool {
+    await MainActor.run {
+      FKToastCenter.shared.updateProgress(id: id, progress: progress, title: title)
     }
   }
 }

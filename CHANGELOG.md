@@ -8,6 +8,25 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.40.0] - 2026-04-23
+
+### Changed (FKUIKit Toast)
+- Merged `TopNotification`-specific capabilities into the unified Toast module:
+  - request handle API via `FKToastHandle`
+  - per-instance progress update API (`FKToast.updateProgress`)
+  - optional presentation sound policy (`FKToastSound` + `FKToastConfiguration.sound`)
+- Refined migration ergonomics for top-banner style usage while keeping Toast/HUD/Snackbar as the single global overlay entry.
+
+### Removed (FKUIKit TopNotification)
+- Removed `Sources/FKUIKit/Components/TopNotification/` after feature parity migration to Toast.
+- Removed TopNotification example hub:
+  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/TopNotification/FKTopNotificationExamplesHubViewController.swift`
+- Removed TopNotification menu entry from:
+  - `Examples/FKKitExamples/FKKitExamples/Main/ExampleMenuViewController.swift`
+
+### Changed (Documentation)
+- Updated root `README.md` and `CHANGELOG.md` to remove TopNotification references and reflect Toast as the unified overlay solution.
+
 ## [0.39.0] - 2026-04-23
 
 ### Added (FKEmptyState CoreLite)
@@ -122,39 +141,6 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
   - SwiftUI integration and XIB/Storyboard demo path
 - Added `BlurView` entry to `Examples/.../Main/ExampleMenuViewController.swift`.
 - Fixed XIB/Storyboard demo crash when nib resource is missing by adding safe nib existence guard and fallback path.
-
-## [0.36.0] - 2026-04-22
-
-### Added (FKUIKit FKTopNotification)
-- Added a new lightweight global top floating notification module under `Sources/FKUIKit/Components/TopNotification/` with pure Swift UIKit implementation and SwiftUI interoperability:
-  - `FKTopNotification`
-  - `FKTopNotificationHandle`
-  - `FKTopNotificationConfiguration`
-  - `FKTopNotificationStyle` (`normal` / `success` / `error` / `warning` / `info`)
-  - `FKTopNotificationPriority` with preemption support
-  - `FKTopNotificationAction`
-  - progress notification support with real-time updates
-  - optional sound support on presentation
-- Added serialized queue presentation to prevent stacked overlays, plus high-priority preemption (interrupt and present first).
-- Added safe-area / notch / Dynamic Island aware top placement behavior:
-  - when a navigation bar is visible, notification is pinned below the navigation bar
-  - otherwise, notification is pinned below the top safe area inset
-
-### Added (Examples)
-- Added a complete FKTopNotification demo hub at:
-  - `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/TopNotification/FKTopNotificationExamplesHubViewController.swift`
-- Added full scenario coverage including:
-  - five preset styles, subtitle, action button, custom color/icon
-  - custom UIView and SwiftUI content hosting
-  - progress notification with live updates
-  - queueing behavior and priority preemption
-  - swipe-to-dismiss, manual dismiss, custom duration, sound
-  - global configuration, dark mode, rotation, notch/Dynamic Island safe area
-- Added `TopNotification` entry in `ExampleMenuViewController` under `FKUIKit`.
-
-### Added (Documentation)
-- Added module-level documentation:
-  - `Sources/FKUIKit/Components/TopNotification/README.md`
 
 ## [0.35.1] - 2026-04-22
 
