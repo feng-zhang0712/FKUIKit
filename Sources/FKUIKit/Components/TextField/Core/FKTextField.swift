@@ -19,23 +19,31 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
 
   /// Current validation result.
   public private(set) var validationResult: FKTextFieldValidationResult = .valid
+  /// Current resolved status.
+  public private(set) var status: FKTextFieldStatus = .normal
 
-  /// Closure called when raw and formatted text changes.
-  public var onTextDidChange: ((String, String) -> Void)?
+  /// Closure called on each editing changed event.
+  public var onEditingChanged: ((String, String) -> Void)?
+  /// Closure called when editing begins.
+  public var onDidBeginEditing: (() -> Void)?
+  /// Closure called when editing ends.
+  public var onDidEndEditing: (() -> Void)?
+  /// Closure called when return/submit is triggered.
+  public var onDidSubmit: ((String) -> Void)?
+  /// Closure called when validation fails.
+  public var onDidFailValidation: ((FKTextFieldValidationResult) -> Void)?
   /// Closure called when formatter output is produced.
   public var onFormattedResult: ((FKTextFieldFormattingResult) -> Void)?
   /// Closure called when validation result changes.
   public var onValidationResult: ((FKTextFieldValidationResult) -> Void)?
-  /// Closure called when error message changes.
-  public var onErrorMessage: ((String?) -> Void)?
   /// Closure called when fixed-length input is completed.
   public var onInputCompleted: ((String) -> Void)?
   /// Closure called when password visibility is toggled.
   ///
   /// The value indicates whether the password is currently visible.
   public var onPasswordVisibilityToggled: ((Bool) -> Void)?
-  /// Closure called when the built-in clear button is tapped.
-  public var onClearButtonTapped: (() -> Void)?
+  /// Closure called when text is cleared.
+  public var onDidClear: (() -> Void)?
 
   /// Raw text value without visual separators.
   ///
@@ -67,6 +75,8 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   private let formatter: FKTextFieldFormatting
   /// Validator implementation used to produce validity and optional messages.
   private let validator: FKTextFieldValidating
+  /// Optional asynchronous validator for server-backed checks.
+  private var asyncValidator: FKTextFieldAsyncValidating?
   /// Debounce work item for callback coalescing.
   private var debounceTask: DispatchWorkItem?
   /// Last accepted input timestamp for anti-burst protection.
@@ -87,6 +97,16 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   private let trailingAccessoryStack = UIStackView()
   /// Inline error label rendered below the text area when enabled.
   private lazy var inlineErrorLabel = UILabel()
+  /// Floating title label rendered above text content.
+  private lazy var floatingTitleLabel = UILabel()
+  /// Latest async validation task.
+  private var asyncValidationTask: Task<Void, Never>?
+  /// Validation debounce task.
+  private var validationDebounceTask: DispatchWorkItem?
+  /// Incrementing token for async validation race handling.
+  private var asyncValidationToken: Int = 0
+  /// External forced status override.
+  private var forcedStatus: FKTextFieldStatus?
   /// Underline layer used when `configuration.decoration.mode == .underline`.
   private let underlineLayer = CALayer()
   /// Size constraint for password toggle button touch target.
@@ -98,11 +118,13 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   public init(
     configuration: FKTextFieldConfiguration,
     formatter: FKTextFieldFormatting = FKTextFieldDefaultFormatter(),
-    validator: FKTextFieldValidating = FKTextFieldDefaultValidator()
+    validator: FKTextFieldValidating = FKTextFieldDefaultValidator(),
+    asyncValidator: FKTextFieldAsyncValidating? = nil
   ) {
     self.configuration = configuration
     self.formatter = formatter
     self.validator = validator
+    self.asyncValidator = asyncValidator
     super.init(frame: .zero)
     commonInit()
   }
@@ -111,7 +133,8 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   public convenience init(inputRule: FKTextFieldInputRule) {
     let configuration = FKTextFieldConfiguration(
       inputRule: inputRule,
-      style: FKTextFieldManager.shared.defaultStyle
+      style: FKTextFieldManager.shared.defaultStyle,
+      localization: FKTextFieldManager.shared.defaultLocalization
     )
     self.init(configuration: configuration)
   }
@@ -120,7 +143,8 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   public required init?(coder: NSCoder) {
     configuration = FKTextFieldConfiguration(
       inputRule: FKTextFieldInputRule(formatType: .alphaNumeric),
-      style: FKTextFieldManager.shared.defaultStyle
+      style: FKTextFieldManager.shared.defaultStyle,
+      localization: FKTextFieldManager.shared.defaultLocalization
     )
     formatter = FKTextFieldDefaultFormatter()
     validator = FKTextFieldDefaultValidator()
@@ -145,18 +169,68 @@ public final class FKTextField: UITextField, FKTextFieldConfigurable {
   /// Sets an explicit error state and message.
   public func setError(message: String?) {
     textState.errorMessage = message
+    configuration.messages.error = message
+    configuration.messages.success = nil
+    forcedStatus = (message == nil ? nil : .error)
+    updateInlineErrorLabel()
     applyStateStyle()
-    onErrorMessage?(message)
+  }
+
+  /// Sets success message and enters success state.
+  public func setSuccess(message: String?) {
+    configuration.messages.success = message
+    forcedStatus = .success
+    textState.errorMessage = nil
+    validationResult = .valid
+    updateInlineErrorLabel()
+    applyStateStyle()
+  }
+
+  /// Sets helper message.
+  public func setHelper(message: String?) {
+    configuration.messages.helper = message
+    updateInlineErrorLabel()
   }
 
   /// Clears current text and state.
   public func clear() {
+    asyncValidationTask?.cancel()
+    validationDebounceTask?.cancel()
     textState = FKTextFieldState()
     text = nil
     validationResult = .valid
-    onTextDidChange?("", "")
+    forcedStatus = nil
+    onEditingChanged?("", "")
     onValidationResult?(.valid)
+    updateFloatingTitleVisibility()
+    updateInlineErrorLabel()
     applyStateStyle()
+  }
+
+  /// Forces an external status and optional message.
+  ///
+  /// - Important: Pass `nil` status through `resetForcedStatus()` to resume automatic status resolution.
+  public func forceStatus(_ status: FKTextFieldStatus, message: String? = nil) {
+    forcedStatus = status
+    if status == .error {
+      textState.errorMessage = message ?? configuration.messages.error
+    } else if status == .success {
+      configuration.messages.success = message ?? configuration.messages.success
+      textState.errorMessage = nil
+    }
+    updateInlineErrorLabel()
+    applyStateStyle()
+  }
+
+  /// Clears forced status override and returns to automatic state resolution.
+  public func resetForcedStatus() {
+    forcedStatus = nil
+    applyStateStyle()
+  }
+
+  /// Installs or replaces async validator at runtime.
+  public func setAsyncValidator(_ validator: FKTextFieldAsyncValidating?) {
+    asyncValidator = validator
   }
 
   /// Connects the receiver to the next field for return-key focus chaining.
@@ -192,10 +266,12 @@ private extension FKTextField {
     smartInsertDeleteType = .no
     // Prefer the custom clear button when enabled to avoid duplicated affordances.
     clearButtonMode = configuration.accessories.clearButton.isEnabled ? .never : .whileEditing
+    adjustsFontForContentSizeCategory = true
     setupInlineViewsIfNeeded()
     setupDecorationLayers()
     setupTrailingAccessoryContainer()
     applyConfiguration()
+    updateAccessibilityConfiguration()
   }
 
   /// Installs decoration layers (e.g. underline) once.
@@ -233,15 +309,25 @@ private extension FKTextField {
     clearButtonMode = configuration.accessories.clearButton.isEnabled ? .never : .whileEditing
     updateAccessoryButtonSizing()
     applyPlaceholder()
+    floatingTitleLabel.text = configuration.floatingTitle
+    floatingTitleLabel.font = configuration.style.floatingTitleFont
+    floatingTitleLabel.textColor = configuration.style.floatingTitleColor
+    floatingTitleLabel.adjustsFontForContentSizeCategory = true
     rebuildTrailingAccessories()
     applySecureTextEntry()
     applyStateStyle()
+    updateFloatingTitleVisibility()
+    updateInlineErrorLabel()
+    updateAccessibilityConfiguration()
     invalidateIntrinsicContentSize()
     setNeedsLayout()
   }
 
   /// Installs inline subviews used for inline messaging.
   func setupInlineViewsIfNeeded() {
+    floatingTitleLabel.isHidden = true
+    floatingTitleLabel.numberOfLines = 1
+    addSubview(floatingTitleLabel)
     inlineErrorLabel.isHidden = true
     inlineErrorLabel.numberOfLines = 0
     addSubview(inlineErrorLabel)
@@ -285,7 +371,9 @@ private extension FKTextField {
         configuredAccessoryImage(configuration.accessories.clearButton.image ?? UIImage(systemName: "xmark.circle.fill")),
         for: .normal
       )
-      clearButton.accessibilityLabel = configuration.accessories.clearButton.accessibilityLabel
+      clearButton.accessibilityLabel = configuration.accessories.clearButton.accessibilityLabel.isEmpty
+        ? configuration.localization.clearButtonLabel
+        : configuration.accessories.clearButton.accessibilityLabel
       clearButton.addTarget(self, action: #selector(didTapClearButton), for: .touchUpInside)
       trailingAccessoryStack.addArrangedSubview(clearButton)
     }
@@ -304,7 +392,7 @@ private extension FKTextField {
         configuredAccessoryImage(configuration.accessories.passwordToggle.hiddenImage ?? UIImage(systemName: "eye.slash")),
         for: .normal
       )
-      passwordToggleButton.accessibilityLabel = configuration.accessories.passwordToggle.accessibilityLabel
+      passwordToggleButton.accessibilityLabel = configuration.localization.passwordHiddenLabel
       passwordToggleButton.addTarget(self, action: #selector(togglePasswordVisible), for: .touchUpInside)
       trailingAccessoryStack.addArrangedSubview(passwordToggleButton)
     }
@@ -327,10 +415,14 @@ private extension FKTextField {
       ? (configuration.accessories.passwordToggle.visibleImage ?? UIImage(systemName: "eye"))
       : (configuration.accessories.passwordToggle.hiddenImage ?? UIImage(systemName: "eye.slash"))
     passwordToggleButton.setImage(configuredAccessoryImage(image), for: .normal)
+    passwordToggleButton.accessibilityLabel = isPasswordVisible
+      ? configuration.localization.passwordVisibleLabel
+      : configuration.localization.passwordHiddenLabel
   }
 
   /// Applies the appropriate visual style for normal/focused/error state.
   func applyStateStyle() {
+    status = resolvedStatus()
     let stateStyle = currentStateStyle()
 
     switch configuration.decoration.mode {
@@ -348,25 +440,66 @@ private extension FKTextField {
       underlineLayer.cornerRadius = thickness / 2
     }
 
-    layer.backgroundColor = stateStyle.backgroundColor.cgColor
-    layer.shadowColor = stateStyle.shadowColor?.cgColor
-    layer.shadowOpacity = stateStyle.shadowOpacity
-    layer.shadowOffset = stateStyle.shadowOffset
-    layer.shadowRadius = stateStyle.shadowRadius
+    let applyLayerStyling = {
+      self.layer.backgroundColor = stateStyle.backgroundColor.cgColor
+      self.layer.shadowColor = stateStyle.shadowColor?.cgColor
+      self.layer.shadowOpacity = stateStyle.shadowOpacity
+      self.layer.shadowOffset = stateStyle.shadowOffset
+      self.layer.shadowRadius = stateStyle.shadowRadius
+    }
+    if configuration.motion.isEnabled, !UIAccessibility.isReduceMotionEnabled {
+      CATransaction.begin()
+      CATransaction.setAnimationDuration(configuration.motion.transitionDuration)
+      applyLayerStyling()
+      CATransaction.commit()
+    } else {
+      applyLayerStyling()
+    }
     applyAccessoryTintColor(using: stateStyle)
   }
 
-  func currentStateStyle() -> FKTextFieldStateStyle {
+  func resolvedStatus() -> FKTextFieldStatus {
+    if let forcedStatus {
+      return forcedStatus
+    }
+    if configuration.isReadOnly {
+      return .readOnly
+    }
     if !isEnabled {
-      return configuration.style.disabled
+      return .disabled
     }
     if textState.errorMessage != nil || !validationResult.isValid {
-      return configuration.style.error
+      return .error
+    }
+    if let success = configuration.messages.success, !success.isEmpty {
+      return .success
     }
     if isFirstResponder {
-      return configuration.style.focused
+      return .focused
     }
-    return configuration.style.normal
+    if !textState.rawText.isEmpty {
+      return .filled
+    }
+    return .normal
+  }
+
+  func currentStateStyle() -> FKTextFieldStateStyle {
+    switch resolvedStatus() {
+    case .normal:
+      return configuration.style.normal
+    case .focused:
+      return configuration.style.focused
+    case .filled:
+      return configuration.style.filled
+    case .error:
+      return configuration.style.error
+    case .success:
+      return configuration.style.success
+    case .disabled:
+      return configuration.style.disabled
+    case .readOnly:
+      return configuration.style.readOnly
+    }
   }
 
   func applyAccessoryTintColor(using stateStyle: FKTextFieldStateStyle) {
@@ -400,7 +533,7 @@ private extension FKTextField {
     clearButton.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
     passwordToggleButton.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
 
-    let side = max(20, configuration.accessories.iconSize + 8)
+    let side = max(configuration.accessibility.minimumHitTarget, configuration.accessories.iconSize + 8)
     clearButtonWidthConstraint = clearButton.widthAnchor.constraint(equalToConstant: side)
     clearButtonHeightConstraint = clearButton.heightAnchor.constraint(equalToConstant: side)
     passwordButtonWidthConstraint = passwordToggleButton.widthAnchor.constraint(equalToConstant: side)
@@ -413,11 +546,28 @@ private extension FKTextField {
   }
 
   func updateAccessoryButtonSizing() {
-    let side = max(20, configuration.accessories.iconSize + 8)
+    let side = max(configuration.accessibility.minimumHitTarget, configuration.accessories.iconSize + 8)
     clearButtonWidthConstraint?.constant = side
     clearButtonHeightConstraint?.constant = side
     passwordButtonWidthConstraint?.constant = side
     passwordButtonHeightConstraint?.constant = side
+  }
+
+  func restoreCursor(rawOffset: Int) {
+    guard isFirstResponder else { return }
+    let formatted = textState.formattedText
+    var resolvedOffset = formatted.count
+    for idx in 0...formatted.count {
+      let prefix = String(formatted.prefix(idx))
+      let mapped = formatter.format(text: prefix, rule: configuration.inputRule).rawText.count
+      if mapped >= rawOffset {
+        resolvedOffset = idx
+        break
+      }
+    }
+    if let position = position(from: beginningOfDocument, offset: resolvedOffset) {
+      selectedTextRange = textRange(from: position, to: position)
+    }
   }
 
   /// Runs the full pipeline for a candidate text:
@@ -429,24 +579,21 @@ private extension FKTextField {
     textState.formattedText = result.formattedText
     text = result.formattedText
     let previousIsValid = validationResult.isValid
-    // 2) Validate raw value (canonical representation).
-    validationResult = validator.validate(rawText: result.rawText, formattedText: result.formattedText, rule: configuration.inputRule)
-
-    // 3) Update error message state.
-    if validationResult.isValid {
-      textState.errorMessage = nil
+    // 2) Validate if configured on change.
+    if configuration.validationPolicy.trigger == .onChange {
+      performValidation(for: result, source: .onChange)
     } else {
-      textState.errorMessage = validationResult.message
+      textState.errorMessage = nil
     }
-
-    // 4) Refresh UI decorations.
+    // 3) Refresh UI decorations.
+    updateFloatingTitleVisibility()
     updateInlineErrorLabel()
     updateCounterLabel()
     applyStateStyle()
-    // 5) Notify callbacks (optionally debounced).
-    dispatchCallbacks(result: result, validationResult: validationResult)
-    onErrorMessage?(textState.errorMessage)
-    // 6) Optionally perform validation feedback animations.
+    // 4) Notify callbacks (optionally debounced).
+    dispatchCallbacks(result: result)
+    onEditingChanged?(result.rawText, result.formattedText)
+    // 5) Optionally perform validation feedback animations.
     if configuration.validationFeedback.shakesOnInvalid, previousIsValid, !validationResult.isValid {
       fk_shake(
         amplitude: configuration.validationFeedback.shakeAmplitude,
@@ -454,21 +601,68 @@ private extension FKTextField {
         duration: configuration.validationFeedback.shakeDuration
       )
     }
-    // 7) Check fixed-length completion conditions.
+    // 6) Check fixed-length completion conditions.
     checkCompletion()
   }
 
+  func performValidation(for result: FKTextFieldFormattingResult, source: FKTextFieldValidationTrigger) {
+    guard configuration.validationPolicy.trigger == source else { return }
+    if configuration.validationPolicy.ignoresEmptyInput, result.rawText.isEmpty {
+      validationResult = .valid
+      textState.errorMessage = nil
+      return
+    }
+    let validateSync: () -> Void = { [self] in
+      validationResult = validator.validate(rawText: result.rawText, formattedText: result.formattedText, rule: configuration.inputRule)
+      textState.errorMessage = validationResult.isValid ? nil : (validationResult.message ?? configuration.messages.error)
+      if !validationResult.isValid {
+        onDidFailValidation?(validationResult)
+      }
+      onValidationResult?(validationResult)
+      runAsyncValidationIfNeeded(result: result)
+    }
+    validationDebounceTask?.cancel()
+    let debounce = configuration.validationPolicy.debounceInterval
+    guard debounce > 0 else {
+      validateSync()
+      return
+    }
+    let task = DispatchWorkItem(block: validateSync)
+    validationDebounceTask = task
+    DispatchQueue.main.asyncAfter(deadline: .now() + debounce, execute: task)
+  }
+
+  func runAsyncValidationIfNeeded(result: FKTextFieldFormattingResult) {
+    asyncValidationTask?.cancel()
+    guard validationResult.isValid, let asyncValidator else { return }
+    asyncValidationToken += 1
+    let token = asyncValidationToken
+    asyncValidationTask = Task { [weak self] in
+      guard let self else { return }
+      let asyncResult = await asyncValidator.validateAsync(rawText: result.rawText, formattedText: result.formattedText, rule: configuration.inputRule)
+      guard !Task.isCancelled, token == self.asyncValidationToken else { return }
+      self.validationResult = asyncResult
+      if asyncResult.isValid {
+        if self.configuration.validationPolicy.marksSuccessOnAsyncPass {
+          self.configuration.messages.success = self.configuration.messages.success ?? ""
+        }
+        self.textState.errorMessage = nil
+      } else {
+        self.textState.errorMessage = asyncResult.message
+        self.onDidFailValidation?(asyncResult)
+      }
+      self.onValidationResult?(asyncResult)
+      self.updateInlineErrorLabel()
+      self.applyStateStyle()
+    }
+  }
+
   /// Dispatches public callbacks with optional debounce.
-  func dispatchCallbacks(
-    result: FKTextFieldFormattingResult,
-    validationResult: FKTextFieldValidationResult
-  ) {
+  func dispatchCallbacks(result: FKTextFieldFormattingResult) {
     debounceTask?.cancel()
     let callback = { [weak self] in
       guard let self else { return }
       self.onFormattedResult?(result)
-      self.onTextDidChange?(result.rawText, result.formattedText)
-      self.onValidationResult?(validationResult)
     }
     let delay = configuration.inputRule.debounceInterval
     if delay > 0 {
@@ -503,17 +697,24 @@ private extension FKTextField {
 
   /// Handles `.editingDidBegin` events to refresh focus style.
   @objc func editingDidBegin() {
+    onDidBeginEditing?()
     applyStateStyle()
   }
 
   /// Handles `.editingDidEnd` events to finalize validation and update UI state.
   @objc func editingDidEnd() {
-    validationResult = validator.validate(rawText: textState.rawText, formattedText: textState.formattedText, rule: configuration.inputRule)
-    if !validationResult.isValid {
-      textState.errorMessage = validationResult.message
-      onErrorMessage?(textState.errorMessage)
-    }
+    onDidEndEditing?()
+    performValidation(
+      for: .init(
+        rawText: textState.rawText,
+        formattedText: textState.formattedText,
+        isTruncated: false,
+        removedIllegalCharacters: false
+      ),
+      source: .onBlur
+    )
     updateInlineErrorLabel()
+    updateFloatingTitleVisibility()
     applyStateStyle()
     forwardingDelegate?.textFieldDidEndEditing?(self)
   }
@@ -526,8 +727,8 @@ private extension FKTextField {
 
   /// Clears current content when the built-in clear button is tapped.
   @objc func didTapClearButton() {
-    onClearButtonTapped?()
     clear()
+    onDidClear?()
     if configuration.accessories.clearButton.resignsFirstResponderOnTap {
       resignFirstResponder()
     }
@@ -542,6 +743,12 @@ private extension FKTextField {
     } else {
       counterLabel.text = "\(textState.rawText.count)"
     }
+    if configuration.accessibility.announcesCounterChanges, UIAccessibility.isVoiceOverRunning, let counterText = counterLabel.text {
+      UIAccessibility.post(
+        notification: .announcement,
+        argument: "\(configuration.localization.counterAnnouncementPrefix): \(counterText)"
+      )
+    }
   }
 
   /// Updates the inline error label visibility and content based on current state.
@@ -550,10 +757,44 @@ private extension FKTextField {
       inlineErrorLabel.isHidden = true
       return
     }
-    inlineErrorLabel.font = configuration.inlineMessage.errorFont
-    inlineErrorLabel.textColor = configuration.inlineMessage.errorColor
-    inlineErrorLabel.text = textState.errorMessage
-    inlineErrorLabel.isHidden = (textState.errorMessage == nil)
+    let resolvedStatus = resolvedStatus()
+    switch resolvedStatus {
+    case .error:
+      inlineErrorLabel.font = configuration.inlineMessage.errorFont
+      inlineErrorLabel.textColor = configuration.inlineMessage.errorColor
+      inlineErrorLabel.text = textState.errorMessage ?? configuration.messages.error
+      inlineErrorLabel.isHidden = inlineErrorLabel.text?.isEmpty ?? true
+      announceForAccessibilityIfNeeded(prefix: configuration.localization.errorAnnouncementPrefix, message: inlineErrorLabel.text)
+    case .success:
+      inlineErrorLabel.font = configuration.inlineMessage.helperFont
+      inlineErrorLabel.textColor = configuration.inlineMessage.successColor
+      inlineErrorLabel.text = configuration.messages.success
+      inlineErrorLabel.isHidden = inlineErrorLabel.text?.isEmpty ?? true
+      announceForAccessibilityIfNeeded(prefix: configuration.localization.successAnnouncementPrefix, message: inlineErrorLabel.text)
+    default:
+      inlineErrorLabel.font = configuration.inlineMessage.helperFont
+      inlineErrorLabel.textColor = configuration.inlineMessage.helperColor
+      inlineErrorLabel.text = configuration.messages.helper
+      inlineErrorLabel.isHidden = inlineErrorLabel.text?.isEmpty ?? true
+    }
+  }
+
+  func updateFloatingTitleVisibility() {
+    let shouldShow = !(configuration.floatingTitle ?? "").isEmpty && (isFirstResponder || !(textState.rawText.isEmpty))
+    floatingTitleLabel.isHidden = !shouldShow
+  }
+
+  func updateAccessibilityConfiguration() {
+    accessibilityTraits = configuration.isReadOnly ? [.staticText] : [.updatesFrequently]
+    if configuration.isReadOnly {
+      accessibilityHint = configuration.messages.helper
+    }
+  }
+
+  func announceForAccessibilityIfNeeded(prefix: String, message: String?) {
+    guard configuration.accessibility.announcesStatusChanges else { return }
+    guard UIAccessibility.isVoiceOverRunning, let message, !message.isEmpty else { return }
+    UIAccessibility.post(notification: .announcement, argument: "\(prefix): \(message)")
   }
 }
 
@@ -561,11 +802,14 @@ extension FKTextField {
   /// Returns an intrinsic height that optionally includes inline message content.
   public override var intrinsicContentSize: CGSize {
     let base = configuration.layout.textAreaHeight
-    guard configuration.inlineMessage.showsErrorMessage, !inlineErrorLabel.isHidden else {
-      return CGSize(width: UIView.noIntrinsicMetric, height: base)
+    let floatingHeight: CGFloat = floatingTitleLabel.isHidden ? 0 : (configuration.style.floatingTitleFont.lineHeight + 4)
+    let messageHeight: CGFloat
+    if configuration.inlineMessage.showsErrorMessage, !inlineErrorLabel.isHidden {
+      messageHeight = configuration.layout.inlineMessageSpacing + inlineErrorLabel.sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height
+    } else {
+      messageHeight = 0
     }
-    let messageHeight = inlineErrorLabel.sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height
-    return CGSize(width: UIView.noIntrinsicMetric, height: base + configuration.layout.inlineMessageSpacing + messageHeight)
+    return CGSize(width: UIView.noIntrinsicMetric, height: base + floatingHeight + messageHeight)
   }
 
   /// Lays out the inline error label under the text area when enabled.
@@ -581,9 +825,18 @@ extension FKTextField {
       underlineLayer.frame = CGRect(x: x, y: y, width: width, height: height)
     }
 
+    let floatingHeight: CGFloat = floatingTitleLabel.isHidden ? 0 : (configuration.style.floatingTitleFont.lineHeight + 4)
+    if !floatingTitleLabel.isHidden {
+      floatingTitleLabel.frame = CGRect(
+        x: configuration.layout.contentInsets.left,
+        y: 0,
+        width: bounds.width - configuration.layout.contentInsets.left - configuration.layout.contentInsets.right,
+        height: floatingHeight
+      )
+    }
     guard configuration.inlineMessage.showsErrorMessage, !inlineErrorLabel.isHidden else { return }
     let baseHeight = configuration.layout.textAreaHeight
-    let y = baseHeight + configuration.layout.inlineMessageSpacing
+    let y = floatingHeight + baseHeight + configuration.layout.inlineMessageSpacing
     let messageHeight = max(0, bounds.height - y)
     inlineErrorLabel.frame = CGRect(
       x: configuration.layout.contentInsets.left,
@@ -615,7 +868,20 @@ extension FKTextField {
     insets.left = max(0, insets.left)
     insets.bottom = max(0, insets.bottom)
     insets.right = max(0, insets.right)
+    if !floatingTitleLabel.isHidden {
+      insets.top += configuration.style.floatingTitleFont.lineHeight + 4
+    }
     return baseRect.inset(by: insets)
+  }
+}
+
+extension FKTextField: FKTextInputComponent {
+  public var fk_rawText: String { rawText }
+  public func fk_setText(_ text: String) {
+    processIncomingText(text)
+  }
+  public func fk_clear() {
+    clear()
   }
 }
 
@@ -624,6 +890,9 @@ extension FKTextField: UITextFieldDelegate {
   ///
   /// - Note: This returns `false` because `FKTextField` assigns the formatted output itself.
   public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+    if configuration.isReadOnly {
+      return false
+    }
     // Respect marked text composition (e.g. Chinese/Japanese IME) to avoid blocking input.
     if textField.markedTextRange != nil {
       return true
@@ -640,12 +909,26 @@ extension FKTextField: UITextFieldDelegate {
     }
     // Build candidate text and run the full pipeline.
     let candidate = text.replacingCharacters(in: textRange, with: string)
+    let targetCaretIndex = range.location + string.count
+    let candidatePrefix = String(candidate.prefix(max(0, min(candidate.count, targetCaretIndex))))
+    let rawCaretOffset = formatter.format(text: candidatePrefix, rule: configuration.inputRule).rawText.count
     processIncomingText(candidate)
+    restoreCursor(rawOffset: rawCaretOffset)
     return false
   }
 
   /// Handles return key and optionally dismisses keyboard.
   public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    onDidSubmit?(textState.rawText)
+    performValidation(
+      for: .init(
+        rawText: textState.rawText,
+        formattedText: textState.formattedText,
+        isTruncated: false,
+        removedIllegalCharacters: false
+      ),
+      source: .onSubmit
+    )
     switch configuration.inputRule.returnKeyBehavior {
     case .system:
       if configuration.inputRule.autoDismissKeyboardOnComplete {
@@ -667,7 +950,10 @@ extension FKTextField: UITextFieldDelegate {
 
   /// Forwards `textFieldShouldBeginEditing` if provided.
   public func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
-    forwardingDelegate?.textFieldShouldBeginEditing?(textField) ?? true
+    if configuration.isReadOnly {
+      return false
+    }
+    return forwardingDelegate?.textFieldShouldBeginEditing?(textField) ?? true
   }
 
   /// Forwards `textFieldDidBeginEditing` if provided.
@@ -690,6 +976,7 @@ extension FKTextField {
   }
 
   public override func paste(_ sender: Any?) {
+    guard !configuration.isReadOnly else { return }
     guard configuration.inputRule.pastePolicy != .forbid else { return }
     guard let pasted = UIPasteboard.general.string else { return }
 

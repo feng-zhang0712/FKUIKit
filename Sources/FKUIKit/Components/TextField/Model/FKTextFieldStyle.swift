@@ -65,8 +65,14 @@ public struct FKTextFieldStyle {
   public var focused: FKTextFieldStateStyle
   /// Style used in invalid/error state.
   public var error: FKTextFieldStateStyle
+  /// Style used in success state.
+  public var success: FKTextFieldStateStyle
+  /// Style used when content is non-empty and not focused.
+  public var filled: FKTextFieldStateStyle
   /// Style used when the field is disabled (`isEnabled == false`).
   public var disabled: FKTextFieldStateStyle
+  /// Style used for read-only state.
+  public var readOnly: FKTextFieldStateStyle
   /// Text color.
   public var textColor: UIColor
   /// Text font.
@@ -75,26 +81,40 @@ public struct FKTextFieldStyle {
   public var placeholderColor: UIColor
   /// Placeholder font.
   public var placeholderFont: UIFont
+  /// Floating title color.
+  public var floatingTitleColor: UIColor
+  /// Floating title font.
+  public var floatingTitleFont: UIFont
 
   /// Creates a style group.
   public init(
     normal: FKTextFieldStateStyle,
     focused: FKTextFieldStateStyle,
     error: FKTextFieldStateStyle,
+    success: FKTextFieldStateStyle,
+    filled: FKTextFieldStateStyle,
     disabled: FKTextFieldStateStyle,
+    readOnly: FKTextFieldStateStyle,
     textColor: UIColor = .label,
     font: UIFont = .systemFont(ofSize: 16),
     placeholderColor: UIColor = .secondaryLabel,
-    placeholderFont: UIFont = .systemFont(ofSize: 16)
+    placeholderFont: UIFont = .systemFont(ofSize: 16),
+    floatingTitleColor: UIColor = .secondaryLabel,
+    floatingTitleFont: UIFont = .preferredFont(forTextStyle: .caption1)
   ) {
     self.normal = normal
     self.focused = focused
     self.error = error
+    self.success = success
+    self.filled = filled
     self.disabled = disabled
+    self.readOnly = readOnly
     self.textColor = textColor
     self.font = font
     self.placeholderColor = placeholderColor
     self.placeholderFont = placeholderFont
+    self.floatingTitleColor = floatingTitleColor
+    self.floatingTitleFont = floatingTitleFont
   }
 }
 
@@ -108,16 +128,26 @@ public extension FKTextFieldStyle {
       normal: FKTextFieldStateStyle(borderColor: .separator),
       focused: FKTextFieldStateStyle(borderColor: .systemBlue),
       error: FKTextFieldStateStyle(borderColor: .systemRed),
+      success: FKTextFieldStateStyle(borderColor: .systemGreen),
+      filled: FKTextFieldStateStyle(borderColor: .systemGray3),
       disabled: FKTextFieldStateStyle(
         borderColor: .systemGray4,
         borderWidth: 1,
         cornerRadius: 10,
         backgroundColor: .tertiarySystemBackground
       ),
+      readOnly: FKTextFieldStateStyle(
+        borderColor: .systemGray3,
+        borderWidth: 1,
+        cornerRadius: 10,
+        backgroundColor: .secondarySystemBackground
+      ),
       textColor: .label,
       font: .systemFont(ofSize: 16),
       placeholderColor: .secondaryLabel,
-      placeholderFont: .systemFont(ofSize: 16)
+      placeholderFont: .systemFont(ofSize: 16),
+      floatingTitleColor: .secondaryLabel,
+      floatingTitleFont: .preferredFont(forTextStyle: .caption1)
     )
   }
 }

@@ -141,7 +141,7 @@ let field = FKTextField.make(
   formatType: .alphaNumeric,
   placeholder: "Enter content"
 )
-field.onTextDidChange = { raw, formatted in
+field.onEditingChanged = { raw, formatted in
   print("raw:", raw, "formatted:", formatted)
 }
 ```
@@ -261,9 +261,8 @@ let emailField = FKTextField.make(formatType: .email, placeholder: "Email")
 emailField.onValidationResult = { result in
   print("isValid:", result.isValid, "message:", result.message ?? "none")
 }
-emailField.onErrorMessage = { message in
-  // Bind message to your own error label
-  print("error tip:", message ?? "")
+emailField.onDidFailValidation = { result in
+  print("error tip:", result.message ?? "")
 }
 ```
 
@@ -347,23 +346,23 @@ Main APIs:
 - `isPasswordVisible`
 
 Callbacks:
-- `onTextDidChange`
+- `onEditingChanged`
 - `onFormattedResult`
 - `onValidationResult`
-- `onErrorMessage`
+- `onDidFailValidation`
 - `onInputCompleted`
 
 ## Best Practices
 - Configure `formatType` based on actual business semantics (phone, amount, email, etc.).
 - Use `rawText` for API payloads and backend submission.
-- Keep UI error rendering in your view layer using `onErrorMessage`.
+- Keep UI error rendering in your view layer using `onDidFailValidation`.
 - Prefer global style defaults for design-system consistency.
 - For OTP screens, use `FKTextFieldLinkageCoordinator` to reduce manual focus logic.
 - For reused cells, call `clear()` in `prepareForReuse()` to avoid stale state.
 
 ## Performance Optimization
 - Reuse `FKTextField` instances in list containers when possible.
-- Avoid expensive logic inside `onTextDidChange` callbacks.
+- Avoid expensive logic inside `onEditingChanged` callbacks.
 - Use `debounceInterval` for heavy validation or remote checking.
 - Use `minimumInputInterval` to mitigate very high-frequency input events.
 - Keep custom left/right views lightweight in scrolling scenarios.
