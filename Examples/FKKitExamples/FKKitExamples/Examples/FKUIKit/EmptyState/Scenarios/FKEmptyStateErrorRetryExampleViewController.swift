@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateErrorRetryDemoViewController: UIViewController {
+final class FKEmptyStateErrorRetryExampleViewController: UIViewController {
   private let container = UIView()
   private var isRetrying = false
 
@@ -14,7 +14,7 @@ final class FKEmptyStateErrorRetryDemoViewController: UIViewController {
   }
 
   private func showError() {
-    var model = FKEmptyStateDemoFactory.makeLoadFailedModel()
+    var model = FKEmptyStateExampleFactory.makeLoadFailedModel()
     model.description = "The request timed out. Retry uses action loading state."
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "retry", title: "Retry", kind: .primary, isLoading: isRetrying)
@@ -31,7 +31,7 @@ final class FKEmptyStateErrorRetryDemoViewController: UIViewController {
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
       guard let self else { return }
       self.isRetrying = false
-      var model = FKEmptyStateDemoFactory.makeBasicModel()
+      var model = FKEmptyStateExampleFactory.makeBasicModel()
       model.title = "No items after retry"
       model.description = "Retry succeeded, but there is still no content to show."
       self.container.fk_applyEmptyState(model)

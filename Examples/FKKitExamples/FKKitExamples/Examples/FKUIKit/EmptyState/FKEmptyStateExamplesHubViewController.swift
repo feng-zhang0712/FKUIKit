@@ -11,68 +11,68 @@ final class FKEmptyStateExamplesHubViewController: UITableViewController {
     Row(
       title: "Basic empty state",
       subtitle: "Default copy, icon and a minimal action",
-      make: { FKEmptyStateBasicDemoViewController() }
+      make: { FKEmptyStateBasicExampleViewController() }
     ),
     Row(
       title: "No results + clear filters",
       subtitle: "Search query interpolation with clear filters action",
-      make: { FKEmptyStateSearchNoResultsDemoViewController() }
+      make: { FKEmptyStateSearchNoResultsExampleViewController() }
     ),
     Row(
       title: "Error + retry loading action",
       subtitle: "Retry button enters loading state before resolving",
-      make: { FKEmptyStateErrorRetryDemoViewController() }
+      make: { FKEmptyStateErrorRetryExampleViewController() }
     ),
     Row(
       title: "Offline + open docs/check network",
       subtitle: "Multi-actions for offline guidance and recovery",
-      make: { FKEmptyStateOfflineDemoViewController() }
+      make: { FKEmptyStateOfflineExampleViewController() }
     ),
     Row(
       title: "Permission denied + request access",
       subtitle: "Permission copy, request access and contact admin",
-      make: { FKEmptyStatePermissionDeniedDemoViewController() }
+      make: { FKEmptyStatePermissionDeniedExampleViewController() }
     ),
     Row(
       title: "Loading placeholder -> empty",
       subtitle: "Skeleton style placeholder and transition flow",
-      make: { FKEmptyStateLoadingTransitionDemoViewController() }
+      make: { FKEmptyStateLoadingTransitionExampleViewController() }
     ),
     Row(
       title: "Full page vs inline section",
       subtitle: "Compare container layout strategies side-by-side",
-      make: { FKEmptyStateLayoutComparisonDemoViewController() }
+      make: { FKEmptyStateLayoutComparisonExampleViewController() }
     ),
     Row(
       title: "Custom icon/illustration (lazy)",
       subtitle: "Lazy-load an accessory view and icon-only edge case",
-      make: { FKEmptyStateCustomIllustrationDemoViewController() }
+      make: { FKEmptyStateCustomIllustrationExampleViewController() }
     ),
     Row(
       title: "Dark mode + token override",
       subtitle: "Theme override with custom color tokens",
-      make: { FKEmptyStateDarkModeDemoViewController() }
+      make: { FKEmptyStateDarkModeExampleViewController() }
     ),
     Row(
-      title: "RTL layout demo",
+      title: "RTL layout example",
       subtitle: "Force RTL direction with Arabic copy",
-      make: { FKEmptyStateRTLDemoViewController() }
+      make: { FKEmptyStateRTLExampleViewController() }
     ),
     Row(
-      title: "i18n demo (en + zh-CN)",
+      title: "i18n example (en + zh-CN)",
       subtitle: "Factory-based localized copy with interpolation",
-      make: { FKEmptyStateI18nDemoViewController() }
+      make: { FKEmptyStateI18nExampleViewController() }
     ),
     Row(
-      title: "State resolver demo",
+      title: "State resolver example",
       subtitle: "Resolve state from data/error/filter inputs",
-      make: { FKEmptyStateResolverDemoViewController() }
+      make: { FKEmptyStateResolverExampleViewController() }
     ),
   ]
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    FKEmptyStateDemoFactory.configureGlobalStyleIfNeeded()
+    FKEmptyStateExampleFactory.configureGlobalStyleIfNeeded()
     title = "FKEmptyState Scenarios"
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.rowHeight = 72

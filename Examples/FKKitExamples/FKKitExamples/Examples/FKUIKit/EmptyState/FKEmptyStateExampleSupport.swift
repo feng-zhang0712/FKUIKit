@@ -2,7 +2,7 @@ import FKUIKit
 import ObjectiveC.runtime
 import UIKit
 
-enum FKEmptyStateDemoFactory {
+enum FKEmptyStateExampleFactory {
   static func configureGlobalStyleIfNeeded() {
     FKEmptyStateManager.shared.configureTemplate { model in
       model.backgroundColor = .systemBackground

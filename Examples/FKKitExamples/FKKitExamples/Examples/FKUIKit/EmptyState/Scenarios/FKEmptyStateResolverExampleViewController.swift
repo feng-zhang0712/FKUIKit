@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateResolverDemoViewController: UIViewController {
+final class FKEmptyStateResolverExampleViewController: UIViewController {
   private let container = UIView()
   private let loadingSwitch = UISwitch()
   private let offlineSwitch = UISwitch()
@@ -72,7 +72,7 @@ final class FKEmptyStateResolverDemoViewController: UIViewController {
 
   @objc private func recompute() {
     // Build a deterministic input snapshot from controls.
-    // Treating UI as source-of-truth helps demo resolver precedence without hidden state.
+    // Treating UI as source-of-truth helps example resolver precedence without hidden state.
     let input = FKEmptyStateInputs(
       dataLength: Int(dataCountField.text ?? "0"),
       isLoading: loadingSwitch.isOn,
@@ -107,7 +107,7 @@ final class FKEmptyStateResolverDemoViewController: UIViewController {
       model.isButtonHidden = false
     }
     container.fk_applyEmptyState(model, actionHandler: { [weak self] _ in
-      // Demo retry behavior: clear error and recompute from controls,
+      // Example retry behavior: clear error and recompute from controls,
       // so users can see the resolver immediately move to the next valid state.
       self?.errorField.text = ""
       self?.loadingSwitch.isOn = false

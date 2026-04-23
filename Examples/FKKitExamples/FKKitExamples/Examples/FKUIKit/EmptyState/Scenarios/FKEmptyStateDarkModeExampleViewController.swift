@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateDarkModeDemoViewController: UIViewController {
+final class FKEmptyStateDarkModeExampleViewController: UIViewController {
   private let container = UIView()
   private let themeToggle = UISwitch()
 
@@ -45,7 +45,7 @@ final class FKEmptyStateDarkModeDemoViewController: UIViewController {
 
   private func applyTheme() {
     overrideUserInterfaceStyle = themeToggle.isOn ? .dark : .light
-    var model = FKEmptyStateDemoFactory.makeBasicModel()
+    var model = FKEmptyStateExampleFactory.makeBasicModel()
     model.title = "Token-driven appearance"
     model.description = "Override colors per scene to match your design system."
     model.titleColor = themeToggle.isOn ? .white : .black

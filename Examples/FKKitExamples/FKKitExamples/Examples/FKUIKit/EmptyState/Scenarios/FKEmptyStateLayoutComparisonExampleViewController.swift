@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateLayoutComparisonDemoViewController: UIViewController {
+final class FKEmptyStateLayoutComparisonExampleViewController: UIViewController {
   private let fullPageContainer = UIView()
   private let sectionContainer = UIView()
 
@@ -34,14 +34,14 @@ final class FKEmptyStateLayoutComparisonDemoViewController: UIViewController {
   }
 
   private func render() {
-    var fullPage = FKEmptyStateDemoFactory.makeLongTextModel()
+    var fullPage = FKEmptyStateExampleFactory.makeLongTextModel()
     fullPage.context = .fullPage
     fullPage.contentInsets = UIEdgeInsets(top: 16, left: 24, bottom: 16, right: 24)
     fullPage.actions = FKEmptyStateActionSet()
     fullPage.isButtonHidden = true
     fullPageContainer.fk_applyEmptyState(fullPage)
 
-    var inline = FKEmptyStateDemoFactory.makeBasicModel()
+    var inline = FKEmptyStateExampleFactory.makeBasicModel()
     inline.context = .section
     inline.title = "Inline section is empty"
     inline.description = "Use compact copy in cards or dashboard sections."

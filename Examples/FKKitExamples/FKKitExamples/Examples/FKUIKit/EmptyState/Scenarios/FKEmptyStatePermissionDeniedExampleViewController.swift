@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStatePermissionDeniedDemoViewController: UIViewController {
+final class FKEmptyStatePermissionDeniedExampleViewController: UIViewController {
   private let container = UIView()
 
   override func viewDidLoad() {

@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateLoadingTransitionDemoViewController: UIViewController {
+final class FKEmptyStateLoadingTransitionExampleViewController: UIViewController {
   private let tableView = UITableView(frame: .zero, style: .insetGrouped)
   private let simulateButton = UIButton(type: .system)
 
@@ -45,7 +45,7 @@ final class FKEmptyStateLoadingTransitionDemoViewController: UIViewController {
       guard let self else { return }
       // Transition from loading to empty by reusing the same host view.
       // This mirrors production flow and avoids overlay teardown flicker.
-      var empty = FKEmptyStateDemoFactory.makeBasicModel()
+      var empty = FKEmptyStateExampleFactory.makeBasicModel()
       empty.title = "No products found yet"
       empty.description = "Loading finished, but there is still no available content."
       self.tableView.fk_applyEmptyState(empty)
@@ -73,7 +73,7 @@ final class FKEmptyStateLoadingTransitionDemoViewController: UIViewController {
   }
 }
 
-extension FKEmptyStateLoadingTransitionDemoViewController: UITableViewDataSource {
+extension FKEmptyStateLoadingTransitionExampleViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 0 }
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell { UITableViewCell() }
 }

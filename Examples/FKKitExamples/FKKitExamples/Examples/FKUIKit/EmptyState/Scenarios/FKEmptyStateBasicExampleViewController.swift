@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateBasicDemoViewController: UIViewController {
+final class FKEmptyStateBasicExampleViewController: UIViewController {
   private let container = UIView()
 
   override func viewDidLoad() {
@@ -18,7 +18,7 @@ final class FKEmptyStateBasicDemoViewController: UIViewController {
       container.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
 
-    let model = FKEmptyStateDemoFactory.makeBasicModel()
+    let model = FKEmptyStateExampleFactory.makeBasicModel()
     container.fk_applyEmptyState(model) { [weak self] _ in
       self?.fk_presentMessageAlert(title: "Action", message: "Create item tapped.")
     }

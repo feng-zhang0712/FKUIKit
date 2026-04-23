@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateCustomIllustrationDemoViewController: UIViewController {
+final class FKEmptyStateCustomIllustrationExampleViewController: UIViewController {
   private let container = UIView()
   private let toggle = UISegmentedControl(items: ["Lazy illustration", "Icon only"])
 
@@ -35,17 +35,17 @@ final class FKEmptyStateCustomIllustrationDemoViewController: UIViewController {
     if toggle.selectedSegmentIndex == 0 {
       renderLazyIllustration()
     } else {
-      container.fk_applyEmptyState(FKEmptyStateDemoFactory.makeIconOnlyModel())
+      container.fk_applyEmptyState(FKEmptyStateExampleFactory.makeIconOnlyModel())
     }
   }
 
   private func renderLazyIllustration() {
-    var model = FKEmptyStateDemoFactory.makeBasicModel()
+    var model = FKEmptyStateExampleFactory.makeBasicModel()
     model.title = "Illustration is loading..."
-    model.description = "This demo simulates lazy-loading a custom accessory view."
+    model.description = "This example simulates lazy-loading a custom accessory view."
     model.customAccessoryPlacement = .replaceImage
     container.fk_applyEmptyState(model) { [weak self] _ in
-      self?.fk_presentMessageAlert(title: "Create", message: "Primary action tapped from custom illustration demo.")
+      self?.fk_presentMessageAlert(title: "Create", message: "Primary action tapped from custom illustration example.")
     }
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in

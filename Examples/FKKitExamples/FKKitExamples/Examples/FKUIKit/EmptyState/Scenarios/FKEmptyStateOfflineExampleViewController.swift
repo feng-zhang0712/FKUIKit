@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateOfflineDemoViewController: UIViewController {
+final class FKEmptyStateOfflineExampleViewController: UIViewController {
   private let container = UIView()
 
   deinit {
@@ -17,7 +17,7 @@ final class FKEmptyStateOfflineDemoViewController: UIViewController {
   }
 
   private func render() {
-    var model = FKEmptyStateDemoFactory.makeNoNetworkModel()
+    var model = FKEmptyStateExampleFactory.makeNoNetworkModel()
     model.description = "You are offline. Open docs for troubleshooting or check network settings."
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "check_network", title: "Check network", kind: .primary),

@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateSearchNoResultsDemoViewController: UIViewController {
+final class FKEmptyStateSearchNoResultsExampleViewController: UIViewController {
   private let container = UIView()
   private let queryField = UITextField()
   private let filtersLabel = UILabel()

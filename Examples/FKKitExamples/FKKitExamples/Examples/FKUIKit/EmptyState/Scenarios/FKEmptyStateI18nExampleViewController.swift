@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateI18nDemoViewController: UIViewController {
+final class FKEmptyStateI18nExampleViewController: UIViewController {
   private let container = UIView()
   private let localeSelector = UISegmentedControl(items: ["en", "zh-CN"])
   private let queryField = UITextField()

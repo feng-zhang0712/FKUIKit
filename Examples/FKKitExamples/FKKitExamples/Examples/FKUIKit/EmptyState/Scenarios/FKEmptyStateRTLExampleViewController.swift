@@ -1,7 +1,7 @@
 import FKUIKit
 import UIKit
 
-final class FKEmptyStateRTLDemoViewController: UIViewController {
+final class FKEmptyStateRTLExampleViewController: UIViewController {
   private let container = UIView()
 
   override func viewDidLoad() {
@@ -13,7 +13,7 @@ final class FKEmptyStateRTLDemoViewController: UIViewController {
   }
 
   private func render() {
-    var model = FKEmptyStateDemoFactory.makeBasicModel()
+    var model = FKEmptyStateExampleFactory.makeBasicModel()
     model.title = "لا توجد بيانات بعد"
     model.description = "قم بإنشاء عنصر جديد لبدء الاستخدام."
     model.actions = FKEmptyStateActionSet(
