@@ -1,8 +1,8 @@
 import UIKit
 import FKUIKit
 
-/// Centralized demo trigger methods shared by UIKit and SwiftUI.
-enum FKToastDemoPlaybook {
+/// Centralized example trigger methods shared by UIKit and SwiftUI.
+enum FKToastExamplePlaybook {
   /// Demonstrates top/center/bottom placement and style variants.
   static func showBasicPlacementAndStyle() {
     FKToast.show("Top info toast", configuration: .init(kind: .toast, style: .info, position: .top))
@@ -50,14 +50,14 @@ enum FKToastDemoPlaybook {
   }
 
   /// Pushes multiple requests quickly to show queue sequencing.
-  static func burstQueueDemo() {
+  static func burstQueueExample() {
     for index in 1...6 {
       FKToast.show("Queue message #\(index)", style: .info, kind: .snackbar)
     }
   }
 
   /// Shows deduplication/coalesce behavior by repeating same message.
-  static func dedupeCoalesceDemo() {
+  static func dedupeCoalesceExample() {
     var config = FKToastConfiguration(kind: .snackbar, style: .warning, duration: 2.2)
     config.queue.arrivalPolicy = .coalesce
     config.queue.deduplicationWindow = 4
@@ -96,7 +96,7 @@ enum FKToastDemoPlaybook {
       FKHUD.showSuccess("Upload completed")
     }
   }
-  
+
   static func showLiveHUDProgress() {
     Task { @MainActor in
       let totalDuration: TimeInterval = 5
@@ -121,7 +121,7 @@ enum FKToastDemoPlaybook {
   }
 
   /// Demonstrates blur and liquid-glass preferred visual effects with fallback.
-  static func showVisualEffectDemo(liquidPreferred: Bool) {
+  static func showVisualEffectExample(liquidPreferred: Bool) {
     var configuration = FKToastConfiguration(kind: .snackbar, style: .info, duration: 4)
     configuration.backgroundVisualEffect = liquidPreferred ? .liquidGlassPreferred : .blur(style: .systemThinMaterial)
     configuration.visualEffectOpacity = 0.82
@@ -131,7 +131,7 @@ enum FKToastDemoPlaybook {
   }
 
   /// Demonstrates top and bottom spacing around navigation bar and tab bar.
-  static func showPlacementInsetsDemo() {
+  static func showPlacementInsetsExample() {
     var top = FKToastConfiguration(kind: .toast, style: .info, position: .top, duration: 2.5)
     top.topInsetWhenHasNavigationBar = 14
     top.topInsetFromSafeArea = 18
@@ -144,7 +144,7 @@ enum FKToastDemoPlaybook {
   }
 
   /// Shows a snackbar with action and accessibility hooks.
-  static func showActionSnackbar(announcementEnabled: Bool) {
+  static func showActionSnackbarExample(announcementEnabled: Bool) {
     var config = FKToastConfiguration(kind: .snackbar, style: .info, duration: 6, action: .init(title: "Retry"))
     config.secondaryAction = .init(title: "Dismiss", accessibilityLabel: "Dismiss message")
     config.swipeToDismiss = true
@@ -174,3 +174,4 @@ enum FKToastDemoPlaybook {
     }
   }
 }
+
