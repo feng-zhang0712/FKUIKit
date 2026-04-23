@@ -123,7 +123,7 @@ FKKit/
 - `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
 - `StickyHeader`: high-performance sticky section header coordinator for UIKit lists (UITableView/UICollectionView/UIScrollView), with push-off interaction, lifecycle callbacks, safe-area-aware offsets, and SwiftUI bridging.
 - `SwipeAction`: native left/right swipe action system for `UITableViewCell` and `UICollectionViewCell` with multi-button actions and global/per-cell configuration.
-- `Toast`: lightweight global toast/snackbar presenter with queueing, style presets, custom content, and SwiftUI hosting support.
+- `Toast`: unified Toast / HUD / Snackbar presenter with queueing, priority, keyboard-aware placement, accessibility, optional material blur, custom content, and SwiftUI hosting support.
 - `TopNotification`: lightweight global top floating notification presenter with styles, priority preemption, progress updates, custom content, and SwiftUI hosting support.
 - `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
 
