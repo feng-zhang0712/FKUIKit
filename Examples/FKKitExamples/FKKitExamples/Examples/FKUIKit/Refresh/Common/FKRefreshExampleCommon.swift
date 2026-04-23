@@ -1,22 +1,17 @@
-//
-// FKRefreshDemoCommon.swift
-// FKKitExamples — FKRefresh demos
-//
-// Shared state formatting, fake network delay, demo animated image, and `FKDotsRefreshContentView`.
-//
-
 import FKUIKit
 import UIKit
 
-enum FKRefreshDemoCommon {
+enum FKRefreshExampleCommon {
 
   /// Human-readable state for the status strip (examples only).
   static func stateDescription(_ state: FKRefreshState) -> String {
     switch state {
     case .idle: return "idle"
     case .pulling(let p): return String(format: "pulling(%.2f)", p)
+    case .readyToRefresh: return "readyToRefresh"
     case .triggered: return "triggered"
     case .refreshing: return "refreshing"
+    case .loadingMore: return "loadingMore"
     case .finished: return "finished"
     case .listEmpty: return "listEmpty"
     case .noMoreData: return "noMoreData"
@@ -118,10 +113,10 @@ final class FKDotsRefreshContentView: UIView, FKRefreshContentView {
     case .pulling:
       stopBouncing()
       setLabel(nil)
-    case .triggered:
+    case .readyToRefresh, .triggered:
       setDotsAlpha(1)
       setLabel(nil)
-    case .refreshing:
+    case .refreshing, .loadingMore:
       setDotsAlpha(1)
       startBouncing()
       setLabel(nil)

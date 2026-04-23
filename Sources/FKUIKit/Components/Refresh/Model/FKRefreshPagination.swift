@@ -1,10 +1,3 @@
-//
-// FKRefreshPagination.swift
-// FKUIKit — FKRefresh
-//
-// Optional 1-based page counter; reset on pull, advance after successful page fetch.
-//
-
 import Foundation
 
 /// Tracks a simple 1-based page index for list APIs.

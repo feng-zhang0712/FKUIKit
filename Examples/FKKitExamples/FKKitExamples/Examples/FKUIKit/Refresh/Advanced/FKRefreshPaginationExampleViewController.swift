@@ -1,10 +1,3 @@
-//
-// FKRefreshPaginationDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `FKRefreshPagination`: reset on pull, `advance()` after each successful load-more.
-//
-
 import FKUIKit
 import UIKit
 
@@ -68,7 +61,7 @@ final class FKRefreshPaginationDemoViewController: UIViewController {
   }
 
   private func handlePull() {
-    FKRefreshDemoCommon.simulateRequest(delay: 0.9) { [weak self] in
+    FKRefreshExampleCommon.simulateRequest(delay: 0.9) { [weak self] in
       guard let self else { return }
       self.pagination.resetForNewRequest()
       self.items = (1...8).map { "p\(self.pagination.page) — \($0)" }
@@ -80,7 +73,7 @@ final class FKRefreshPaginationDemoViewController: UIViewController {
   }
 
   private func handleLoadMore() {
-    FKRefreshDemoCommon.simulateRequest(delay: 0.8) { [weak self] in
+    FKRefreshExampleCommon.simulateRequest(delay: 0.8) { [weak self] in
       guard let self else { return }
       if self.items.count >= 35 {
         self.tableView.fk_loadMore?.endRefreshingWithNoMoreData()

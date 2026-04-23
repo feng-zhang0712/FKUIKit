@@ -1,10 +1,3 @@
-//
-// FKRefreshContentView.swift
-// FKUIKit — FKRefresh
-//
-// Protocol for custom indicators (GIF, hosted Lottie view, etc.); optional pull progress callback.
-//
-
 import UIKit
 
 /// Protocol for custom refresh / load-more indicators (GIF, hosted Lottie view, etc.).

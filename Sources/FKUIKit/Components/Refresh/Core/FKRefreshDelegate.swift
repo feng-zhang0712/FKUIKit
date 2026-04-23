@@ -1,10 +1,3 @@
-//
-// FKRefreshDelegate.swift
-// FKUIKit — FKRefresh
-//
-// Optional delegate alternative to `FKRefreshControl.onStateChanged` (callbacks on the main queue).
-//
-
 import UIKit
 
 /// Optional delegate for hosts that prefer protocols over closures.

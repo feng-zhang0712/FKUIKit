@@ -1,11 +1,3 @@
-//
-// UIScrollView+FKRefresh.swift
-// FKUIKit — FKRefresh
-//
-// Associated-object API to attach one header and one footer control per scroll view; merges
-// `FKRefreshSettings` when `configuration` is nil.
-//
-
 import UIKit
 import ObjectiveC.runtime
 
@@ -14,11 +6,17 @@ import ObjectiveC.runtime
 private enum FKRefreshKeys {
   nonisolated(unsafe) static var pullToRefresh: UInt8 = 0
   nonisolated(unsafe) static var loadMore: UInt8 = 0
+  nonisolated(unsafe) static var coordinator: UInt8 = 0
 }
 
 // MARK: - UIScrollView extension
 
 public extension UIScrollView {
+  /// Shared policy for the attached pull-to-refresh and load-more pair.
+  var fk_refreshPolicy: FKRefreshPolicy {
+    get { fk_refreshCoordinator.policy }
+    set { fk_refreshCoordinator.policy = newValue }
+  }
 
   // MARK: Pull-to-refresh
 
@@ -33,6 +31,21 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.pullToRefresh,
       action: action
     )
+    fk_setPullToRefresh(control)
+    return control
+  }
+
+  /// Attaches pull-to-refresh with context callback that includes race-safe token metadata.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh
+    )
+    control.contextActionHandler = action
     fk_setPullToRefresh(control)
     return control
   }
@@ -116,6 +129,21 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.loadMore,
       action: action
     )
+    fk_setLoadMore(control)
+    return control
+  }
+
+  /// Attaches load-more with context callback that includes race-safe token metadata.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore
+    )
+    control.contextActionHandler = action
     fk_setLoadMore(control)
     return control
   }
@@ -215,12 +243,25 @@ public extension UIScrollView {
   private func fk_setPullToRefresh(_ control: FKRefreshControl) {
     fk_removePullToRefresh()
     objc_setAssociatedObject(self, &FKRefreshKeys.pullToRefresh, control, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    control.setCoordinator(fk_refreshCoordinator)
     control.attach(to: self)
   }
 
   private func fk_setLoadMore(_ control: FKRefreshControl) {
     fk_removeLoadMore()
     objc_setAssociatedObject(self, &FKRefreshKeys.loadMore, control, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    control.setCoordinator(fk_refreshCoordinator)
     control.attach(to: self)
+  }
+
+  private var fk_refreshCoordinator: FKRefreshCoordinator {
+    if let coordinator = objc_getAssociatedObject(self, &FKRefreshKeys.coordinator) as? FKRefreshCoordinator {
+      return coordinator
+    }
+    let coordinator = FKRefreshCoordinator()
+    coordinator.register(scrollView: self)
+    coordinator.policy = FKRefreshSettings.policy
+    objc_setAssociatedObject(self, &FKRefreshKeys.coordinator, coordinator, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    return coordinator
   }
 }

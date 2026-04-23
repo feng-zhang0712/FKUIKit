@@ -1,10 +1,3 @@
-//
-// FKRefreshGlobalSettingsDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Sets global defaults via `FKRefreshManager`, then restores originals on pop.
-//
-
 import FKUIKit
 import UIKit
 
@@ -66,7 +59,7 @@ final class FKRefreshGlobalSettingsDemoViewController: UIViewController {
     ])
 
     tableView.fk_addPullToRefresh(configuration: nil) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
         self?.items = (1...12).map { "Global refresh \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
@@ -75,7 +68,7 @@ final class FKRefreshGlobalSettingsDemoViewController: UIViewController {
     }
 
     tableView.fk_addLoadMore(configuration: nil) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.9) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.9) {
         guard let self else { return }
         let n = self.items.count
         self.items.append(contentsOf: (n + 1...(n + 5)).map { "Global \($0)" })

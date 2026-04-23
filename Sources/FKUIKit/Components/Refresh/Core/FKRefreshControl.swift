@@ -1,15 +1,7 @@
-//
-// FKRefreshControl.swift
-// FKUIKit — FKRefresh
-//
-// Core control: observes scroll offset / insets, drives state machine, adjusts header `contentInset`
-// only for pull-to-refresh. Attach via `UIScrollView.fk_addPullToRefresh` / `fk_addLoadMore` only.
-//
-
 import UIKit
 
 /// The direction / role of a refresh control.
-public enum FKRefreshKind {
+public enum FKRefreshKind: Sendable {
   case pullToRefresh
   case loadMore
 }
@@ -46,6 +38,10 @@ public final class FKRefreshControl: UIView {
   public var actionHandler: FKVoidHandler?
   /// Async callback alternative to `actionHandler`.
   public var asyncActionHandler: FKRefreshAsyncHandler?
+  /// Context-aware callback with token/source for race-safe integrations.
+  public var contextActionHandler: FKRefreshActionHandler?
+  /// Context-aware async callback with token/source for race-safe integrations.
+  public var contextAsyncActionHandler: FKRefreshContextAsyncHandler?
 
   /// Observe state without a delegate.
   public var onStateChanged: ((_ control: FKRefreshControl, _ state: FKRefreshState) -> Void)?
@@ -79,6 +75,10 @@ public final class FKRefreshControl: UIView {
   private var loadingStartedAt: Date?
   private var pendingEndWorkItem: DispatchWorkItem?
   private var asyncTask: Task<Void, Never>?
+  private weak var coordinator: FKRefreshCoordinator?
+  private var clock: FKRefreshClock
+  private var currentActionToken: UInt64?
+  private var nextActionToken: UInt64 = 0
 
   // MARK: - Init
 
@@ -87,7 +87,8 @@ public final class FKRefreshControl: UIView {
     configuration: FKRefreshConfiguration = .default,
     contentView: FKRefreshContentView? = nil,
     action: FKVoidHandler? = nil,
-    asyncAction: FKRefreshAsyncHandler? = nil
+    asyncAction: FKRefreshAsyncHandler? = nil,
+    clock: FKRefreshClock = FKSystemRefreshClock()
   ) {
     self.kind = kind
     self.configuration = configuration
@@ -95,6 +96,7 @@ public final class FKRefreshControl: UIView {
     self.contentView = cv
     self.actionHandler = action
     self.asyncActionHandler = asyncAction
+    self.clock = clock
     super.init(frame: .zero)
     clipsToBounds = true
     embedContentView(cv)
@@ -128,7 +130,17 @@ public final class FKRefreshControl: UIView {
     }
   }
 
+  func setCoordinator(_ coordinator: FKRefreshCoordinator?) {
+    self.coordinator = coordinator
+    coordinator?.register(control: self)
+  }
+
   func detach() {
+    if currentActionToken != nil {
+      coordinator?.didCancel(kind: kind)
+    }
+    stopBlockingInteractionIfNeeded()
+    coordinator?.unregister(control: self)
     stopObserving()
     pendingEndWorkItem?.cancel()
     pendingEndWorkItem = nil
@@ -141,18 +153,18 @@ public final class FKRefreshControl: UIView {
   // MARK: - Public control
 
   /// Programmatically begin pull-to-refresh or silent refresh.
-  public func beginRefreshing(animated: Bool = true) {
-    ensureMain { self.beginRefreshingOnMain(animated: animated) }
+  public func beginRefreshing(animated: Bool = true, triggerSource: FKRefreshTriggerSource = .programmatic) {
+    ensureMain { self.beginRefreshingOnMain(animated: animated, triggerSource: triggerSource) }
   }
 
   /// Programmatically begin load-more (same semantics as an automatic bottom trigger).
-  public func beginLoadingMore() {
-    ensureMain { self.beginLoadingMoreOnMain() }
+  public func beginLoadingMore(triggerSource: FKRefreshTriggerSource = .programmatic) {
+    ensureMain { self.beginLoadingMoreOnMain(triggerSource: triggerSource) }
   }
 
   /// Successful completion (header or footer).
-  public func endRefreshing() {
-    ensureMain { self.endRefreshingOnMain(outcome: .success) }
+  public func endRefreshing(token: UInt64? = nil) {
+    ensureMain { self.endRefreshingOnMain(outcome: .success, token: token) }
   }
 
   /// Footer convenience — identical to ``endRefreshing``.
@@ -161,18 +173,18 @@ public final class FKRefreshControl: UIView {
   }
 
   /// Header: refresh succeeded but the first page has no rows.
-  public func endRefreshingWithEmptyList() {
-    ensureMain { self.endRefreshingOnMain(outcome: .emptyList) }
+  public func endRefreshingWithEmptyList(token: UInt64? = nil) {
+    ensureMain { self.endRefreshingOnMain(outcome: .emptyList, token: token) }
   }
 
   /// Footer: pagination is exhausted.
-  public func endRefreshingWithNoMoreData() {
-    ensureMain { self.endRefreshingOnMain(outcome: .noMoreData) }
+  public func endRefreshingWithNoMoreData(token: UInt64? = nil) {
+    ensureMain { self.endRefreshingOnMain(outcome: .noMoreData, token: token) }
   }
 
   /// Any failure path — shows retry affordance on the bundled default footer.
-  public func endRefreshingWithError(_ error: Error? = nil) {
-    ensureMain { self.endRefreshingOnMain(outcome: .failure(error)) }
+  public func endRefreshingWithError(_ error: Error? = nil, token: UInt64? = nil) {
+    ensureMain { self.endRefreshingOnMain(outcome: .failure(error), token: token) }
   }
 
   /// Clears `.noMoreData` / `.failed` and returns to `.idle`.
@@ -190,6 +202,11 @@ public final class FKRefreshControl: UIView {
     ensureMain { self.retryAfterFailureOnMain() }
   }
 
+  /// Cancels in-flight async work and optionally resets state to `.idle`.
+  public func cancelCurrentAction(resetState: Bool = true) {
+    ensureMain { self.cancelCurrentActionOnMain(resetState: resetState) }
+  }
+
   // MARK: - Main queue
 
   private func ensureMain(_ work: @escaping () -> Void) {
@@ -200,10 +217,12 @@ public final class FKRefreshControl: UIView {
     }
   }
 
-  private func beginRefreshingOnMain(animated: Bool) {
+  private func beginRefreshingOnMain(animated: Bool, triggerSource: FKRefreshTriggerSource) {
     guard isEnabled else { return }
     guard kind == .pullToRefresh else { return }
     guard state != .refreshing else { return }
+    guard state != .loadingMore else { return }
+    guard coordinator?.canStart(kind: kind) ?? true else { return }
     guard let scrollView else { return }
 
     scrollView.fk_resetLoadMoreAfterPullToRefresh()
@@ -213,7 +232,8 @@ public final class FKRefreshControl: UIView {
       isUserInteractionEnabled = false
       transition(to: .refreshing)
       markLoadingStart()
-      fireAction()
+      startBlockingInteractionIfNeeded()
+      fireAction(triggerSource: triggerSource)
       return
     }
 
@@ -221,6 +241,7 @@ public final class FKRefreshControl: UIView {
     isUserInteractionEnabled = true
     transition(to: .refreshing)
     markLoadingStart()
+    startBlockingInteractionIfNeeded()
     if animated && configuration.shouldKeepExpandedWhileRefreshing {
       expandScrollView(scrollView)
       let targetOffsetY = -(baselineContentInset.top + configuration.expandedHeight)
@@ -230,18 +251,19 @@ public final class FKRefreshControl: UIView {
         }
       }
     }
-    fireAction()
+    fireAction(triggerSource: triggerSource)
   }
 
-  private func beginLoadingMoreOnMain() {
+  private func beginLoadingMoreOnMain(triggerSource: FKRefreshTriggerSource) {
     guard isEnabled else { return }
     guard kind == .loadMore else { return }
     guard state == .idle else { return }
+    guard coordinator?.canStart(kind: kind) ?? true else { return }
     guard let scrollView else { return }
     guard !isFooterHiddenForShortContent(scrollView) else { return }
-    transition(to: .refreshing)
+    transition(to: .loadingMore)
     markLoadingStart()
-    fireAction()
+    fireAction(triggerSource: triggerSource)
   }
 
   private enum EndOutcome {
@@ -251,21 +273,22 @@ public final class FKRefreshControl: UIView {
     case failure(Error?)
   }
 
-  private func endRefreshingOnMain(outcome: EndOutcome) {
+  private func endRefreshingOnMain(outcome: EndOutcome, token: UInt64?) {
+    guard token.map(isCurrentToken) ?? true else { return }
     switch outcome {
     case .success:
-      guard state == .refreshing || state == .triggered else { return }
+      guard state == .refreshing || state == .loadingMore || state == .triggered || state == .readyToRefresh else { return }
       transition(to: .finished)
     case .emptyList:
       guard kind == .pullToRefresh else { return }
-      guard state == .refreshing || state == .triggered else { return }
+      guard state == .refreshing || state == .triggered || state == .readyToRefresh else { return }
       transition(to: .listEmpty)
     case .noMoreData:
       guard kind == .loadMore else { return }
-      guard state == .refreshing || state == .triggered else { return }
+      guard state == .loadingMore || state == .refreshing || state == .triggered || state == .readyToRefresh else { return }
       transition(to: .noMoreData)
     case .failure(let error):
-      guard state == .refreshing || state == .triggered else { return }
+      guard state == .refreshing || state == .loadingMore || state == .triggered || state == .readyToRefresh else { return }
       transition(to: .failed(error))
     }
 
@@ -280,6 +303,7 @@ public final class FKRefreshControl: UIView {
       } else {
         self.scheduleFooterCompletion()
       }
+      self.finishActionLifecycle()
     }
   }
 
@@ -306,9 +330,23 @@ public final class FKRefreshControl: UIView {
     guard kind == .loadMore else { return }
     guard case .failed = state else { return }
     guard let scrollView, !isFooterHiddenForShortContent(scrollView) else { return }
-    transition(to: .refreshing)
+    transition(to: .loadingMore)
     markLoadingStart()
-    fireAction()
+    fireAction(triggerSource: .retry)
+  }
+
+  private func cancelCurrentActionOnMain(resetState: Bool) {
+    pendingEndWorkItem?.cancel()
+    pendingEndWorkItem = nil
+    asyncTask?.cancel()
+    asyncTask = nil
+    stopBlockingInteractionIfNeeded()
+    coordinator?.didCancel(kind: kind)
+    currentActionToken = nil
+    loadingStartedAt = nil
+    if resetState {
+      resetToIdleOnMain()
+    }
   }
 
   // MARK: - Frame setup
@@ -416,7 +454,7 @@ public final class FKRefreshControl: UIView {
     guard !isAnimatingCollapse else { return }
     if kind == .pullToRefresh {
       switch state {
-      case .refreshing, .triggered, .finished, .listEmpty, .failed:
+      case .refreshing, .loadingMore, .triggered, .readyToRefresh, .finished, .listEmpty, .failed:
         return
       default:
         break
@@ -432,7 +470,7 @@ public final class FKRefreshControl: UIView {
     let insetTop = baselineContentInset.top
     let offsetY = scrollView.contentOffset.y
 
-    if state == .refreshing { return }
+    if state == .refreshing || state == .loadingMore { return }
 
     switch state {
     case .noMoreData, .finished, .listEmpty:
@@ -457,8 +495,8 @@ public final class FKRefreshControl: UIView {
     let progress = min(1, pullDistance / configuration.triggerThreshold)
     currentPullProgress = progress
     if progress >= 1 {
-      if state != .triggered {
-        transition(to: .triggered)
+      if state != .readyToRefresh {
+        transition(to: .readyToRefresh)
       }
     } else {
       transition(to: .pulling(progress: progress))
@@ -483,10 +521,11 @@ public final class FKRefreshControl: UIView {
       + scrollView.bounds.height
       - scrollView.adjustedContentInset.bottom
 
-    if visibleBottom >= contentH - configuration.triggerThreshold {
-      transition(to: .refreshing)
+    let preload = max(configuration.loadMorePreloadOffset, configuration.triggerThreshold)
+    if visibleBottom >= contentH - preload {
+      transition(to: .loadingMore)
       markLoadingStart()
-      fireAction()
+      fireAction(triggerSource: .userInteraction)
     }
   }
 
@@ -527,15 +566,20 @@ public final class FKRefreshControl: UIView {
     guard isEnabled else { return }
     guard gestureState == .ended || gestureState == .cancelled else { return }
 
-    if state == .triggered {
+    if state == .triggered || state == .readyToRefresh {
+      guard coordinator?.canStart(kind: kind) ?? true else {
+        transition(to: .idle)
+        return
+      }
       guard let scrollView else { return }
       scrollView.fk_resetLoadMoreAfterPullToRefresh()
       transition(to: .refreshing)
       markLoadingStart()
+      startBlockingInteractionIfNeeded()
       if configuration.isSilentRefresh {
         alpha = 0
         isUserInteractionEnabled = false
-        fireAction()
+        fireAction(triggerSource: .userInteraction)
         return
       }
       alpha = 1
@@ -543,7 +587,7 @@ public final class FKRefreshControl: UIView {
       if configuration.shouldKeepExpandedWhileRefreshing {
         expandScrollView(scrollView)
       }
-      fireAction()
+      fireAction(triggerSource: .userInteraction)
     } else if case .pulling = state {
       transition(to: .idle)
       currentPullProgress = 0
@@ -557,19 +601,70 @@ public final class FKRefreshControl: UIView {
   }
 
   private func handleStateTransition(from previous: FKRefreshState, to current: FKRefreshState) {
-    if case .triggered = current, case .triggered = previous {} else if current == .triggered {
+    if (current == .triggered || current == .readyToRefresh) && (previous != .triggered && previous != .readyToRefresh) {
       hapticGenerator?.impactOccurred()
       hapticGenerator?.prepare()
     }
     contentView.refreshControl(self, didTransitionTo: current, from: previous)
+    announceAccessibilityStateIfNeeded(current)
     onStateChanged?(self, current)
     delegate?.refreshControl(self, didChange: current, from: previous)
+  }
+
+  private func announceAccessibilityStateIfNeeded(_ state: FKRefreshState) {
+    guard UIAccessibility.isVoiceOverRunning else { return }
+    let text = configuration.texts
+    let message: String?
+    switch state {
+    case .refreshing:
+      message = text.headerLoading
+    case .loadingMore:
+      message = text.footerLoading
+    case .failed:
+      message = kind == .loadMore ? text.footerFailed : text.headerFailed
+    case .noMoreData:
+      message = text.footerNoMoreData
+    default:
+      message = nil
+    }
+    if let message {
+      UIAccessibility.post(notification: .announcement, argument: message)
+    }
   }
 
   // MARK: - Timing helpers
 
   private func markLoadingStart() {
-    loadingStartedAt = Date()
+    loadingStartedAt = clock.now()
+    nextActionToken &+= 1
+    currentActionToken = nextActionToken
+    coordinator?.didStart(kind: kind)
+  }
+
+  private func isCurrentToken(_ token: UInt64) -> Bool {
+    currentActionToken == token
+  }
+
+  private func currentContext(source: FKRefreshTriggerSource) -> FKRefreshActionContext? {
+    guard let token = currentActionToken else { return nil }
+    return FKRefreshActionContext(token: token, kind: kind, source: source, startedAt: loadingStartedAt ?? clock.now())
+  }
+
+  private func finishActionLifecycle() {
+    stopBlockingInteractionIfNeeded()
+    coordinator?.didComplete(kind: kind, isTerminal: true)
+    currentActionToken = nil
+    loadingStartedAt = nil
+  }
+
+  private func startBlockingInteractionIfNeeded() {
+    guard configuration.blocksUserInteractionWhileRefreshing, kind == .pullToRefresh else { return }
+    scrollView?.isUserInteractionEnabled = false
+  }
+
+  private func stopBlockingInteractionIfNeeded() {
+    guard configuration.blocksUserInteractionWhileRefreshing, kind == .pullToRefresh else { return }
+    scrollView?.isUserInteractionEnabled = true
   }
 
   private func runMinimumVisibilityIfNeeded(completion: @escaping () -> Void) {
@@ -658,7 +753,7 @@ public final class FKRefreshControl: UIView {
   private func scheduleCollapse(delay: TimeInterval? = nil) {
     let hold = delay ?? configuration.finishedHoldDuration
     DispatchQueue.main.asyncAfter(deadline: .now() + hold) { [weak self] in
-      guard let self, self.state != .refreshing else { return }
+      guard let self, self.state != .refreshing, self.state != .loadingMore else { return }
       self.collapseScrollView(animated: true)
     }
   }
@@ -666,7 +761,7 @@ public final class FKRefreshControl: UIView {
   private func scheduleFooterCompletion() {
     let hold = configuration.finishedHoldDuration
     DispatchQueue.main.asyncAfter(deadline: .now() + hold) { [weak self] in
-      guard let self, self.state != .refreshing else { return }
+      guard let self, self.state != .refreshing, self.state != .loadingMore else { return }
       self.applyFooterIdleTransitionIfNeeded()
     }
   }
@@ -683,46 +778,57 @@ public final class FKRefreshControl: UIView {
 
   // MARK: - Action
 
-  private func fireAction() {
+  private func fireAction(triggerSource: FKRefreshTriggerSource) {
     asyncTask?.cancel()
+    let context = currentContext(source: triggerSource)
     actionHandler?()
-    guard let asyncActionHandler else { return }
+    if let context {
+      contextActionHandler?(context)
+    }
+    let legacyAsync = asyncActionHandler
+    let contextAsync = contextAsyncActionHandler
+    guard legacyAsync != nil || contextAsync != nil else { return }
     asyncTask = Task { [weak self] in
       guard let self else { return }
       do {
-        try await asyncActionHandler()
+        if let legacyAsync {
+          try await legacyAsync()
+        }
+        if let context, let contextAsync {
+          try await contextAsync(context)
+        }
         await MainActor.run {
           guard self.configuration.automaticallyEndsRefreshingOnAsyncCompletion else { return }
-          self.finishAsyncActionWithSuccess()
+          self.finishAsyncActionWithSuccess(token: context?.token)
         }
       } catch {
         await MainActor.run {
           guard self.configuration.automaticallyEndsRefreshingOnAsyncCompletion else { return }
-          self.finishAsyncActionWithFailure(error)
+          self.finishAsyncActionWithFailure(error, token: context?.token)
         }
       }
     }
   }
 
-  private func finishAsyncActionWithSuccess() {
+  private func finishAsyncActionWithSuccess(token: UInt64?) {
     let delay = configuration.automaticEndDelay
     if delay <= 0 {
-      endRefreshing()
+      endRefreshing(token: token)
       return
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-      self?.endRefreshing()
+      self?.endRefreshing(token: token)
     }
   }
 
-  private func finishAsyncActionWithFailure(_ error: Error) {
+  private func finishAsyncActionWithFailure(_ error: Error, token: UInt64?) {
     let delay = configuration.automaticEndDelay
     if delay <= 0 {
-      endRefreshingWithError(error)
+      endRefreshingWithError(error, token: token)
       return
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-      self?.endRefreshingWithError(error)
+      self?.endRefreshingWithError(error, token: token)
     }
   }
 

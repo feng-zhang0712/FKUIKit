@@ -1,10 +1,3 @@
-//
-// FKRefreshScrollViewDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Non-list `UIScrollView` with tall stacked content to test header/footer placement.
-//
-
 import FKUIKit
 import UIKit
 
@@ -92,14 +85,14 @@ final class FKRefreshScrollViewDemoViewController: UIViewController {
     cfg.tintColor = .systemMint
     cfg.loadMoreTriggerMode = .manual
     scrollView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
         self?.scrollView.fk_pullToRefresh?.endRefreshing()
         self?.scrollView.fk_resetLoadMoreState()
       }
     }
 
     scrollView.fk_addLoadMore(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.8) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.8) {
         self?.scrollView.fk_loadMore?.endRefreshing()
       }
     }

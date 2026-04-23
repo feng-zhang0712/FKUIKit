@@ -1,10 +1,3 @@
-//
-// FKRefreshDelegateDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `FKRefreshControlDelegate` vs `onStateChanged`; bottom log shows transitions.
-//
-
 import FKUIKit
 import UIKit
 
@@ -52,7 +45,7 @@ final class FKRefreshDelegateDemoViewController: UIViewController {
     var cfg = FKRefreshConfiguration()
     cfg.tintColor = .systemGreen
     let pull = tableView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.9) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.9) {
         self?.items = (1...12).map { "Pull ok \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
@@ -61,11 +54,11 @@ final class FKRefreshDelegateDemoViewController: UIViewController {
     }
     pull.delegate = self
     pull.onStateChanged = { [weak self] _, state in
-      self?.appendLog("onStateChanged pull: \(FKRefreshDemoCommon.stateDescription(state))")
+      self?.appendLog("onStateChanged pull: \(FKRefreshExampleCommon.stateDescription(state))")
     }
 
     let load = tableView.fk_addLoadMore(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.8) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.8) {
         guard let self else { return }
         let n = self.items.count
         self.items.append(contentsOf: (n + 1...(n + 5)).map { "Delegate \($0)" })
@@ -75,7 +68,7 @@ final class FKRefreshDelegateDemoViewController: UIViewController {
     }
     load.delegate = self
     load.onStateChanged = { [weak self] _, state in
-      self?.appendLog("onStateChanged load: \(FKRefreshDemoCommon.stateDescription(state))")
+      self?.appendLog("onStateChanged load: \(FKRefreshExampleCommon.stateDescription(state))")
     }
   }
 
@@ -90,7 +83,7 @@ final class FKRefreshDelegateDemoViewController: UIViewController {
 extension FKRefreshDelegateDemoViewController: FKRefreshControlDelegate {
   func refreshControl(_ control: FKRefreshControl, didChange state: FKRefreshState, from previous: FKRefreshState) {
     let kindName = control.kind == .pullToRefresh ? "FKRefreshKind.pullToRefresh" : "FKRefreshKind.loadMore"
-    appendLog("delegate \(kindName): \(FKRefreshDemoCommon.stateDescription(previous)) → \(FKRefreshDemoCommon.stateDescription(state))")
+    appendLog("delegate \(kindName): \(FKRefreshExampleCommon.stateDescription(previous)) → \(FKRefreshExampleCommon.stateDescription(state))")
   }
 }
 

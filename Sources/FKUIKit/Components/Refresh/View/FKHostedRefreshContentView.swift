@@ -1,10 +1,3 @@
-//
-// FKHostedRefreshContentView.swift
-// FKUIKit — FKRefresh
-//
-// Wraps any `UIView` (e.g. Lottie `AnimationView`) as `FKRefreshContentView`; animate via state observation.
-//
-
 import UIKit
 
 /// Wraps an arbitrary `UIView` so it can serve as ``FKRefreshContentView``.

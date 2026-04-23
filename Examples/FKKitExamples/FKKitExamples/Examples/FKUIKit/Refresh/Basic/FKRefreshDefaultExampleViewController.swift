@@ -1,10 +1,3 @@
-//
-// FKRefreshDefaultDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Exercises `FKDefaultRefreshContentView`: simulated outcomes, `fk_beginPullToRefresh` / `fk_beginLoadMore`.
-//
-
 import FKUIKit
 import UIKit
 
@@ -55,10 +48,11 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
     let reset = makePanelButton(title: "Reset data") { [weak self] in self?.resetData() }
     let pull = makePanelButton(title: "Begin pull") { [weak self] in self?.triggerPull() }
     let more = makePanelButton(title: "Begin load more") { [weak self] in self?.triggerLoadMore() }
+    let cancel = makePanelButton(title: "Cancel current action") { [weak self] in self?.cancelCurrentAction() }
     let toggleFooter = makePanelButton(title: "Toggle footer hidden") { [weak self] in self?.toggleFooterHidden() }
     let toggleHeader = makePanelButton(title: "Toggle header enabled") { [weak self] in self?.toggleHeaderEnabled() }
 
-    let buttons = UIStackView(arrangedSubviews: [reset, pull, more, toggleFooter, toggleHeader])
+    let buttons = UIStackView(arrangedSubviews: [reset, pull, more, cancel, toggleFooter, toggleHeader])
     buttons.axis = .vertical
     buttons.spacing = 8
     buttons.distribution = .fillEqually
@@ -157,13 +151,13 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
     let l = load ?? tableView.fk_loadMore?.state ?? .idle
     let pp = tableView.fk_pullToRefresh?.currentPullProgress ?? 0
     statusLabel.text =
-      "pull: \(FKRefreshDemoCommon.stateDescription(p))  progress=\(String(format: "%.2f", pp))\n"
-      + "load: \(FKRefreshDemoCommon.stateDescription(l))"
+      "pull: \(FKRefreshExampleCommon.stateDescription(p))  progress=\(String(format: "%.2f", pp))\n"
+      + "load: \(FKRefreshExampleCommon.stateDescription(l))"
   }
 
   private func runPullRefresh() {
     let delay: TimeInterval = outcomeControl.selectedSegmentIndex == 3 ? 0.05 : 1.0
-    FKRefreshDemoCommon.simulateRequest(delay: delay) { [weak self] in
+    FKRefreshExampleCommon.simulateRequest(delay: delay) { [weak self] in
       guard let self else { return }
       switch self.outcomeControl.selectedSegmentIndex {
       case 1:
@@ -186,7 +180,7 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
 
   private func runLoadMore() {
     let delay: TimeInterval = outcomeControl.selectedSegmentIndex == 3 ? 0.05 : 1.0
-    FKRefreshDemoCommon.simulateRequest(delay: delay) { [weak self] in
+    FKRefreshExampleCommon.simulateRequest(delay: delay) { [weak self] in
       guard let self else { return }
       if self.outcomeControl.selectedSegmentIndex == 2 {
         self.tableView.fk_loadMore?.endRefreshingWithError()
@@ -236,6 +230,12 @@ final class FKRefreshDefaultDemoViewController: UIViewController {
   @objc private func toggleHeaderEnabled() {
     guard let header = tableView.fk_pullToRefresh else { return }
     header.isEnabled.toggle()
+    updateStatus()
+  }
+
+  @objc private func cancelCurrentAction() {
+    tableView.fk_pullToRefresh?.cancelCurrentAction(resetState: true)
+    tableView.fk_loadMore?.cancelCurrentAction(resetState: true)
     updateStatus()
   }
 }

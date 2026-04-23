@@ -1,10 +1,3 @@
-//
-// FKRefreshConfiguration.swift
-// FKUIKit — FKRefresh
-//
-// Tunables for thresholds, timing, colors, copy (`FKRefreshText`), silent refresh, and footer visibility.
-//
-
 import UIKit
 
 /// Trigger strategy for load-more controls.
@@ -71,12 +64,17 @@ public struct FKRefreshConfiguration: Sendable {
 
   /// Controls whether load-more starts automatically when scrolled near the bottom.
   public var loadMoreTriggerMode: FKLoadMoreTriggerMode
+  /// Starts load-more this many points before the absolute bottom.
+  public var loadMorePreloadOffset: CGFloat
 
   /// Automatically ends loading after async handlers complete.
   public var automaticallyEndsRefreshingOnAsyncCompletion: Bool
 
   /// Delay used when `automaticallyEndsRefreshingOnAsyncCompletion` is enabled.
   public var automaticEndDelay: TimeInterval
+
+  /// When true, blocks user interaction while pull-to-refresh is running.
+  public var blocksUserInteractionWhileRefreshing: Bool
 
   // MARK: - Init
 
@@ -97,8 +95,10 @@ public struct FKRefreshConfiguration: Sendable {
     autohidesFooterWhenNotScrollable: Bool = true,
     footerSafeAreaPadding: CGFloat = 0,
     loadMoreTriggerMode: FKLoadMoreTriggerMode = .automatic,
+    loadMorePreloadOffset: CGFloat = 0,
     automaticallyEndsRefreshingOnAsyncCompletion: Bool = false,
-    automaticEndDelay: TimeInterval = 0
+    automaticEndDelay: TimeInterval = 0,
+    blocksUserInteractionWhileRefreshing: Bool = false
   ) {
     self.triggerThreshold = max(20, triggerThreshold)
     self.expandedHeight = max(20, expandedHeight)
@@ -116,8 +116,10 @@ public struct FKRefreshConfiguration: Sendable {
     self.autohidesFooterWhenNotScrollable = autohidesFooterWhenNotScrollable
     self.footerSafeAreaPadding = max(0, footerSafeAreaPadding)
     self.loadMoreTriggerMode = loadMoreTriggerMode
+    self.loadMorePreloadOffset = max(0, loadMorePreloadOffset)
     self.automaticallyEndsRefreshingOnAsyncCompletion = automaticallyEndsRefreshingOnAsyncCompletion
     self.automaticEndDelay = max(0, automaticEndDelay)
+    self.blocksUserInteractionWhileRefreshing = blocksUserInteractionWhileRefreshing
   }
 
   public static let `default` = FKRefreshConfiguration()

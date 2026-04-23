@@ -1,16 +1,9 @@
-//
-// FKRefreshGIFDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `FKGIFRefreshContentView` driven by a programmatic `UIImage.animatedImage`.
-//
-
 import FKUIKit
 import UIKit
 
-final class FKRefreshGIFDemoViewController: UIViewController {
+final class FKRefreshDotsDemoViewController: UIViewController {
 
-  private var items = (1...18).map { "GIF demo \($0)" }
+  private var items = (1...20).map { "Dots \($0)" }
 
   private lazy var tableView: UITableView = {
     let tv = UITableView(frame: .zero, style: .insetGrouped)
@@ -22,7 +15,7 @@ final class FKRefreshGIFDemoViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "GIF"
+    title = "Custom dots"
     view.backgroundColor = .systemGroupedBackground
     view.addSubview(tableView)
     NSLayoutConstraint.activate([
@@ -32,27 +25,23 @@ final class FKRefreshGIFDemoViewController: UIViewController {
       tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
 
-    let gifPull = FKGIFRefreshContentView()
-    gifPull.image = FKRefreshDemoCommon.makeDemoAnimatedImage()
-
     var cfg = FKRefreshConfiguration()
-    cfg.expandedHeight = 56
-    tableView.fk_addPullToRefresh(configuration: cfg, contentView: gifPull) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.2) {
-        self?.items = (1...12).map { "GIF refreshed \($0)" }
+    cfg.tintColor = .systemPurple
+    let dots = FKDotsRefreshContentView()
+    tableView.fk_addPullToRefresh(configuration: cfg, contentView: dots) { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
+        self?.items = (1...15).map { "Dots refreshed \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
         self?.tableView.fk_loadMore?.resetToIdle()
       }
     }
 
-    let gifLoad = FKGIFRefreshContentView()
-    gifLoad.image = FKRefreshDemoCommon.makeDemoAnimatedImage()
-    tableView.fk_addLoadMore(configuration: cfg, contentView: gifLoad) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
+    tableView.fk_addLoadMore(configuration: cfg, contentView: FKDotsRefreshContentView()) { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
         guard let self else { return }
         let n = self.items.count
-        self.items.append(contentsOf: (n + 1...(n + 6)).map { "GIF \($0)" })
+        self.items.append(contentsOf: (n + 1...(n + 5)).map { "Dots \($0)" })
         self.tableView.reloadData()
         self.tableView.fk_loadMore?.endRefreshing()
       }
@@ -60,7 +49,7 @@ final class FKRefreshGIFDemoViewController: UIViewController {
   }
 }
 
-extension FKRefreshGIFDemoViewController: UITableViewDataSource {
+extension FKRefreshDotsDemoViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     items.count
   }

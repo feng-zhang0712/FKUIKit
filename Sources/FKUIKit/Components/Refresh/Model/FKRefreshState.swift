@@ -1,10 +1,3 @@
-//
-// FKRefreshState.swift
-// FKUIKit — FKRefresh
-//
-// Shared state machine for header and footer; `.refreshing` means in-flight work for both kinds.
-//
-
 import Foundation
 
 /// The state machine for a refresh / load-more control.
@@ -17,10 +10,14 @@ public enum FKRefreshState: Equatable {
   case idle
   /// Pull gesture in progress; `progress` is normalized to `[0, 1]` at the trigger threshold.
   case pulling(progress: CGFloat)
-  /// Threshold crossed; release will start refresh (header only — footer skips this state).
+  /// Threshold crossed; release will start refresh (header only).
+  case readyToRefresh
+  /// Backward-compatible alias state retained for existing consumers.
   case triggered
   /// Work is running (network / DB). Duplicate triggers are ignored while here.
   case refreshing
+  /// Footer-specific in-flight state for clearer UI and analytics semantics.
+  case loadingMore
   /// Pull-to-refresh finished successfully with data.
   case finished
   /// Pull-to-refresh finished successfully but the first page is empty (distinct copy / analytics).
@@ -33,8 +30,10 @@ public enum FKRefreshState: Equatable {
   public static func == (lhs: FKRefreshState, rhs: FKRefreshState) -> Bool {
     switch (lhs, rhs) {
     case (.idle, .idle),
+         (.readyToRefresh, .readyToRefresh),
          (.triggered, .triggered),
          (.refreshing, .refreshing),
+         (.loadingMore, .loadingMore),
          (.finished, .finished),
          (.listEmpty, .listEmpty),
          (.noMoreData, .noMoreData):

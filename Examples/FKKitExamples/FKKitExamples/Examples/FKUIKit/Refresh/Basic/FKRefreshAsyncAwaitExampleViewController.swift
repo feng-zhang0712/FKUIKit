@@ -1,14 +1,7 @@
-//
-// FKRefreshAsyncAwaitDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Demonstrates async/await refresh + load-more with automatic end handling.
-//
-
 import FKUIKit
 import UIKit
 
-final class FKRefreshAsyncAwaitDemoViewController: UIViewController {
+final class FKRefreshAsyncAwaitExampleViewController: UIViewController {
 
   private enum ResultMode: Int {
     case success
@@ -75,10 +68,27 @@ final class FKRefreshAsyncAwaitDemoViewController: UIViewController {
 
     tableView.fk_addPullToRefresh(configuration: pullConfig, asyncAction: { [weak self] in
       guard let self else { return }
-      try await FKRefreshDemoCommon.simulateAsyncRequest(delay: 0.8)
-      self.items = (1...16).map { "Refreshed async \($0)" }
-      self.tableView.reloadData()
-      self.tableView.fk_resetLoadMoreState()
+      do {
+        try await FKRefreshExampleCommon.simulateAsyncRequest(delay: 0.8)
+        self.items = (1...16).map { "Refreshed async \($0)" }
+        self.tableView.reloadData()
+        self.tableView.fk_resetLoadMoreState()
+      } catch {
+        if Task.isCancelled {
+          self.tableView.fk_pullToRefresh?.cancelCurrentAction(resetState: true)
+        } else {
+          self.tableView.fk_pullToRefresh?.endRefreshingWithError(error)
+        }
+        throw error
+      }
+
+      if Task.isCancelled {
+        self.tableView.fk_pullToRefresh?.cancelCurrentAction(resetState: true)
+        return
+      }
+
+      // Minimal safety net: if auto-end fails due to edge cases, this ensures the header returns to idle.
+      self.tableView.fk_pullToRefresh?.endRefreshing()
     })
 
     var loadConfig = pullConfig
@@ -106,7 +116,7 @@ final class FKRefreshAsyncAwaitDemoViewController: UIViewController {
   }
 
   private func handleAsyncLoadMore() async throws {
-    try await FKRefreshDemoCommon.simulateAsyncRequest(delay: 0.9)
+    try await FKRefreshExampleCommon.simulateAsyncRequest(delay: 0.9)
     switch selectedResultMode {
     case .success:
       guard items.count < maxItems else {
@@ -130,13 +140,13 @@ final class FKRefreshAsyncAwaitDemoViewController: UIViewController {
   }
 
   private func reloadStatusText() {
-    let pull = FKRefreshDemoCommon.stateDescription(tableView.fk_pullToRefresh?.state ?? .idle)
-    let load = FKRefreshDemoCommon.stateDescription(tableView.fk_loadMore?.state ?? .idle)
+    let pull = FKRefreshExampleCommon.stateDescription(tableView.fk_pullToRefresh?.state ?? .idle)
+    let load = FKRefreshExampleCommon.stateDescription(tableView.fk_loadMore?.state ?? .idle)
     statusLabel.text = "pull: \(pull)\nload: \(load)\nrows: \(items.count)"
   }
 }
 
-extension FKRefreshAsyncAwaitDemoViewController: UITableViewDataSource {
+extension FKRefreshAsyncAwaitExampleViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     items.count
   }

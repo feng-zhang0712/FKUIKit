@@ -157,7 +157,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.40.1")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.40.2")
 ],
 targets: [
   .target(

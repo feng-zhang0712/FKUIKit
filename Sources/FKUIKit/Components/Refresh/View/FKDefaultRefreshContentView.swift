@@ -1,10 +1,3 @@
-//
-// FKDefaultRefreshContentView.swift
-// FKUIKit — FKRefresh
-//
-// Stock indicator: arrow + spinner share a top `indicatorHost`; label sits below to avoid overlap.
-//
-
 import UIKit
 
 /// Built-in indicator: arrow that rotates into a spinner plus status label driven by ``FKRefreshText``.
@@ -16,6 +9,7 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
   private let arrowLayer = CAShapeLayer()
   private let stackView = UIStackView()
   private let label = UILabel()
+  private let retryButton = UIButton(type: .system)
 
   private var configuration: FKRefreshConfiguration = .default
 
@@ -62,6 +56,8 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
     label.textAlignment = .center
     label.alpha = 0
     label.numberOfLines = 2
+    label.adjustsFontForContentSizeCategory = true
+    label.lineBreakMode = .byWordWrapping
 
     stackView.axis = .vertical
     stackView.alignment = .center
@@ -70,6 +66,7 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
     addSubview(stackView)
     stackView.addArrangedSubview(indicatorHost)
     stackView.addArrangedSubview(label)
+    stackView.addArrangedSubview(retryButton)
 
     NSLayoutConstraint.activate([
       stackView.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -84,7 +81,12 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
       spinner.centerYAnchor.constraint(equalTo: indicatorHost.centerYAnchor),
     ])
 
+    retryButton.isHidden = true
+    retryButton.setContentHuggingPriority(.required, for: .vertical)
+    retryButton.addTarget(self, action: #selector(handleRetryTap), for: .touchUpInside)
+
     addGestureRecognizer(retryTapGesture)
+    semanticContentAttribute = .unspecified
   }
 
   // MARK: - Layout
@@ -129,22 +131,26 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
       spinner.stopAnimating()
       setLabel(nil)
 
+      retryButton.isHidden = true
     case .pulling:
       showArrow(rotated: false, animated: false)
       spinner.stopAnimating()
       setLabel(texts.pullToRefresh)
 
-    case .triggered:
+      retryButton.isHidden = true
+    case .readyToRefresh, .triggered:
       showArrow(rotated: true, animated: true)
       setLabel(texts.releaseToRefresh)
+      retryButton.isHidden = true
 
-    case .refreshing:
+    case .refreshing, .loadingMore:
       UIView.animate(withDuration: 0.2) {
         self.arrowLayer.opacity = 0
         self.spinner.alpha = 1
       }
       spinner.startAnimating()
       setLabel(isFooter ? texts.footerLoading : texts.headerLoading)
+      retryButton.isHidden = true
 
     case .finished:
       arrowLayer.opacity = 0
@@ -162,6 +168,7 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
       spinner.stopAnimating()
       arrowLayer.opacity = 0
       setLabel(isFooter ? texts.footerNoMoreData : texts.headerListEmpty)
+      retryButton.isHidden = true
 
     case .failed:
       spinner.stopAnimating()
@@ -170,10 +177,15 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
       retryTapGesture.isEnabled = isFooter
       if isFooter {
         setLabel("\(texts.footerFailed)\n\(texts.footerTapToRetry)")
+        retryButton.setTitle(texts.footerTapToRetry, for: .normal)
+        retryButton.isHidden = false
       } else {
         setLabel(texts.headerFailed)
+        retryButton.isHidden = true
       }
     }
+
+    updateAccessibility(state: state, texts: texts, isFooter: isFooter)
   }
 
   public func refreshControl(_ control: FKRefreshControl, didUpdatePullProgress progress: CGFloat) {
@@ -189,8 +201,9 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
   // MARK: - Helpers
 
   private func applyAppearance() {
-    let font = UIFont.systemFont(ofSize: configuration.messageFontSize, weight: configuration.messageFontWeight)
-    label.font = font
+    let base = UIFont.systemFont(ofSize: configuration.messageFontSize, weight: configuration.messageFontWeight)
+    label.font = UIFontMetrics(forTextStyle: .footnote).scaledFont(for: base)
+    retryButton.titleLabel?.font = UIFontMetrics(forTextStyle: .footnote).scaledFont(for: base)
     applyTint(configuration.tintColor)
   }
 
@@ -226,5 +239,44 @@ public final class FKDefaultRefreshContentView: UIView, FKRefreshContentView {
     arrowLayer.strokeColor = color.cgColor
     spinner.color = color
     label.textColor = color
+    retryButton.tintColor = color
+  }
+
+  private func updateAccessibility(state: FKRefreshState, texts: FKRefreshText, isFooter: Bool) {
+    isAccessibilityElement = true
+    accessibilityTraits = .staticText
+    switch state {
+    case .refreshing:
+      accessibilityLabel = texts.headerLoading
+      accessibilityHint = nil
+    case .loadingMore:
+      accessibilityLabel = texts.footerLoading
+      accessibilityHint = nil
+    case .failed:
+      accessibilityLabel = isFooter ? texts.footerFailed : texts.headerFailed
+      accessibilityHint = isFooter ? texts.footerTapToRetry : nil
+    case .noMoreData:
+      accessibilityLabel = texts.footerNoMoreData
+      accessibilityHint = nil
+    case .readyToRefresh, .triggered:
+      accessibilityLabel = texts.releaseToRefresh
+      accessibilityHint = nil
+    case .pulling:
+      accessibilityLabel = texts.pullToRefresh
+      accessibilityHint = nil
+    case .finished:
+      accessibilityLabel = isFooter ? texts.footerFinished : texts.headerFinished
+      accessibilityHint = nil
+    case .listEmpty:
+      accessibilityLabel = texts.headerListEmpty
+      accessibilityHint = nil
+    case .idle:
+      accessibilityLabel = nil
+      accessibilityHint = nil
+    }
+
+    retryButton.isAccessibilityElement = !retryButton.isHidden
+    retryButton.accessibilityTraits = [.button]
+    retryButton.accessibilityHint = texts.footerTapToRetry
   }
 }

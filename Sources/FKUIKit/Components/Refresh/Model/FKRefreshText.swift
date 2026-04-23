@@ -1,13 +1,8 @@
-//
-// FKRefreshText.swift
-// FKUIKit — FKRefresh
-//
-// User-visible strings for `FKDefaultRefreshContentView`. Localize at app launch or override per screen.
-//
-
 import UIKit
 
 /// User-visible strings for the built-in ``FKDefaultRefreshContentView``.
+///
+/// Localize these strings at app launch, or override them per screen (e.g. for feature-specific copy).
 public struct FKRefreshText: Equatable, Sendable {
 
   // MARK: Pull header

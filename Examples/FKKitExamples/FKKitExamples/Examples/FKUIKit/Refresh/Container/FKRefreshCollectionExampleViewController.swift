@@ -1,10 +1,3 @@
-//
-// FKRefreshCollectionDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `UICollectionView` + pull / load-more (same `UIScrollView` APIs).
-//
-
 import FKUIKit
 import UIKit
 
@@ -64,7 +57,7 @@ final class FKRefreshCollectionDemoViewController: UIViewController {
     var cfg = FKRefreshConfiguration()
     cfg.tintColor = .systemRed
     collectionView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
         self?.items = (0..<24).map { "Refreshed \($0)" }
         self?.collectionView.reloadData()
         self?.collectionView.fk_pullToRefresh?.endRefreshing()
@@ -73,7 +66,7 @@ final class FKRefreshCollectionDemoViewController: UIViewController {
     }
 
     collectionView.fk_addLoadMore(configuration: cfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.9) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.9) {
         guard let self else { return }
         let outcome = LoadOutcome(rawValue: self.outcomeControl.selectedSegmentIndex) ?? .success
         if outcome == .failed {

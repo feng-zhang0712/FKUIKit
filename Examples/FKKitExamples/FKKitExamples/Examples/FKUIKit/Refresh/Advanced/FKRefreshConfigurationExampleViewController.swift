@@ -1,10 +1,3 @@
-//
-// FKRefreshConfigurationDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `FKRefreshText`, silent refresh toggle, and minimum loading visibility duration.
-//
-
 import FKUIKit
 import UIKit
 
@@ -83,7 +76,7 @@ final class FKRefreshConfigurationDemoViewController: UIViewController {
 
     tableView.fk_addPullToRefresh(configuration: cfg) { [weak self] in
       // Very fast “network” to show minimum visibility hold.
-      FKRefreshDemoCommon.simulateRequest(delay: 0.08) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.08) {
         self?.items = (1...8).map { "Cfg refreshed \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
@@ -94,7 +87,7 @@ final class FKRefreshConfigurationDemoViewController: UIViewController {
     var loadCfg = cfg
     loadCfg.isSilentRefresh = false
     tableView.fk_addLoadMore(configuration: loadCfg) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.5) {
+      FKRefreshExampleCommon.simulateRequest(delay: 0.5) {
         guard let self else { return }
         let n = self.items.count
         self.items.append(contentsOf: (n + 1...(n + 4)).map { "Cfg \($0)" })

@@ -1,16 +1,18 @@
-//
-// FKRefreshDotsDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Custom `FKRefreshContentView` implementation (bouncing dots) on pull and load-more.
-//
-
 import FKUIKit
 import UIKit
 
-final class FKRefreshDotsDemoViewController: UIViewController {
+final class FKRefreshHostedDemoViewController: UIViewController {
 
-  private var items = (1...20).map { "Dots \($0)" }
+  private var items = (1...16).map { "Hosted \($0)" }
+
+  private lazy var hostedPullLabel: UILabel = {
+    let l = UILabel()
+    l.font = .boldSystemFont(ofSize: 13)
+    l.textAlignment = .center
+    l.textColor = .label
+    l.numberOfLines = 2
+    return l
+  }()
 
   private lazy var tableView: UITableView = {
     let tv = UITableView(frame: .zero, style: .insetGrouped)
@@ -22,7 +24,7 @@ final class FKRefreshDotsDemoViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "Custom dots"
+    title = "Hosted"
     view.backgroundColor = .systemGroupedBackground
     view.addSubview(tableView)
     NSLayoutConstraint.activate([
@@ -32,23 +34,30 @@ final class FKRefreshDotsDemoViewController: UIViewController {
       tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
 
+    hostedPullLabel.text = "Hosted header\n(Lottie could go here)"
+
+    let hosted = FKHostedRefreshContentView(hostedView: hostedPullLabel)
     var cfg = FKRefreshConfiguration()
-    cfg.tintColor = .systemPurple
-    let dots = FKDotsRefreshContentView()
-    tableView.fk_addPullToRefresh(configuration: cfg, contentView: dots) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
-        self?.items = (1...15).map { "Dots refreshed \($0)" }
+    cfg.tintColor = .label
+
+    tableView.fk_addPullToRefresh(configuration: cfg, contentView: hosted) { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
+        self?.items = (1...14).map { "Hosted refresh \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
         self?.tableView.fk_loadMore?.resetToIdle()
       }
     }
 
-    tableView.fk_addLoadMore(configuration: cfg, contentView: FKDotsRefreshContentView()) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
+    tableView.fk_pullToRefresh?.onStateChanged = { [weak self] _, state in
+      self?.hostedPullLabel.text = "Pull state:\n\(FKRefreshExampleCommon.stateDescription(state))"
+    }
+
+    tableView.fk_addLoadMore { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 0.8) {
         guard let self else { return }
         let n = self.items.count
-        self.items.append(contentsOf: (n + 1...(n + 5)).map { "Dots \($0)" })
+        self.items.append(contentsOf: (n + 1...(n + 5)).map { "Hosted \($0)" })
         self.tableView.reloadData()
         self.tableView.fk_loadMore?.endRefreshing()
       }
@@ -56,7 +65,7 @@ final class FKRefreshDotsDemoViewController: UIViewController {
   }
 }
 
-extension FKRefreshDotsDemoViewController: UITableViewDataSource {
+extension FKRefreshHostedDemoViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     items.count
   }

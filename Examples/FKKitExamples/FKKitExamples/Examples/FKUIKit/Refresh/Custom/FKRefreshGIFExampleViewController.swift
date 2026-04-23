@@ -1,25 +1,9 @@
-//
-// FKRefreshHostedDemoViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// `FKHostedRefreshContentView` with a hosted `UILabel`; state mirrored via `onStateChanged`.
-//
-
 import FKUIKit
 import UIKit
 
-final class FKRefreshHostedDemoViewController: UIViewController {
+final class FKRefreshGIFDemoViewController: UIViewController {
 
-  private var items = (1...16).map { "Hosted \($0)" }
-
-  private lazy var hostedPullLabel: UILabel = {
-    let l = UILabel()
-    l.font = .boldSystemFont(ofSize: 13)
-    l.textAlignment = .center
-    l.textColor = .label
-    l.numberOfLines = 2
-    return l
-  }()
+  private var items = (1...18).map { "GIF demo \($0)" }
 
   private lazy var tableView: UITableView = {
     let tv = UITableView(frame: .zero, style: .insetGrouped)
@@ -31,7 +15,7 @@ final class FKRefreshHostedDemoViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "Hosted"
+    title = "GIF"
     view.backgroundColor = .systemGroupedBackground
     view.addSubview(tableView)
     NSLayoutConstraint.activate([
@@ -41,30 +25,27 @@ final class FKRefreshHostedDemoViewController: UIViewController {
       tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
 
-    hostedPullLabel.text = "Hosted header\n(Lottie could go here)"
+    let gifPull = FKGIFRefreshContentView()
+    gifPull.image = FKRefreshExampleCommon.makeDemoAnimatedImage()
 
-    let hosted = FKHostedRefreshContentView(hostedView: hostedPullLabel)
     var cfg = FKRefreshConfiguration()
-    cfg.tintColor = .label
-
-    tableView.fk_addPullToRefresh(configuration: cfg, contentView: hosted) { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 1.0) {
-        self?.items = (1...14).map { "Hosted refresh \($0)" }
+    cfg.expandedHeight = 56
+    tableView.fk_addPullToRefresh(configuration: cfg, contentView: gifPull) { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 1.2) {
+        self?.items = (1...12).map { "GIF refreshed \($0)" }
         self?.tableView.reloadData()
         self?.tableView.fk_pullToRefresh?.endRefreshing()
         self?.tableView.fk_loadMore?.resetToIdle()
       }
     }
 
-    tableView.fk_pullToRefresh?.onStateChanged = { [weak self] _, state in
-      self?.hostedPullLabel.text = "Pull state:\n\(FKRefreshDemoCommon.stateDescription(state))"
-    }
-
-    tableView.fk_addLoadMore { [weak self] in
-      FKRefreshDemoCommon.simulateRequest(delay: 0.8) {
+    let gifLoad = FKGIFRefreshContentView()
+    gifLoad.image = FKRefreshExampleCommon.makeDemoAnimatedImage()
+    tableView.fk_addLoadMore(configuration: cfg, contentView: gifLoad) { [weak self] in
+      FKRefreshExampleCommon.simulateRequest(delay: 1.0) {
         guard let self else { return }
         let n = self.items.count
-        self.items.append(contentsOf: (n + 1...(n + 5)).map { "Hosted \($0)" })
+        self.items.append(contentsOf: (n + 1...(n + 6)).map { "GIF \($0)" })
         self.tableView.reloadData()
         self.tableView.fk_loadMore?.endRefreshing()
       }
@@ -72,7 +53,7 @@ final class FKRefreshHostedDemoViewController: UIViewController {
   }
 }
 
-extension FKRefreshHostedDemoViewController: UITableViewDataSource {
+extension FKRefreshGIFDemoViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     items.count
   }

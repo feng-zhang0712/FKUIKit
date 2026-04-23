@@ -8,6 +8,21 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.40.2] - 2026-04-23
+
+### Changed (FKUIKit Refresh)
+- Added token-safe context handlers (`FKRefreshActionContext`) and completion APIs that accept `token:` to prevent stale-end races.
+- Added pair-level policy model (`FKRefreshPolicy`) for concurrency coordination and auto-fill behavior.
+- Added a SwiftUI bridge (`FKRefreshSwiftUIBridge`) for hosting UIKit scroll views in SwiftUI wrappers.
+- Refined global defaults plumbing via `FKRefreshManager` / `FKRefreshSettings`.
+
+### Changed (Examples)
+- Refreshed FKRefresh example hub and renamed example sources from `Demo` to `Example`.
+- Added i18n + accessibility focused example.
+
+### Changed (Documentation)
+- Rewrote `Sources/FKUIKit/Components/Refresh/README.md` as an English, open-source ready guide aligned with current APIs.
+
 ## [0.40.1] - 2026-04-23
 
 ### Changed (FKUIKit TextField)

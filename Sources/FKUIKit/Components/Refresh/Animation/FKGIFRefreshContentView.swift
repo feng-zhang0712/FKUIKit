@@ -1,10 +1,3 @@
-//
-// FKGIFRefreshContentView.swift
-// FKUIKit — FKRefresh
-//
-// Animated `UIImage` (e.g. GIF frames) as refresh indicator; no third-party dependencies.
-//
-
 import UIKit
 
 /// GIF-based indicator using `UIImage.animatedImage` (UIKit only).
@@ -44,7 +37,7 @@ public final class FKGIFRefreshContentView: UIView, FKRefreshContentView {
 
   public func refreshControl(_ control: FKRefreshControl, didTransitionTo state: FKRefreshState, from previous: FKRefreshState) {
     switch state {
-    case .refreshing:
+    case .refreshing, .loadingMore:
       startGIF()
     default:
       stopGIF()

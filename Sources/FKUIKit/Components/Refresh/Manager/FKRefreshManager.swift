@@ -1,10 +1,3 @@
-//
-// FKRefreshManager.swift
-// FKUIKit — FKRefresh
-//
-// Singleton manager for global style / behaviour overrides.
-//
-
 import UIKit
 
 /// Global manager that centralizes FKRefresh default configuration.
@@ -22,10 +15,12 @@ public final class FKRefreshManager {
   ///   - loadMore: Global default used when load-more configuration is omitted.
   public func applyGlobalConfiguration(
     pullToRefresh: FKRefreshConfiguration,
-    loadMore: FKRefreshConfiguration
+    loadMore: FKRefreshConfiguration,
+    policy: FKRefreshPolicy = .default
   ) {
     FKRefreshSettings.pullToRefresh = pullToRefresh
     FKRefreshSettings.loadMore = loadMore
+    FKRefreshSettings.policy = policy
   }
 
   /// Updates pull-to-refresh global configuration in place.
@@ -42,5 +37,12 @@ public final class FKRefreshManager {
     var config = FKRefreshSettings.loadMore
     update(&config)
     FKRefreshSettings.loadMore = config
+  }
+
+  /// Updates the global pair policy used by newly attached controls.
+  public func updatePolicy(_ update: (inout FKRefreshPolicy) -> Void) {
+    var policy = FKRefreshSettings.policy
+    update(&policy)
+    FKRefreshSettings.policy = policy
   }
 }
