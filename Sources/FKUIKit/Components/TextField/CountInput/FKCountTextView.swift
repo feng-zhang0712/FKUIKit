@@ -252,3 +252,16 @@ extension FKCountTextView: UITextViewDelegate {
   }
 }
 
+extension FKCountTextView: FKTextInputComponent {
+  public var fk_rawText: String { text ?? "" }
+  public func fk_setText(_ text: String) {
+    self.text = text
+    enforceMaxLengthIfNeeded()
+    updateUI()
+  }
+  public func fk_clear() {
+    text = ""
+    updateUI()
+  }
+}
+

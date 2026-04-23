@@ -20,6 +20,9 @@ public struct FKTextFieldDefaultValidator: FKTextFieldValidating {
     formattedText _: String,
     rule: FKTextFieldInputRule
   ) -> FKTextFieldValidationResult {
+    if let minLength = rule.minLength, rawText.count < minLength, !rawText.isEmpty {
+      return .init(isValid: false, message: "Input is shorter than minimum length.")
+    }
     if let maxLength = rule.maxLength, rawText.count > maxLength {
       // Hard guard for global max length constraints.
       return .init(isValid: false, message: "Input exceeds max length.")

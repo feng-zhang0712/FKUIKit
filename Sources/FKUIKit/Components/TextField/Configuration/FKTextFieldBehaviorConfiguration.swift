@@ -38,16 +38,28 @@ public struct FKTextFieldInlineMessageConfiguration {
   public var errorFont: UIFont
   /// Color used by the inline error label.
   public var errorColor: UIColor
+  /// Font used by helper/success text.
+  public var helperFont: UIFont
+  /// Color used for helper text.
+  public var helperColor: UIColor
+  /// Color used for success text.
+  public var successColor: UIColor
 
   /// Creates an inline message configuration.
   public init(
     showsErrorMessage: Bool = false,
     errorFont: UIFont = .preferredFont(forTextStyle: .caption1),
-    errorColor: UIColor = .systemRed
+    errorColor: UIColor = .systemRed,
+    helperFont: UIFont = .preferredFont(forTextStyle: .caption1),
+    helperColor: UIColor = .secondaryLabel,
+    successColor: UIColor = .systemGreen
   ) {
     self.showsErrorMessage = showsErrorMessage
     self.errorFont = errorFont
     self.errorColor = errorColor
+    self.helperFont = helperFont
+    self.helperColor = helperColor
+    self.successColor = successColor
   }
 }
 

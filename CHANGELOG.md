@@ -8,6 +8,36 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.40.1] - 2026-04-23
+
+### Changed (FKUIKit TextField)
+- Upgraded `FKTextField` into a more complete input module with:
+  - explicit status model (`normal` / `focused` / `filled` / `error` / `success` / `disabled` / `readOnly`)
+  - configurable validation trigger strategy (`onChange` / `onBlur` / `onSubmit`)
+  - async validation support with cancellation and latest-result-wins race handling
+  - helper/success/error message channels and floating-title presentation
+  - improved cursor restoration after formatting and stronger IME-friendly behavior
+  - expanded accessibility and localization configuration
+  - SwiftUI bridge via `FKTextFieldRepresentable`
+- Extended TextField style/token and behavior models with success/filled/read-only states, motion policy, accessibility policy, and localization bundle.
+- Added composable validation building blocks:
+  - `FKTextFieldAsyncValidating` / `FKTextFieldAnyAsyncValidator`
+  - `FKTextFieldCompositeValidator`
+  - `FKTextFieldValidationRule`
+- Added a shared text-input abstraction (`FKTextInputComponent`) and aligned single-line/multi-line input usage paths.
+
+### Changed (Examples)
+- Expanded `FKTextField` examples into a high-coverage scenario hub:
+  - basics, common types/formatting, status gallery, validation strategies, form orchestration
+  - i18n/accessibility, theme tokens, OTP/counter, XIB/Storyboard, SwiftUI
+- Added explicit per-field input-rule hints (allowed/blocked characters) to reduce ambiguity for integrators.
+- Added unrestricted “any-character” input example.
+- Unified naming in TextField example sources from `Demo` to `Example`.
+
+### Fixed (FKUIKit TextField)
+- Fixed state-message carryover where error feedback could still show success text after toggling from success to error state.
+- Improved inline helper-message spacing in read-only example scenarios.
+
 ## [0.40.0] - 2026-04-23
 
 ### Changed (FKUIKit Toast)
@@ -1372,7 +1402,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.39.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.40.1...HEAD
+[0.40.1]: https://github.com/feng-zhang0712/FKKit/compare/0.40.0...0.40.1
+[0.40.0]: https://github.com/feng-zhang0712/FKKit/compare/0.39.0...0.40.0
 [0.39.0]: https://github.com/feng-zhang0712/FKKit/compare/0.38.0...0.39.0
 [0.38.0]: https://github.com/feng-zhang0712/FKKit/compare/0.37.3...0.38.0
 [0.37.0]: https://github.com/feng-zhang0712/FKKit/compare/0.36.0...0.37.0
