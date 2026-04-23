@@ -1,17 +1,14 @@
-//
-// FKEmptyStateView.swift
-//
-// Visual overlay for loading, empty, and error states. Typically hosted via `UIView.fk_applyEmptyState`.
-//
-
 import UIKit
 
 // MARK: - Delegate
 
 /// Delegate for the primary action button (alternative to `actionHandler` closure).
 public protocol FKEmptyStateViewDelegate: AnyObject {
-  /// Called when the user taps the primary button; fires after `actionHandler` if both are set.
-  func emptyStateViewDidTapAction(_ view: FKEmptyStateView)
+  /// Called when the user taps an action button.
+  ///
+  /// - Important: The callback carries a full `FKEmptyStateAction` so hosts can route by `id`
+  ///   (recommended) or by `kind` (UI slot role).
+  func emptyStateView(_ view: FKEmptyStateView, didTap action: FKEmptyStateAction)
 }
 
 // MARK: - FKEmptyStateView
@@ -21,14 +18,23 @@ public protocol FKEmptyStateViewDelegate: AnyObject {
 /// Prefer adding to `UIViewController.view` or a `UIScrollView` subview — **not** `UITableView.backgroundView`, so refresh controls remain visible above table backgrounds.
 ///
 /// Touch handling: the view fills the host bounds and intercepts touches; `UIGestureRecognizerDelegate` avoids stealing taps from `UIControl` subclasses (e.g. the action button). Optional dimming uses `blockingOverlayAlpha`.
+///
+/// Accessibility notes:
+/// - The overlay does not set `accessibilityViewIsModal` by default to avoid trapping focus in
+///   complex screens. Instead, it posts a VoiceOver announcement on state changes when enabled
+///   (`FKEmptyStateModel.announcesStateChanges`).
+/// - Title is marked as `.header` to improve navigation in VoiceOver rotor.
 public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
 
   // MARK: Public
 
   /// Optional delegate for button taps.
   public weak var delegate: FKEmptyStateViewDelegate?
-  /// Closure invoked when the primary button is tapped; use `[weak self]` at the call site to avoid cycles.
-  public var actionHandler: FKVoidHandler?
+  /// Closure invoked when any action button is tapped (primary / secondary / tertiary).
+  ///
+  /// Use `action.id` as a stable routing key. The built-in renderer auto-generates a primary
+  /// action with id `"primary"` when you only set the legacy `buttonStyle.title`.
+  public var actionHandler: ((FKEmptyStateAction) -> Void)?
   /// Closure invoked when users tap the placeholder background area.
   public var viewTapHandler: FKVoidHandler?
   /// Snapshot of the last `apply(_:animated:)` input (for debugging / re-application).
@@ -47,7 +53,15 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   private let imageView = UIImageView()
   private let titleLabel = UILabel()
   private let descriptionLabel = UILabel()
-  private let actionButton = UIButton(type: .system)
+  private let primaryButton = UIButton(type: .system)
+  private let secondaryButton = UIButton(type: .system)
+  private let tertiaryButton = UIButton(type: .system)
+  private let actionsStack = UIStackView()
+  private let headerSlotContainer = UIView()
+  private let mediaSlotContainer = UIView()
+  private let contentSlotContainer = UIView()
+  private let actionsSlotContainer = UIView()
+  private let footerSlotContainer = UIView()
   private var loadingIndicator = UIActivityIndicatorView(style: .large)
   /// Tracks style to avoid recreating the indicator unnecessarily.
   private var appliedIndicatorStyle: UIActivityIndicatorView.Style?
@@ -60,6 +74,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   private var keyboardBottomConstraint: NSLayoutConstraint?
   private var containerCenterYConstraint: NSLayoutConstraint?
   private var containerTopConstraint: NSLayoutConstraint?
+  private var lastAnnouncementSignature: String?
 
   // MARK: Lifecycle
 
@@ -89,7 +104,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     fk_emptyStateAssertMainThread()
     self.model = model
     let updates = { self.updateUI(with: model) }
-    if animated {
+    if animated, !UIAccessibility.isReduceMotionEnabled {
       UIView.transition(with: self, duration: model.fadeDuration, options: .transitionCrossDissolve, animations: updates)
     } else {
       updates()
@@ -121,6 +136,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     isHidden = true
     alpha = 0
     isUserInteractionEnabled = true
+    accessibilityIdentifier = "fk.emptyState.root"
 
     blockingDimmingView.translatesAutoresizingMaskIntoConstraints = false
     blockingDimmingView.isUserInteractionEnabled = false
@@ -140,18 +156,41 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
 
     imageView.contentMode = .scaleAspectFit
     imageView.setContentCompressionResistancePriority(.required, for: .vertical)
+    imageView.accessibilityIdentifier = "fk.emptyState.image"
+    imageView.isAccessibilityElement = false
 
     titleLabel.numberOfLines = 0
     titleLabel.textAlignment = .center
     titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+    titleLabel.accessibilityIdentifier = "fk.emptyState.title"
+    titleLabel.isAccessibilityElement = true
+    titleLabel.accessibilityTraits = [.header]
 
     descriptionLabel.numberOfLines = 0
     descriptionLabel.textAlignment = .center
+    descriptionLabel.accessibilityIdentifier = "fk.emptyState.description"
+    descriptionLabel.isAccessibilityElement = true
 
-    actionButton.addTarget(self, action: #selector(handleActionTap), for: .touchUpInside)
-    actionButton.titleLabel?.numberOfLines = 1
+    actionsStack.axis = .vertical
+    actionsStack.alignment = .center
+    actionsStack.distribution = .fill
+    actionsStack.spacing = 10
+    actionsStack.translatesAutoresizingMaskIntoConstraints = false
+    actionsStack.accessibilityIdentifier = "fk.emptyState.actions"
+
+    configureButton(primaryButton, identifier: "fk.emptyState.primaryButton", action: #selector(handlePrimaryTap))
+    configureButton(secondaryButton, identifier: "fk.emptyState.secondaryButton", action: #selector(handleSecondaryTap))
+    configureButton(tertiaryButton, identifier: "fk.emptyState.tertiaryButton", action: #selector(handleTertiaryTap))
+
+    headerSlotContainer.translatesAutoresizingMaskIntoConstraints = false
+    mediaSlotContainer.translatesAutoresizingMaskIntoConstraints = false
+    contentSlotContainer.translatesAutoresizingMaskIntoConstraints = false
+    actionsSlotContainer.translatesAutoresizingMaskIntoConstraints = false
+    footerSlotContainer.translatesAutoresizingMaskIntoConstraints = false
 
     loadingIndicator.hidesWhenStopped = true
+    loadingIndicator.accessibilityIdentifier = "fk.emptyState.loading"
+    loadingIndicator.isAccessibilityElement = true
 
     keyboardDismissTap.addTarget(self, action: #selector(handleBackgroundTap))
     keyboardDismissTap.cancelsTouchesInView = false
@@ -193,6 +232,13 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     keyboardBottomConstraint = keyboardBottom
   }
 
+  private func configureButton(_ button: UIButton, identifier: String, action: Selector) {
+    button.addTarget(self, action: action, for: .touchUpInside)
+    button.titleLabel?.numberOfLines = 1
+    button.accessibilityIdentifier = identifier
+    button.isAccessibilityElement = true
+  }
+
   // MARK: UI update
 
   private func updateUI(with model: FKEmptyStateModel) {
@@ -212,6 +258,8 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       trailing: insets.right
     )
 
+    // Recreate the activity indicator only when style changes.
+    // This avoids unnecessary view churn while still supporting dynamic style switching.
     if appliedIndicatorStyle != model.activityIndicatorStyle {
       loadingIndicator.removeFromSuperview()
       loadingIndicator = UIActivityIndicatorView(style: model.activityIndicatorStyle)
@@ -228,6 +276,16 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     titleLabel.font = model.titleFont
     descriptionLabel.textColor = model.descriptionColor
     descriptionLabel.font = model.descriptionFont
+    titleLabel.textAlignment = model.textAlignment
+    descriptionLabel.textAlignment = model.textAlignment
+
+    // Allow forcing layout direction for QA/preview (e.g. RTL verification).
+    // When unset, the view follows system direction.
+    if let forced = model.forcedLayoutDirection {
+      semanticContentAttribute = (forced == .rightToLeft) ? .forceRightToLeft : .forceLeftToRight
+    } else {
+      semanticContentAttribute = .unspecified
+    }
 
     switch model.phase {
     case .content:
@@ -238,9 +296,16 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       applyContentPhase(model: model)
     }
 
+    // Background tap optionally dismisses keyboard; the gesture recognizer will not steal taps
+    // from buttons/controls due to `gestureRecognizer(_:shouldReceive:)`.
     keyboardDismissTap.isEnabled = model.supportsTapToDismissKeyboard
+    // Keyboard-aware positioning is implemented via `keyboardLayoutGuide` when enabled.
     keyboardBottomConstraint?.isActive = model.adjustsPositionForKeyboard
     updateContentPosition(with: model)
+
+    applySlots(model: model)
+    applyAccessibility(model: model)
+    announceIfNeeded(model: model)
   }
 
   // MARK: Loading layout
@@ -259,10 +324,16 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     loadingIndicator.color = model.loadingTintColor
     loadingIndicator.startAnimating()
 
-    applyButtonStyle(model: model, title: model.buttonStyle.title)
-    actionButton.isHidden = true
+    applyActions(model: model, enforcedRetryTitle: nil)
+    actionsStack.isHidden = true
 
-    rebuildStack(orderedViews: [loadingIndicator, titleLabel, descriptionLabel, actionButton])
+    rebuildStack(orderedViews: [
+      headerSlotContainer,
+      loadingIndicator,
+      titleLabel,
+      descriptionLabel,
+      footerSlotContainer,
+    ])
   }
 
   // MARK: Empty / error layout
@@ -287,18 +358,11 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       customAccessoryContainer.isHidden = customMissing
     }
 
-    var effectiveButtonHidden = model.isButtonHidden || model.buttonStyle.title?.isEmpty != false
-    var buttonTitle = model.buttonStyle.title
+    var enforcedRetry: String?
     if model.phase == .error {
-      effectiveButtonHidden = false
-      if buttonTitle?.isEmpty != false {
-        buttonTitle = FKEmptyStateModel.defaultRetryButtonTitle
-      }
+      enforcedRetry = FKEmptyStateModel.defaultRetryButtonTitle
     }
-
-    applyButtonStyle(model: model, title: buttonTitle)
-    actionButton.isHidden = effectiveButtonHidden
-    actionButton.isEnabled = true
+    applyActions(model: model, enforcedRetryTitle: enforcedRetry)
 
     rebuildStack(orderedViews: contentBlocks(model: model))
   }
@@ -309,13 +373,56 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
     let customBlock = customAccessoryContainer
     switch model.customAccessoryPlacement {
     case .replaceImage:
-      return [customBlock, titleLabel, descriptionLabel, actionButton]
+      return [
+        headerSlotContainer,
+        mediaSlotContainer,
+        customBlock,
+        contentSlotContainer,
+        titleLabel,
+        descriptionLabel,
+        actionsSlotContainer,
+        actionsStack,
+        footerSlotContainer,
+      ]
     case .aboveImage:
-      return [customBlock, imageBlock, titleLabel, descriptionLabel, actionButton]
+      return [
+        headerSlotContainer,
+        mediaSlotContainer,
+        customBlock,
+        imageBlock,
+        contentSlotContainer,
+        titleLabel,
+        descriptionLabel,
+        actionsSlotContainer,
+        actionsStack,
+        footerSlotContainer,
+      ]
     case .belowImage:
-      return [imageBlock, customBlock, titleLabel, descriptionLabel, actionButton]
+      return [
+        headerSlotContainer,
+        mediaSlotContainer,
+        imageBlock,
+        customBlock,
+        contentSlotContainer,
+        titleLabel,
+        descriptionLabel,
+        actionsSlotContainer,
+        actionsStack,
+        footerSlotContainer,
+      ]
     case .belowDescription:
-      return [imageBlock, titleLabel, descriptionLabel, customBlock, actionButton]
+      return [
+        headerSlotContainer,
+        mediaSlotContainer,
+        imageBlock,
+        contentSlotContainer,
+        titleLabel,
+        descriptionLabel,
+        customBlock,
+        actionsSlotContainer,
+        actionsStack,
+        footerSlotContainer,
+      ]
     }
   }
 
@@ -325,6 +432,12 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
       $0.removeFromSuperview()
     }
     for v in orderedViews {
+      if v === headerSlotContainer || v === mediaSlotContainer || v === contentSlotContainer || v === actionsSlotContainer || v === footerSlotContainer {
+        v.isHidden = v.subviews.isEmpty
+      }
+      if v === actionsStack {
+        v.isHidden = actionsStack.arrangedSubviews.isEmpty || actionsStack.isHidden
+      }
       stackView.addArrangedSubview(v)
     }
   }
@@ -375,7 +488,7 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   }
 
   /// Applies button styling while remaining compatible with iOS 13+.
-  private func applyButtonStyle(model: FKEmptyStateModel, title: String?) {
+  private func applyPrimaryButtonStyle(model: FKEmptyStateModel, title: String?) {
     if #available(iOS 15.0, *) {
       var buttonConfig = UIButton.Configuration.filled()
       buttonConfig.title = title
@@ -388,20 +501,148 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
         bottom: model.buttonStyle.contentInsets.bottom,
         trailing: model.buttonStyle.contentInsets.right
       )
-      actionButton.configuration = buttonConfig
-      actionButton.setTitle(nil, for: .normal)
+      primaryButton.configuration = buttonConfig
+      primaryButton.setTitle(nil, for: .normal)
     } else {
-      actionButton.configuration = nil
-      actionButton.setTitle(title, for: .normal)
-      actionButton.setTitleColor(model.buttonStyle.titleColor, for: .normal)
-      actionButton.contentEdgeInsets = model.buttonStyle.contentInsets
-      actionButton.backgroundColor = model.buttonStyle.backgroundColor
+      primaryButton.configuration = nil
+      primaryButton.setTitle(title, for: .normal)
+      primaryButton.setTitleColor(model.buttonStyle.titleColor, for: .normal)
+      primaryButton.contentEdgeInsets = model.buttonStyle.contentInsets
+      primaryButton.backgroundColor = model.buttonStyle.backgroundColor
     }
-    actionButton.titleLabel?.font = model.buttonStyle.font
-    actionButton.layer.cornerRadius = model.buttonStyle.cornerRadius
-    actionButton.layer.masksToBounds = true
-    actionButton.layer.borderWidth = model.buttonStyle.borderWidth
-    actionButton.layer.borderColor = model.buttonStyle.borderColor?.cgColor
+    primaryButton.titleLabel?.font = model.buttonStyle.font
+    primaryButton.layer.cornerRadius = model.buttonStyle.cornerRadius
+    primaryButton.layer.masksToBounds = true
+    primaryButton.layer.borderWidth = model.buttonStyle.borderWidth
+    primaryButton.layer.borderColor = model.buttonStyle.borderColor?.cgColor
+  }
+
+  private func applySecondaryButtonStyle(model: FKEmptyStateModel, title: String?) {
+    if #available(iOS 15.0, *) {
+      var cfg = UIButton.Configuration.bordered()
+      cfg.title = title
+      cfg.baseForegroundColor = model.buttonStyle.backgroundColor
+      cfg.cornerStyle = .fixed
+      cfg.contentInsets = NSDirectionalEdgeInsets(
+        top: model.buttonStyle.contentInsets.top,
+        leading: model.buttonStyle.contentInsets.left,
+        bottom: model.buttonStyle.contentInsets.bottom,
+        trailing: model.buttonStyle.contentInsets.right
+      )
+      secondaryButton.configuration = cfg
+      secondaryButton.setTitle(nil, for: .normal)
+    } else {
+      secondaryButton.configuration = nil
+      secondaryButton.setTitle(title, for: .normal)
+      secondaryButton.setTitleColor(model.buttonStyle.backgroundColor, for: .normal)
+      secondaryButton.contentEdgeInsets = model.buttonStyle.contentInsets
+      secondaryButton.backgroundColor = .clear
+      secondaryButton.layer.borderWidth = 1
+      secondaryButton.layer.borderColor = model.buttonStyle.backgroundColor.cgColor
+    }
+    secondaryButton.titleLabel?.font = model.buttonStyle.font
+    secondaryButton.layer.cornerRadius = model.buttonStyle.cornerRadius
+    secondaryButton.layer.masksToBounds = true
+  }
+
+  private func applyTertiaryButtonStyle(model: FKEmptyStateModel, title: String?) {
+    tertiaryButton.configuration = nil
+    tertiaryButton.setTitle(title, for: .normal)
+    tertiaryButton.setTitleColor(model.buttonStyle.backgroundColor, for: .normal)
+    tertiaryButton.titleLabel?.font = model.buttonStyle.font
+    tertiaryButton.backgroundColor = .clear
+    tertiaryButton.layer.borderWidth = 0
+  }
+
+  private func applyActions(model: FKEmptyStateModel, enforcedRetryTitle: String?) {
+    actionsStack.arrangedSubviews.forEach {
+      actionsStack.removeArrangedSubview($0)
+      $0.removeFromSuperview()
+    }
+
+    var actions = model.actions
+    var legacyPrimaryTitle = model.buttonStyle.title
+
+    if model.phase == .error, (actions.primary?.title.isEmpty ?? true), (legacyPrimaryTitle?.isEmpty ?? true) {
+      legacyPrimaryTitle = enforcedRetryTitle
+    }
+
+    // Backward-compat: allow a single legacy button title to be rendered as a primary action.
+    // This keeps the model ergonomic for simple screens while still emitting a typed action.
+    if actions.primary == nil, let t = legacyPrimaryTitle, !t.isEmpty {
+      actions.primary = FKEmptyStateAction(id: "primary", title: t, kind: .primary)
+    }
+
+    if let p = actions.primary {
+      applyPrimaryButtonStyle(model: model, title: p.title)
+      primaryButton.isEnabled = p.isEnabled && !p.isLoading
+      actionsStack.addArrangedSubview(primaryButton)
+    }
+    if let s = actions.secondary {
+      applySecondaryButtonStyle(model: model, title: s.title)
+      secondaryButton.isEnabled = s.isEnabled && !s.isLoading
+      actionsStack.addArrangedSubview(secondaryButton)
+    }
+    if let t = actions.tertiary {
+      applyTertiaryButtonStyle(model: model, title: t.title)
+      tertiaryButton.isEnabled = t.isEnabled && !t.isLoading
+      actionsStack.addArrangedSubview(tertiaryButton)
+    }
+
+    let shouldHide = actionsStack.arrangedSubviews.isEmpty || model.isButtonHidden
+    actionsStack.isHidden = shouldHide && model.phase != .error
+  }
+
+  private func applySlots(model: FKEmptyStateModel) {
+    replaceSlot(in: headerSlotContainer, with: model.headerSlot)
+    replaceSlot(in: mediaSlotContainer, with: model.mediaSlot)
+    replaceSlot(in: contentSlotContainer, with: model.contentSlot)
+    replaceSlot(in: actionsSlotContainer, with: model.actionsSlot)
+    replaceSlot(in: footerSlotContainer, with: model.footerSlot)
+  }
+
+  private func replaceSlot(in container: UIView, with view: UIView?) {
+    container.subviews.forEach { $0.removeFromSuperview() }
+    guard let view else { return }
+    view.translatesAutoresizingMaskIntoConstraints = false
+    container.addSubview(view)
+    NSLayoutConstraint.activate([
+      view.topAnchor.constraint(equalTo: container.topAnchor),
+      view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+      view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+      view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+    ])
+  }
+
+  private func applyAccessibility(model: FKEmptyStateModel) {
+    isAccessibilityElement = false
+    accessibilityViewIsModal = false
+  }
+
+  private func announcementSignature(model: FKEmptyStateModel) -> String {
+    let title = model.title ?? ""
+    let desc = model.description ?? ""
+    return "\(model.phase)|\(model.type.rawValue)|\(title)|\(desc)"
+  }
+
+  private func announceIfNeeded(model: FKEmptyStateModel) {
+    guard model.announcesStateChanges else { return }
+    guard !isHidden, alpha > 0.01 else { return }
+    guard UIAccessibility.isVoiceOverRunning else { return }
+    guard model.phase != .content else { return }
+
+    let sig = announcementSignature(model: model)
+    if sig == lastAnnouncementSignature { return }
+    lastAnnouncementSignature = sig
+
+    let message = [model.title, model.description]
+      .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+      .joined(separator: ", ")
+    guard !message.isEmpty else { return }
+    // We use `.announcement` (not `.screenChanged`) to avoid interrupting navigation context
+    // for users who keep exploring the underlying screen while the overlay appears.
+    UIAccessibility.post(notification: .announcement, argument: message)
   }
 
   /// Updates container constraints according to alignment and offset preferences.
@@ -421,19 +662,66 @@ public final class FKEmptyStateView: UIView, UIGestureRecognizerDelegate {
   // MARK: UIGestureRecognizerDelegate
 
   public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-    if touch.view is UIControl { return false }
+    // Walk up the hierarchy instead of checking only `touch.view`.
+    // Some button internals report label/image subviews as the touched view; without this
+    // ancestor check, background tap handlers may fire when users interact near CTA content.
+    var current: UIView? = touch.view
+    while let view = current {
+      if view is UIControl { return false }
+      current = view.superview
+    }
     return true
   }
 
   // MARK: Actions
 
-  @objc private func handleActionTap() {
-    actionHandler?()
-    delegate?.emptyStateViewDidTapAction(self)
+  @objc private func handlePrimaryTap() { emitAction(kind: .primary) }
+  @objc private func handleSecondaryTap() { emitAction(kind: .secondary) }
+  @objc private func handleTertiaryTap() { emitAction(kind: .tertiary) }
+
+  private func emitAction(kind: FKEmptyStateActionKind) {
+    let action: FKEmptyStateAction = {
+      switch kind {
+      case .primary:
+        return model.actions.primary ?? FKEmptyStateAction(id: "primary", title: "", kind: .primary)
+      case .secondary:
+        return model.actions.secondary ?? FKEmptyStateAction(id: "secondary", title: "", kind: .secondary)
+      case .tertiary:
+        return model.actions.tertiary ?? FKEmptyStateAction(id: "tertiary", title: "", kind: .tertiary)
+      case .link:
+        return FKEmptyStateAction(id: "link", title: "", kind: .link)
+      }
+    }()
+
+    actionHandler?(action)
+    delegate?.emptyStateView(self, didTap: action)
+    NotificationCenter.default.post(
+      name: .fkEmptyStateActionInvoked,
+      object: self,
+      userInfo: [
+        FKEmptyStateNotificationKeys.id: action.id,
+        FKEmptyStateNotificationKeys.kind: action.kind.rawValue,
+        FKEmptyStateNotificationKeys.payload: action.payload
+      ]
+    )
   }
 
   @objc private func handleBackgroundTap() {
     endEditing(true)
     viewTapHandler?()
   }
+}
+
+public extension Notification.Name {
+  static let fkEmptyStateActionInvoked = Notification.Name("fk.emptyState.actionInvoked")
+}
+
+/// Keys used by the `.fkEmptyStateActionInvoked` notification userInfo payload.
+///
+/// This is a lightweight interop channel for hosts that prefer NotificationCenter routing
+/// (e.g. multiple actions handled by a coordinator without wiring closures).
+public enum FKEmptyStateNotificationKeys {
+  public static let id = "id"
+  public static let kind = "kind"
+  public static let payload = "payload"
 }

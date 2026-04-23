@@ -1,12 +1,3 @@
-//
-// UIView+FKEmptyState.swift
-//
-// Hosts `FKEmptyStateView` on any container (typically `UIViewController.view`) or `UIScrollView`
-// without using `UITableView.backgroundView` (avoids z-order issues with refresh controls).
-//
-// - Note: `fk_applyEmptyState` is declared only on `UIView`; `UIScrollView` inherits it (no duplicate in a subclass extension).
-//
-
 import ObjectiveC.runtime
 import UIKit
 
@@ -46,11 +37,14 @@ public extension UIView {
   /// - Parameters:
   ///   - model: Visual and behavioral configuration.
   ///   - animated: Fade-in when showing; fade-out is handled by `fk_hideEmptyState`.
-  ///   - actionHandler: Invoked when the primary button is tapped; use `[weak self]` to avoid retain cycles.
+  ///   - actionHandler: Invoked when an action button is tapped (primary/secondary/tertiary).
+  ///     Use `action.id` to route multi-action flows and capture `[weak self]` to avoid retain cycles.
+  ///   - viewTapHandler: Invoked when users tap the background area (outside any `UIControl`).
+  @_disfavoredOverload
   func fk_applyEmptyState(
     _ model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
@@ -77,7 +71,8 @@ public extension UIView {
       view.isHidden = false
       view.alpha = 1
     }
-    if animated {
+    let shouldAnimate = animated && !UIAccessibility.isReduceMotionEnabled
+    if shouldAnimate {
       view.alpha = 0
       view.isHidden = false
       UIView.animate(withDuration: model.fadeDuration, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: display)
@@ -89,13 +84,42 @@ public extension UIView {
     bringSubviewToFront(view)
   }
 
+  /// Applies or hides the empty-state overlay from `model` with `actionHandler` as the only trailing-closure parameter.
+  ///
+  /// This overload avoids Swift's deprecated "backward matching" when the caller uses
+  /// `fk_applyEmptyState(model) { ... }`.
+  ///
+  /// - Important: Prefer this overload when you only care about action taps, as it avoids
+  ///   ambiguity when there are multiple closure parameters.
+  ///
+  /// Minimal example:
+  /// ```swift
+  /// view.fk_applyEmptyState(model) { action in
+  ///   if action.id == "retry" { reload() }
+  /// }
+  /// ```
+  func fk_applyEmptyState(
+    _ model: FKEmptyStateModel,
+    animated: Bool = true,
+    actionHandler: @escaping (FKEmptyStateAction) -> Void
+  ) {
+    fk_applyEmptyState(
+      model,
+      animated: animated,
+      actionHandler: actionHandler,
+      viewTapHandler: nil
+    )
+  }
+
   /// Applies the global template with a specific phase in one line.
   ///
   /// Use this API when you only need to toggle `loading/empty/error/content` quickly.
+  ///
+  /// - Note: `templateModel` is copied before mutation so per-call changes do not leak globally.
   func fk_setEmptyState(
     phase: FKEmptyStatePhase,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     var model = FKEmptyStateManager.shared.templateModel
@@ -109,9 +133,12 @@ public extension UIView {
   }
 
   /// Applies the global template and lets the caller mutate a screen-local model copy.
+  ///
+  /// This is the preferred entry point when you want a shared look-and-feel while customizing
+  /// copy/actions per screen.
   func fk_setEmptyState(
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil,
     configure: (inout FKEmptyStateModel) -> Void
   ) {
@@ -137,7 +164,8 @@ public extension UIView {
         scroll.isScrollEnabled = true
       }
     }
-    if animated {
+    let shouldAnimate = animated && !UIAccessibility.isReduceMotionEnabled
+    if shouldAnimate {
       UIView.animate(withDuration: duration, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: hideBlock, completion: completion)
     } else {
       hideBlock()

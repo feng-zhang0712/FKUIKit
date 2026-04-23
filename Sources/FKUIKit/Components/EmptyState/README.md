@@ -127,7 +127,7 @@ view.fk_applyEmptyState(model)
 ### Show Load Failed View
 ```swift
 let model = FKEmptyStateModel.scenario(.loadFailed)
-view.fk_applyEmptyState(model, actionHandler: { [weak self] in
+view.fk_applyEmptyState(model, actionHandler: { [weak self] _ in
   self?.reloadData()
 })
 ```
@@ -135,7 +135,7 @@ view.fk_applyEmptyState(model, actionHandler: { [weak self] in
 ### Show No Network View
 ```swift
 let model = FKEmptyStateModel.scenario(.noNetwork)
-view.fk_applyEmptyState(model, actionHandler: { [weak self] in
+view.fk_applyEmptyState(model, actionHandler: { [weak self] _ in
   self?.retryNetworkRequest()
 })
 ```
@@ -152,7 +152,7 @@ view.fk_setEmptyState(phase: .content)
 // UITableView
 var tableModel = FKEmptyStateModel.scenario(.noOrders)
 tableModel.phase = .empty
-tableView.fk_updateEmptyStateForTable(model: tableModel, actionHandler: { [weak self] in
+tableView.fk_updateEmptyStateForTable(model: tableModel, actionHandler: { [weak self] _ in
   self?.reloadData()
 })
 
@@ -162,7 +162,7 @@ gridModel.phase = .empty
 collectionView.fk_updateEmptyState(
   itemCount: collectionView.fk_totalItemCount(),
   model: gridModel,
-  actionHandler: { [weak self] in
+  actionHandler: { [weak self] _ in
     self?.reloadData()
   }
 )
@@ -179,7 +179,7 @@ var model = FKEmptyStateModel(
   buttonStyle: FKEmptyStateButtonStyle(title: "Refresh"),
   isButtonHidden: false
 )
-view.fk_applyEmptyState(model, actionHandler: { [weak self] in
+view.fk_applyEmptyState(model, actionHandler: { [weak self] _ in
   self?.reloadData()
 })
 ```
@@ -226,7 +226,7 @@ model.phase = .error
 
 view.fk_applyEmptyState(
   model,
-  actionHandler: { [weak self] in
+  actionHandler: { [weak self] _ in
     self?.reloadData()
   },
   viewTapHandler: { [weak self] in
@@ -244,9 +244,66 @@ let maintenance = FKEmptyStateModel.customState(
   buttonTitle: "Try Again"
 )
 
-view.fk_applyEmptyState(maintenance, actionHandler: { [weak self] in
+view.fk_applyEmptyState(maintenance, actionHandler: { [weak self] _ in
   self?.checkServiceStatus()
 })
+```
+
+### Ultimate: Semantic Type + i18n Factory + State Resolver
+`FKEmptyStatePhase` controls the rendering pipeline (content/loading/empty/error), while `FKEmptyStateType` describes the user-facing semantics.
+
+```swift
+import FKUIKit
+
+let inputs = FKEmptyStateInputs(
+  dataLength: 0,
+  isLoading: false,
+  errorDescription: nil,
+  filtersCount: 2,
+  searchQuery: "apple",
+  hasPermission: true,
+  isOffline: false,
+  isNewUser: false
+)
+
+let resolution = FKEmptyStateResolver.resolve(inputs)
+switch resolution {
+case .none:
+  view.fk_setEmptyState(phase: .content)
+case .show(let type):
+  let factory = FKEmptyStateFactory(locale: .zhCN)
+  let copy = factory.copy(for: type, variables: ["query": inputs.searchQuery ?? ""])
+  var model = FKEmptyStateModel(
+    phase: type == .loading ? .loading : (type == .error ? .error : .empty),
+    type: type,
+    context: .search,
+    title: copy.title,
+    description: copy.description
+  )
+  model.actions = FKEmptyStateActionSet(
+    primary: FKEmptyStateAction(id: "retry", title: factory.actionTitle(FKEmptyStateI18nKey("empty.action.retry")), kind: .primary),
+    secondary: FKEmptyStateAction(id: "clear_filters", title: factory.actionTitle(FKEmptyStateI18nKey("empty.action.clearFilters")), kind: .secondary)
+  )
+  view.fk_applyEmptyState(model, actionHandler: { _ in /* handle actions */ })
+}
+```
+
+Notes:
+- `FKEmptyStateBuiltInMessages` ships `en` + `zh-CN`, and includes an RTL sample (`ar`). You can plug in your own `FKEmptyStateTranslating`.
+- RTL forcing is supported via `model.forcedLayoutDirection = .rightToLeft` for UI verification.
+- Animations are automatically disabled when `Reduce Motion` is enabled (`UIAccessibility.isReduceMotionEnabled`).
+
+### Ultimate: Slots (Composable)
+Use slots when you need full custom layout while keeping the same overlay behaviors.
+
+```swift
+let tip = UILabel()
+tip.numberOfLines = 0
+tip.text = "Tip: You can create items from the + button."
+
+var model = FKEmptyStateModel(phase: .empty, type: .empty, title: "No items", description: "Create your first item.")
+model.footerSlot = tip
+view.fk_applyEmptyState(model)
 ```
 
 ### Auto Layout & Safe Area Adaptation
@@ -277,17 +334,17 @@ Core types:
 - `FKEmptyStatePresentable`
 
 Main APIs:
-- `UIView.fk_applyEmptyState(_:animated:actionHandler:viewTapHandler:)`
+- `UIView.fk_applyEmptyState(_:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
 - `UIView.fk_hideEmptyState(animated:)`
-- `UIView.fk_setEmptyState(phase:animated:actionHandler:viewTapHandler:)`
-- `UIView.fk_setEmptyState(animated:actionHandler:viewTapHandler:configure:)`
-- `UIScrollView.fk_showEmptyState(_:animated:actionHandler:viewTapHandler:)`
+- `UIView.fk_setEmptyState(phase:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
+- `UIView.fk_setEmptyState(animated:actionHandler:viewTapHandler:configure:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
+- `UIScrollView.fk_showEmptyState(_:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
 - `UIScrollView.fk_updateEmptyState(_:animated:)`
-- `UIScrollView.fk_updateEmptyState(itemCount:model:animated:actionHandler:viewTapHandler:)`
-- `UIScrollView.fk_updateEmptyStateVisibility(isEmpty:model:animated:actionHandler:viewTapHandler:)`
-- `UIScrollView.fk_refreshEmptyStateAutomatically(actionHandler:viewTapHandler:)`
+- `UIScrollView.fk_updateEmptyState(itemCount:model:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
+- `UIScrollView.fk_updateEmptyStateVisibility(isEmpty:model:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
+- `UIScrollView.fk_refreshEmptyStateAutomatically(actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
 - `UITableView.fk_totalRowCount()`
-- `UITableView.fk_updateEmptyStateForTable(model:animated:actionHandler:viewTapHandler:)`
+- `UITableView.fk_updateEmptyStateForTable(model:animated:actionHandler:viewTapHandler:)` (`actionHandler: (FKEmptyStateAction) -> Void`)
 - `UICollectionView.fk_totalItemCount()`
 
 ## Best Practices
@@ -311,6 +368,13 @@ Main APIs:
 - Scroll behavior can be controlled with `keepScrollEnabled`.
 - Background tap can dismiss keyboard when `supportsTapToDismissKeyboard = true`.
 - `customAccessoryView` supports any `UIView` (including animation views managed by your app).
+
+## Tests
+This repository is an iOS-first UIKit package. The recommended way to run tests is via Xcode build system:
+
+```bash
+xcodebuild -scheme FKKit-Package -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.4.1' test
+```
 
 ## License
 This module is part of the FKKit project and is released under the MIT License.  

@@ -1,5 +1,11 @@
 import Foundation
+import CoreGraphics
+
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Default implementation of ``FKBusinessInfoProviding``.
 public final class FKBusinessInfoProvider: FKBusinessInfoProviding, @unchecked Sendable {
@@ -30,7 +36,11 @@ public final class FKBusinessInfoProvider: FKBusinessInfoProviding, @unchecked S
 
   /// Current iOS system version.
   public var systemVersion: String {
-    UIDevice.current.systemVersion
+    #if canImport(UIKit)
+    return UIDevice.current.systemVersion
+    #else
+    return ProcessInfo.processInfo.operatingSystemVersionString
+    #endif
   }
 
   /// Current hardware model identifier.
@@ -40,7 +50,13 @@ public final class FKBusinessInfoProvider: FKBusinessInfoProviding, @unchecked S
 
   /// Current main screen size in points.
   public var screenSize: CGSize {
-    UIScreen.main.bounds.size
+    #if canImport(UIKit)
+    return UIScreen.main.bounds.size
+    #elseif canImport(AppKit)
+    return NSScreen.main?.frame.size ?? .zero
+    #else
+    return .zero
+    #endif
   }
 
   /// Current distribution channel from toolkit configuration.

@@ -139,7 +139,7 @@ public final class FKListStateManager {
       }
       if configuration.presentsEmptyOverlay {
         let model = configuration.emptyListModel()
-        host?.fk_list_applyEmptyState(model, animated: animated, actionHandler: { [weak self] in
+        host?.fk_list_applyEmptyState(model, animated: animated, actionHandler: { [weak self] _ in
           self?.onOverlayPrimaryAction?()
         })
       } else {
@@ -160,7 +160,7 @@ public final class FKListStateManager {
       }
       if configuration.presentsErrorOverlay {
         let model = configuration.errorModel(error)
-        host?.fk_list_applyEmptyState(model, animated: animated, actionHandler: { [weak self] in
+        host?.fk_list_applyEmptyState(model, animated: animated, actionHandler: { [weak self] _ in
           self?.onOverlayPrimaryAction?()
         })
       } else {

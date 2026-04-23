@@ -1,9 +1,3 @@
-//
-// FKEmptyStatePhase.swift
-//
-// High-level state machine for page placeholders: normal content vs loading / empty / error overlays.
-//
-
 import Foundation
 
 // MARK: - Phase

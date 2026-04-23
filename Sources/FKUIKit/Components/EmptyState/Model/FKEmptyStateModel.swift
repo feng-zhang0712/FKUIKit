@@ -1,15 +1,3 @@
-//
-// FKEmptyStateModel.swift
-//
-// Integration notes (recommended):
-// - Attach overlays to `UIViewController.view` (`UIView.fk_applyEmptyState`) or `UIScrollView` — avoid `UITableView.backgroundView` so refresh controls stay on top.
-// - Use `FKEmptyStatePhase`: `.content` hides the overlay; `.loading` + `skipsLoadingWhileRefreshing` skips the placeholder while `UIRefreshControl.isRefreshing`.
-// - Error UI always shows a retry control when `phase == .error` (default title from `defaultRetryButtonTitle`).
-// - Global fonts/colors: copy `FKEmptyStateGlobalDefaults.template` in AppDelegate and mutate, or build models from scratch.
-// - Lottie: assign `customAccessoryView` + `customAccessoryPlacement` (host `AnimationView` yourself; no Lottie dependency in FKUIKit).
-// - Default `backgroundColor` is `systemBackground` so overlays hide underlying lists in landscape; use `.clear` only for intentional transparency.
-//
-
 import UIKit
 
 // MARK: - Custom accessory placement
@@ -109,6 +97,22 @@ public struct FKEmptyStateModel {
   /// Controls which layout branch runs inside `FKEmptyStateView` (loading vs empty/error vs hidden).
   public var phase: FKEmptyStatePhase
 
+  /// High-level semantic type used by i18n presets and state resolution helpers.
+  ///
+  /// This is intentionally separate from `phase`:
+  /// - `phase` controls the rendering pipeline (loading vs non-loading vs hidden).
+  /// - `type` communicates intent (offline, noResults, permissionDenied, etc.).
+  public var type: FKEmptyStateType
+
+  /// Screen context for presets and layout decisions.
+  public var context: FKEmptyStateLayoutContext
+
+  /// Density preset used to derive spacing/layout defaults (does not override explicit values).
+  public var density: FKEmptyStateDensity
+
+  /// Stack direction for content blocks (vertical/horizontal). UIKit implementation keeps vertical by default.
+  public var axis: FKEmptyStateAxis
+
   /// Main illustration; hidden when `isImageHidden` or `nil` (unless `customAccessoryView` replaces it).
   public var image: UIImage?
   /// Primary headline for empty/error; also fallback text for loading if `loadingMessage` is `nil`.
@@ -120,6 +124,12 @@ public struct FKEmptyStateModel {
   /// Primary button look-and-feel.
   public var buttonStyle: FKEmptyStateButtonStyle
 
+  /// Optional multi-action set; when not empty it supersedes the legacy single button slot.
+  ///
+  /// - Important: UIKit rendering maps `primary` → filled button, `secondary` → bordered button,
+  ///   `tertiary` → plain button. Action events are emitted by id.
+  public var actions: FKEmptyStateActionSet
+
   /// Hides the image view even when `image` is non-nil.
   public var isImageHidden: Bool
   /// Hides the title label.
@@ -129,10 +139,22 @@ public struct FKEmptyStateModel {
   /// Hides the action button (ignored for `phase == .error`, which always shows retry).
   public var isButtonHidden: Bool
 
+  /// Optional slots for advanced composition. When set, these views are inserted into the stack.
+  /// Slots are never force-sized by the library; callers own intrinsic size or constraints inside the slot view.
+  public var headerSlot: UIView?
+  public var mediaSlot: UIView?
+  public var contentSlot: UIView?
+  public var actionsSlot: UIView?
+  public var footerSlot: UIView?
+
+  /// Accessibility / announcement behavior for state changes.
+  public var announcesStateChanges: Bool
+
   public var titleColor: UIColor
   public var descriptionColor: UIColor
   public var titleFont: UIFont
   public var descriptionFont: UIFont
+  public var textAlignment: NSTextAlignment
   /// Fixed image dimensions when set; intrinsic sizing otherwise.
   public var imageSize: CGSize?
 
@@ -187,21 +209,36 @@ public struct FKEmptyStateModel {
   public var customAccessoryView: UIView?
   public var customAccessoryPlacement: FKEmptyStateCustomPlacement
 
+  /// Overrides layout direction for RTL testing or forced direction UI. `nil` follows system.
+  public var forcedLayoutDirection: UIUserInterfaceLayoutDirection?
+
   public init(
     phase: FKEmptyStatePhase = .empty,
+    type: FKEmptyStateType = .empty,
+    context: FKEmptyStateLayoutContext = .section,
+    density: FKEmptyStateDensity = .regular,
+    axis: FKEmptyStateAxis = .vertical,
     image: UIImage? = nil,
     title: String? = nil,
     description: String? = nil,
     loadingMessage: String? = nil,
     buttonStyle: FKEmptyStateButtonStyle = FKEmptyStateButtonStyle(),
+    actions: FKEmptyStateActionSet = FKEmptyStateActionSet(),
     isImageHidden: Bool = false,
     isTitleHidden: Bool = false,
     isDescriptionHidden: Bool = false,
     isButtonHidden: Bool = true,
+    headerSlot: UIView? = nil,
+    mediaSlot: UIView? = nil,
+    contentSlot: UIView? = nil,
+    actionsSlot: UIView? = nil,
+    footerSlot: UIView? = nil,
+    announcesStateChanges: Bool = true,
     titleColor: UIColor = .label,
     descriptionColor: UIColor = .secondaryLabel,
     titleFont: UIFont = .systemFont(ofSize: 18, weight: .semibold),
     descriptionFont: UIFont = .systemFont(ofSize: 14, weight: .regular),
+    textAlignment: NSTextAlignment = .center,
     imageSize: CGSize? = nil,
     verticalSpacing: CGFloat = 10,
     contentInsets: UIEdgeInsets = UIEdgeInsets(top: 24, left: 20, bottom: 24, right: 20),
@@ -225,22 +262,35 @@ public struct FKEmptyStateModel {
     skipsLoadingWhileRefreshing: Bool = true,
     adjustsPositionForKeyboard: Bool = true,
     customAccessoryView: UIView? = nil,
-    customAccessoryPlacement: FKEmptyStateCustomPlacement = .belowImage
+    customAccessoryPlacement: FKEmptyStateCustomPlacement = .belowImage,
+    forcedLayoutDirection: UIUserInterfaceLayoutDirection? = nil
   ) {
     self.phase = phase
+    self.type = type
+    self.context = context
+    self.density = density
+    self.axis = axis
     self.image = image
     self.title = title
     self.description = description
     self.loadingMessage = loadingMessage
     self.buttonStyle = buttonStyle
+    self.actions = actions
     self.isImageHidden = isImageHidden
     self.isTitleHidden = isTitleHidden
     self.isDescriptionHidden = isDescriptionHidden
     self.isButtonHidden = isButtonHidden
+    self.headerSlot = headerSlot
+    self.mediaSlot = mediaSlot
+    self.contentSlot = contentSlot
+    self.actionsSlot = actionsSlot
+    self.footerSlot = footerSlot
+    self.announcesStateChanges = announcesStateChanges
     self.titleColor = titleColor
     self.descriptionColor = descriptionColor
     self.titleFont = titleFont
     self.descriptionFont = descriptionFont
+    self.textAlignment = textAlignment
     self.imageSize = imageSize
     self.verticalSpacing = max(0, verticalSpacing)
     self.contentInsets = contentInsets
@@ -264,6 +314,7 @@ public struct FKEmptyStateModel {
     self.adjustsPositionForKeyboard = adjustsPositionForKeyboard
     self.customAccessoryView = customAccessoryView
     self.customAccessoryPlacement = customAccessoryPlacement
+    self.forcedLayoutDirection = forcedLayoutDirection
   }
 }
 
@@ -279,6 +330,8 @@ public extension FKEmptyStateModel {
     case .noNetwork:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .offline,
+        context: .section,
         title: "No network",
         description: "Check your connection and try again.",
         buttonStyle: FKEmptyStateButtonStyle(title: "Reload"),
@@ -287,6 +340,8 @@ public extension FKEmptyStateModel {
     case .noSearchResult:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .noResults,
+        context: .search,
         title: "No results",
         description: "Try different keywords.",
         isButtonHidden: true
@@ -294,6 +349,8 @@ public extension FKEmptyStateModel {
     case .noFavorites:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .empty,
+        context: .list,
         title: "No favorites yet",
         description: "Save items you like to see them here.",
         buttonStyle: FKEmptyStateButtonStyle(title: "Go home"),
@@ -302,6 +359,8 @@ public extension FKEmptyStateModel {
     case .noOrders:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .empty,
+        context: .list,
         title: "No orders",
         description: "Place an order to track it here.",
         buttonStyle: FKEmptyStateButtonStyle(title: "Shop now"),
@@ -310,6 +369,8 @@ public extension FKEmptyStateModel {
     case .noMessages:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .empty,
+        context: .list,
         title: "No messages",
         description: "New notifications will appear here.",
         isButtonHidden: true
@@ -317,6 +378,8 @@ public extension FKEmptyStateModel {
     case .loadFailed:
       return FKEmptyStateModel(
         phase: .error,
+        type: .error,
+        context: .section,
         title: "Couldn’t load",
         description: "The request timed out or the server returned an error. Try again.",
         buttonStyle: FKEmptyStateButtonStyle(title: defaultRetryButtonTitle),
@@ -325,6 +388,8 @@ public extension FKEmptyStateModel {
     case .noPermission:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .permissionDenied,
+        context: .section,
         title: "No access",
         description: "You don’t have permission to view this content.",
         buttonStyle: FKEmptyStateButtonStyle(title: "OK"),
@@ -333,6 +398,8 @@ public extension FKEmptyStateModel {
     case .notLoggedIn:
       return FKEmptyStateModel(
         phase: .empty,
+        type: .newUser,
+        context: .fullPage,
         title: "Sign in required",
         description: "Log in to see your data here.",
         buttonStyle: FKEmptyStateButtonStyle(title: "Sign in"),

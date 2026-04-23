@@ -1,5 +1,9 @@
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
+
+#if canImport(UIKit)
 
 /// Default implementation of ``FKBusinessLifecycleObserving`` based on `UIApplication` notifications.
 public final class FKBusinessLifecycleObserver: FKBusinessLifecycleObserving, @unchecked Sendable {
@@ -118,4 +122,25 @@ public final class FKBusinessLifecycleObserver: FKBusinessLifecycleObserving, @u
     })
   }
 }
+
+#else
+
+/// Cross-platform fallback that keeps the API available when UIKit is unavailable.
+///
+/// This implementation does not attempt to mirror application lifecycle on macOS/Linux.
+public final class FKBusinessLifecycleObserver: FKBusinessLifecycleObserving, @unchecked Sendable {
+  public private(set) var state: FKAppLifecycleState = .notRunning
+
+  public init(center: NotificationCenter = .default) {
+    state = .active
+  }
+
+  @discardableResult
+  public func observe(_ handler: @escaping @Sendable (FKAppLifecycleState) -> Void) -> FKBusinessObservationToken {
+    handler(state)
+    return FKBusinessObservationToken { }
+  }
+}
+
+#endif
 

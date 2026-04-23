@@ -54,12 +54,12 @@ extension UIView: FKListPrimarySurfaceDriving {
 /// Hosts ``FKEmptyState`` overlays (typically a `UIViewController.view` or the scroll view itself).
 @MainActor
 public protocol FKListEmptyStateDriving: AnyObject {
-  func fk_list_applyEmptyState(_ model: FKEmptyStateModel, animated: Bool, actionHandler: FKVoidHandler?)
+  func fk_list_applyEmptyState(_ model: FKEmptyStateModel, animated: Bool, actionHandler: ((FKEmptyStateAction) -> Void)?)
   func fk_list_hideEmptyState(animated: Bool)
 }
 
 extension UIView: FKListEmptyStateDriving {
-  public func fk_list_applyEmptyState(_ model: FKEmptyStateModel, animated: Bool, actionHandler: FKVoidHandler?) {
+  public func fk_list_applyEmptyState(_ model: FKEmptyStateModel, animated: Bool, actionHandler: ((FKEmptyStateAction) -> Void)?) {
     fk_applyEmptyState(model, animated: animated, actionHandler: actionHandler)
   }
 

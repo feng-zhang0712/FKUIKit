@@ -1,9 +1,3 @@
-//
-// UIScrollView+FKEmptyState.swift
-//
-// Scroll-specific convenience APIs. `fk_applyEmptyState` / `fk_hideEmptyState` are inherited from `UIView`.
-//
-
 import ObjectiveC.runtime
 import UIKit
 
@@ -11,10 +5,13 @@ import UIKit
 
 public extension UIScrollView {
   /// Convenience alias for `fk_applyEmptyState` (historical name).
+  ///
+  /// - Note: This method exists for API readability in scroll-heavy screens. Internally it calls
+  ///   `UIView.fk_applyEmptyState` (inherited by `UIScrollView`).
   func fk_showEmptyState(
     _ model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_applyEmptyState(
@@ -28,6 +25,10 @@ public extension UIScrollView {
   /// Updates the existing overlay’s content without tearing down the view (no-op if never shown).
   ///
   /// Retains the latest model in associated storage and respects refresh-control skipping for loading phases.
+  ///
+  /// Performance notes:
+  /// - Updating avoids tearing down Auto Layout constraints and reduces animation jank.
+  /// - Prefer this method when you want to change copy/spinner while keeping the overlay visible.
   func fk_updateEmptyState(_ model: FKEmptyStateModel, animated: Bool = true) {
     fk_emptyStateAssertMainThread()
     objc_setAssociatedObject(
@@ -54,11 +55,13 @@ public extension UIScrollView {
   }
 
   /// When `isEmpty` is false, forces `phase = .content` before applying (hides overlay).
+  ///
+  /// - Parameter isEmpty: Pass your list emptiness predicate (e.g. `items.isEmpty`).
   func fk_updateEmptyStateVisibility(
     isEmpty: Bool,
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     var resolved = model
@@ -76,8 +79,12 @@ public extension UIScrollView {
   /// If `automaticallyShowsWhenContentFits` is enabled on the stored model, shows the empty state when `contentSize` fits in the visible area.
   ///
   /// Call from `scrollViewDidScroll` / `layoutSubviews` when using short content empty states.
+  ///
+  /// Edge cases:
+  /// - Uses `adjustedContentInset` and bounds height; safe area and refresh controls are accounted for.
+  /// - Will only run when `fk_emptyStateModel.automaticallyShowsWhenContentFits == true`.
   func fk_refreshEmptyStateAutomatically(
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
@@ -99,11 +106,13 @@ public extension UIScrollView {
   /// Shows the overlay when `itemCount == 0`; otherwise hides it (`phase = .content`).
   ///
   /// If `itemCount == 0` and `model.phase == .content`, coerces phase to `.empty` so something visible is shown.
+  ///
+  /// - Note: For collection views, prefer `fk_totalItemCount()` to compute `itemCount`.
   func fk_updateEmptyState(
     itemCount: Int,
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
@@ -145,7 +154,7 @@ public extension UITableView {
   func fk_updateEmptyStateForTable(
     model: FKEmptyStateModel,
     animated: Bool = true,
-    actionHandler: FKVoidHandler? = nil,
+    actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_updateEmptyState(

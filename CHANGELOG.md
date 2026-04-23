@@ -8,6 +8,22 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.39.0] - 2026-04-23
+
+### Added (FKEmptyState CoreLite)
+- Added a Foundation-only EmptyState core library product: `FKEmptyStateCoreLite`
+  - UI-agnostic types (`FKEmptyStateType`, `FKEmptyStateInputs`)
+  - severity-first resolver (`FKEmptyStateResolver`)
+  - lightweight i18n interpolation + dictionary translator
+- `Package.swift`: added a dedicated target for CoreLite and excluded it from `FKUIKit` to avoid symbol collisions.
+
+### Changed (FKUIKit FKEmptyState)
+- **Breaking**: Unified action callbacks to a typed action payload:
+  - `actionHandler` is now `((FKEmptyStateAction) -> Void)?` across `UIView` / `UIScrollView` entry points.
+  - All action buttons (primary/secondary/tertiary) emit a single typed callback; route by `action.id`.
+- Added `FKEmptyStateNotificationKeys` and enriched `.fkEmptyStateActionInvoked` payload (`id`, `kind`, `payload`) for coordinator-style routing.
+- Improved open-source documentation comments across core EmptyState files (resolver, i18n, view behavior, and host extensions).
+
 ## [0.38.0] - 2026-04-23
 
 ### Added (FKUIKit Toast)
@@ -1370,7 +1386,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.37.0...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.39.0...HEAD
+[0.39.0]: https://github.com/feng-zhang0712/FKKit/compare/0.38.0...0.39.0
+[0.38.0]: https://github.com/feng-zhang0712/FKKit/compare/0.37.3...0.38.0
 [0.37.0]: https://github.com/feng-zhang0712/FKKit/compare/0.36.0...0.37.0
 [0.36.0]: https://github.com/feng-zhang0712/FKKit/compare/0.35.1...0.36.0
 [0.35.1]: https://github.com/feng-zhang0712/FKKit/compare/0.35.0...0.35.1

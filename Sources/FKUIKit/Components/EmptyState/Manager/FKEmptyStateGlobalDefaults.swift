@@ -1,9 +1,3 @@
-//
-// FKEmptyStateGlobalDefaults.swift
-//
-// App-wide defaults for `FKEmptyStateModel` (fonts, colors, copy). Configure once at launch; per-screen models override.
-//
-
 import UIKit
 
 // MARK: - Global template

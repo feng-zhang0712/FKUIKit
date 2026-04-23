@@ -10,13 +10,21 @@ let package = Package(
   ],
   products: [
     .library(name: "FKUIKit", targets: ["FKUIKit"]),
+    .library(name: "FKEmptyStateCoreLite", targets: ["FKEmptyStateCoreLite"]),
     .library(name: "FKCoreKit", targets: ["FKCoreKit"]),
     .library(name: "FKCompositeKit", targets: ["FKCompositeKit"]),
   ],
   targets: [
     .target(
       name: "FKUIKit",
-      path: "Sources/FKUIKit"
+      path: "Sources/FKUIKit",
+      exclude: [
+        "Components/EmptyState/CoreLite",
+      ]
+    ),
+    .target(
+      name: "FKEmptyStateCoreLite",
+      path: "Sources/FKUIKit/Components/EmptyState/CoreLite"
     ),
     .target(
       name: "FKCoreKit",

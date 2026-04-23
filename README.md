@@ -32,6 +32,9 @@ The repository is organized into three product modules:
 
 Each module focuses on a different layer of app development, from infrastructure and utilities to UI components and composite business widgets.
 
+In addition, the package exposes a small Foundation-only product for EmptyState core logic:
+- `FKEmptyStateCoreLite` (resolver + i18n interpolation, no UIKit dependency)
+
 ## Features
 - Pure Swift implementation (Swift 6 language mode in package settings).
 - No third-party dependencies.
@@ -149,19 +152,21 @@ This module currently focuses on source-level composable components; add interna
    - `https://github.com/feng-zhang0712/FKKit.git`
 3. Select one or more products:
    - `FKCoreKit`
+   - `FKEmptyStateCoreLite`
    - `FKUIKit`
    - `FKCompositeKit`
 
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.37.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.39.0")
 ],
 targets: [
   .target(
     name: "YourTarget",
     dependencies: [
       .product(name: "FKCoreKit", package: "FKKit"),
+      .product(name: "FKEmptyStateCoreLite", package: "FKKit"),
       .product(name: "FKUIKit", package: "FKKit"),
       .product(name: "FKCompositeKit", package: "FKKit")
     ]
