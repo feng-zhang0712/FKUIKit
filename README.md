@@ -62,8 +62,6 @@ FKKit/
 │  ├─ FKUIKit/
 │  │  └─ Components/
 │  │     ├─ Badge/
-│  │     ├─ Bar/
-│  │     ├─ BarPresentation/
 │  │     ├─ BlurView/
 │  │     ├─ Button/
 │  │     ├─ Carousel/
@@ -79,6 +77,7 @@ FKKit/
 │  │     ├─ StarRating/
 │  │     ├─ StickyHeader/
 │  │     ├─ SwipeAction/
+  │  │     ├─ TabBar/
 │  │     ├─ Toast/
 │  │     └─ TextField/
 │  └─ FKCompositeKit/
@@ -108,9 +107,7 @@ FKKit/
 `FKUIKit` contains reusable UIKit components for modern iOS interfaces:
 
 - `Button`: configurable button system with style/content/loading behavior.
-- `Bar`: composable horizontal bar/tab-like navigation container.
 - `Presentation`: presentation container and positioning utilities.
-- `BarPresentation`: bar-driven presentation coordinator.
 - `BlurView`: high-performance blur component with system/custom pipelines, UIKit/SwiftUI adapters, image/view snapshot blur APIs, and IB/global-configuration support.
 - `Carousel`: reusable carousel component with configurable direction/looping, item models, page control support, and extension points for image/custom view rendering.
 - `EmptyState`: loading/empty/error state overlay system.
@@ -121,6 +118,7 @@ FKKit/
 - `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
 - `Refresh`: pull-to-refresh and load-more controls.
 - `Badge`: flexible badge display for views, bar items, and tab items, with corner/center anchoring, global visibility control, and customizable animations/styles.
+- `TabBar`: high-performance UIKit tab header (UICollectionView-based) with indicator, badges, data source, and paging progress linkage (UI-only).
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 - `StarRating`: configurable star-rating component supporting full/half/precise modes, image/color rendering, gestures, callbacks, global defaults, and reuse-safe integration.
 - `StickyHeader`: high-performance sticky section header coordinator for UIKit lists (UITableView/UICollectionView/UIScrollView), with push-off interaction, lifecycle callbacks, safe-area-aware offsets, and SwiftUI bridging.
@@ -157,7 +155,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.40.2")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.41.0")
 ],
 targets: [
   .target(

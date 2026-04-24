@@ -29,16 +29,6 @@ final class ExampleMenuViewController: UITableViewController {
       subtitle: "Foundational UI components and presentation infrastructure",
       items: [
         ExampleMenuItem(
-          title: "Bar",
-          subtitle: "Horizontal item bar with selection callbacks",
-          make: { FKBarExampleViewController() }
-        ),
-        ExampleMenuItem(
-          title: "BarPresentation",
-          subtitle: "Bar + anchored panel composite",
-          make: { FKBarPresentationExampleViewController() }
-        ),
-        ExampleMenuItem(
           title: "Badge",
           subtitle: "Dot, numeric & text badges, anchors, animations, TabBarItem",
           make: { FKBadgeExamplesHubViewController() }
@@ -117,6 +107,11 @@ final class ExampleMenuViewController: UITableViewController {
           title: "SwipeAction",
           subtitle: "Native left/right multi-button swipe actions for table and collection lists",
           make: { FKSwipeActionExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
+          title: "TabBar",
+          subtitle: "Segmented tab bar with indicators, dynamic data, width policies, and a11y/i18n demos",
+          make: { FKTabBarExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "TextField",

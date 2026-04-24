@@ -17,7 +17,7 @@ final class FKFilterExampleViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "Filter (FKBarPresentation)"
+    title = "Filter"
     view.backgroundColor = .systemBackground
     setupFilterHost()
     setupBelowPlaceholder()

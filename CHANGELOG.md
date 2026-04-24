@@ -8,6 +8,29 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.41.0] - 2026-04-24
+
+### Added (FKUIKit TabBar)
+- Added a new `FKTabBar` module under `Sources/FKUIKit/Components/TabBar/`:
+  - `FKTabBar` (UICollectionView-based, UI-only tab header)
+  - `FKTabBarItem` with structured `title/subtitle/image/badge` configuration models
+  - `FKTabBarConfiguration` as the single configuration entry point (layout + appearance + animation)
+  - indicator styles + interactive paging linkage via `setSelectionProgress(from:to:progress:)`
+  - per-item badges via `FKBadge` integration (anchor + offset, local updates via `setBadge`)
+  - delegate + closure callback pipeline (deterministic ordering) and a lightweight `FKTabBarDataSource`
+- Added TabBar examples under `Examples/FKKitExamples/.../TabBar/` covering:
+  - basics, scrollable vs fixed-equal, dynamic data, RTL, Dynamic Type, accessibility
+  - indicator styles and interactive progress driving
+  - badge updates + badge placement controls (horizontal + vertical item layout)
+  - replace-`UITabBar` style page (UIView only)
+
+### Removed (FKUIKit Bar / BarPresentation)
+- Removed legacy `FKBar` and `FKBarPresentation` sources and corresponding example pages after migrating relevant use cases to `FKTabBar` + `FKPresentation` composition.
+
+### Changed (Documentation)
+- Added `Sources/FKUIKit/Components/TabBar/README.md` aligned with other component module guides.
+- Updated root `README.md` module structure and SPM reference version to `0.41.0`.
+
 ## [0.40.2] - 2026-04-23
 
 ### Changed (FKUIKit Refresh)

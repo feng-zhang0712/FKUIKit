@@ -58,23 +58,29 @@ public extension FKFilterBarPresentation {
   /// High-level configuration for `FKFilterBarPresentation`.
   ///
   /// - `barItemAppearance`: Controls the tab button look.
-  /// - `barConfiguration`: Passed through to `FKBar` (layout/spacing/behavior).
+  /// - `tabBarAppearance`: Passed through to `FKTabBar` (colors/indicator/typography).
+  /// - `tabBarLayout`: Passed through to `FKTabBar` (layout/alignment/spacing).
   /// - `presentationConfiguration`: Passed through to `FKPresentation` (mask/layout/corners).
   ///
   /// Tip: Prefer starting from `.default` and tweaking a few fields.
   struct Configuration {
     public var barItemAppearance: BarItemAppearance
-    public var barConfiguration: FKBar.Configuration
+    public var tabBarAppearance: FKTabBarAppearance
+    public var tabBarLayout: FKTabBarLayoutConfiguration
     public var presentationConfiguration: FKPresentation.Configuration
 
     public static var `default`: Configuration {
-      var barCfg = FKBar.Configuration.default
-      barCfg.itemSpacing = 0
-      barCfg.arrangement = .around
-      barCfg.contentInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
-      barCfg.appearance.backgroundColor = .systemBackground
-      barCfg.selectionScroll.isEnabled = false
-      barCfg.usesDefaultSelectionAppearance = false
+      var tabAppearance = FKTabBarAppearance()
+      tabAppearance.backgroundStyle = .solid(.systemBackground)
+      tabAppearance.showsDivider = false
+      // Indicator is not needed for filter bar (chevron conveys expanded state).
+      tabAppearance.indicatorStyle = .none
+
+      var tabLayout = FKTabBarLayoutConfiguration()
+      tabLayout.widthMode = .intrinsic
+      tabLayout.contentInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
+      tabLayout.itemSpacing = 0
+      tabLayout.contentAlignment = .spaceAround
 
       var pres = FKPresentation.Configuration.default
       pres.layout.widthMode = .fullWidth
@@ -97,18 +103,21 @@ public extension FKFilterBarPresentation {
 
       return Configuration(
         barItemAppearance: .init(),
-        barConfiguration: barCfg,
+        tabBarAppearance: tabAppearance,
+        tabBarLayout: tabLayout,
         presentationConfiguration: pres
       )
     }
 
     public init(
       barItemAppearance: BarItemAppearance = .init(),
-      barConfiguration: FKBar.Configuration = Configuration.default.barConfiguration,
+      tabBarAppearance: FKTabBarAppearance = Configuration.default.tabBarAppearance,
+      tabBarLayout: FKTabBarLayoutConfiguration = Configuration.default.tabBarLayout,
       presentationConfiguration: FKPresentation.Configuration = Configuration.default.presentationConfiguration
     ) {
       self.barItemAppearance = barItemAppearance
-      self.barConfiguration = barConfiguration
+      self.tabBarAppearance = tabBarAppearance
+      self.tabBarLayout = tabBarLayout
       self.presentationConfiguration = presentationConfiguration
     }
   }
