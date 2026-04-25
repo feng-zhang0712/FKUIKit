@@ -155,6 +155,8 @@ final class FKContainerPresentationController: UIPresentationController {
       stopKeyboardTracking()
       cleanupPresentingViewEffect()
     } else {
+      // Interactive dismiss can cancel after intermediate visual changes; restore backdrop/effect state
+      // so the re-presented sheet remains visually consistent and does not look half-dismissed.
       applyPresentingViewEffectIfNeeded(isPresenting: true)
       updateBackdropForCurrentState()
     }
@@ -262,9 +264,11 @@ final class FKContainerPresentationController: UIPresentationController {
           return safe
         }
       }()
-      contentContainerView.frame = wrapperView.bounds.inset(by: insets)
+      var frame = wrapperView.bounds.inset(by: insets)
+      frame = frame.inset(by: UIEdgeInsets(configuration.contentInsets))
+      contentContainerView.frame = frame
     } else {
-      contentContainerView.frame = wrapperView.bounds
+      contentContainerView.frame = wrapperView.bounds.inset(by: UIEdgeInsets(configuration.contentInsets))
     }
 
     // Chrome overlays the whole wrapper; grabber lives in chrome.
@@ -281,10 +285,10 @@ final class FKContainerPresentationController: UIPresentationController {
       object: nil,
       queue: .main
     ) { [weak self] note in
-      let info = note.userInfo ?? [:]
-      let endFrameScreen = (info[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue ?? .zero
-      let duration = (info[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
-      let curveRaw = (info[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? UIView.AnimationCurve.easeInOut.rawValue
+      let userInfo = note.userInfo ?? [:]
+      let endFrameScreen = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue ?? .zero
+      let duration = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
+      let curveRaw = (userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? UIView.AnimationCurve.easeInOut.rawValue
       self?.handleKeyboard(endFrameScreen: endFrameScreen, duration: duration, curveRaw: curveRaw)
     })
 
@@ -293,10 +297,10 @@ final class FKContainerPresentationController: UIPresentationController {
       object: nil,
       queue: .main
     ) { [weak self] note in
-      let info = note.userInfo ?? [:]
-      let endFrameScreen = (info[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue ?? .zero
-      let duration = (info[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
-      let curveRaw = (info[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? UIView.AnimationCurve.easeInOut.rawValue
+      let userInfo = note.userInfo ?? [:]
+      let endFrameScreen = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue ?? .zero
+      let duration = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
+      let curveRaw = (userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? UIView.AnimationCurve.easeInOut.rawValue
       self?.handleKeyboard(endFrameScreen: endFrameScreen, duration: duration, curveRaw: curveRaw)
     })
   }
@@ -1031,6 +1035,8 @@ enum FKPresentationAnchorLayout {
     case let .view(box):
       guard let view = box.object else { return nil }
       guard view.window != nil else { return nil }
+      // Convert to the host/container coordinate space so modal and embedded paths share identical
+      // geometry decisions even when the anchor is deeply nested.
       return view.convert(view.bounds, to: containerView)
     case let .rect(provider):
       return provider()
@@ -1045,6 +1051,7 @@ enum FKPresentationAnchorLayout {
     measuredContentHeight: () -> CGFloat
   ) -> Result {
     guard let sourceRect = resolveSourceRect(in: containerView, anchor: anchor) else {
+      // Fallback to center when anchor cannot be resolved yet (detached view / stale weak reference).
       let width = min(bounds.width - safeInsets.left - safeInsets.right, 460)
       let height = min(bounds.height - safeInsets.top - safeInsets.bottom, max(180, measuredContentHeight()))
       let frame = CGRect(x: (bounds.width - width) / 2, y: (bounds.height - height) / 2, width: width, height: height)
@@ -1108,6 +1115,7 @@ enum FKPresentationAnchorLayout {
     let y: CGFloat = {
       switch direction {
       case .down:
+        // Edge-attached rule: panel starts exactly from the anchor edge + configured offset.
         return attachmentY + anchor.offset
       case .up:
         return attachmentY - anchor.offset - height

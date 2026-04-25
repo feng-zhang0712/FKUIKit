@@ -51,9 +51,9 @@ final class FKPresentationBackdropView: UIView {
         effectView.contentView.addSubview(vibView)
         vibrancyView = vibView
       }
-    case let .liquidGlass(config):
-      let shouldDowngrade = (config.downgradeWhenReduceTransparencyEnabled && UIAccessibility.isReduceTransparencyEnabled)
-        || (config.simplifyInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled)
+    case let .liquidGlass(liquidGlassConfiguration):
+      let shouldDowngrade = (liquidGlassConfiguration.downgradeWhenReduceTransparencyEnabled && UIAccessibility.isReduceTransparencyEnabled)
+        || (liquidGlassConfiguration.simplifyInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled)
       if shouldDowngrade {
         configure(with: .init(style: .blur(effect: .systemUltraThinMaterial, alpha: 1, vibrancy: nil), allowsTapToDismiss: configuration.allowsTapToDismiss))
         return
@@ -62,15 +62,15 @@ final class FKPresentationBackdropView: UIView {
       let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
       effectView.frame = bounds
       effectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      effectView.alpha = config.intensity
+      effectView.alpha = liquidGlassConfiguration.intensity
       addSubview(effectView)
       visualEffectView = effectView
 
       // Best-effort "liquid glass": blur + highlight gradient + subtle noise + adaptive tint.
       let isDark = traitCollection.userInterfaceStyle == .dark
-      backgroundColor = (isDark ? UIColor.black : UIColor.white).withAlphaComponent(0.06 * config.intensity)
+      backgroundColor = (isDark ? UIColor.black : UIColor.white).withAlphaComponent(0.06 * liquidGlassConfiguration.intensity)
 
-      if config.showsHighlight {
+      if liquidGlassConfiguration.showsHighlight {
         let gradient = CAGradientLayer()
         gradient.frame = bounds
         gradient.colors = [
@@ -85,12 +85,12 @@ final class FKPresentationBackdropView: UIView {
         highlightLayer = gradient
       }
 
-      if config.showsNoise {
+      if liquidGlassConfiguration.showsNoise {
         let noise = CALayer()
         noise.frame = bounds
         noise.contents = Self.noiseImage(scale: UIScreen.main.scale)?.cgImage
         noise.contentsGravity = .resizeAspectFill
-        noise.opacity = (isDark ? 0.12 : 0.08) * Float(config.intensity)
+        noise.opacity = (isDark ? 0.12 : 0.08) * Float(liquidGlassConfiguration.intensity)
         noise.compositingFilter = "overlayBlendMode"
         layer.addSublayer(noise)
         noiseLayer = noise

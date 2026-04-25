@@ -117,6 +117,8 @@ final class FKPresentationAnimator: NSObject, UIViewControllerAnimatedTransition
       }
     )
     animator.addCompletion { position in
+      // `transitionWasCancelled` is the source of truth for interactive cancellations. Using it keeps
+      // host cleanup and callback order consistent between finish/cancel outcomes.
       let finished = (position == .end || position == .current) && !transitionContext.transitionWasCancelled
       transitionContext.completeTransition(finished)
       self.cachedAnimator = nil
@@ -132,6 +134,8 @@ final class FKPresentationAnimator: NSObject, UIViewControllerAnimatedTransition
   }
 
   private func initialState(for baseFrame: CGRect, style: FKAnimationStyleResolver.TransitionStyle) -> State {
+    // Center keeps frame stable and communicates motion with subtle scale+alpha.
+    // Sheet-like families start from an offset frame to preserve directional attachment cues.
     let frame = style.family == .alertLikeCenter ? baseFrame : initialFrame(for: baseFrame)
     return .init(
       frame: frame,
@@ -179,9 +183,9 @@ final class FKPresentationAnimator: NSObject, UIViewControllerAnimatedTransition
           return baseFrame.offsetBy(dx: 0, dy: delta)
         }
       }
-    case let .anchorEmbedded(config):
+    case let .anchorEmbedded(configuration):
       // Embedded anchors use the same motion baseline as modal anchors.
-      return initialFrame(for: baseFrame, anchor: config.anchor)
+      return initialFrame(for: baseFrame, anchor: configuration.anchor)
     case let .edge(edge):
       if edge.contains(.left) { return baseFrame.offsetBy(dx: -baseFrame.width, dy: 0) }
       if edge.contains(.right) { return baseFrame.offsetBy(dx: baseFrame.width, dy: 0) }

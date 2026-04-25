@@ -81,7 +81,7 @@ final class ExampleMenuViewController: UITableViewController {
         ExampleMenuItem(
           title: "Presentation",
           subtitle: "Custom presentation controller examples (sheet/center/anchor, animation, backdrop, keyboard, rotation)",
-          make: { PresentationExamplesIndexViewController() }
+          make: { FKPresentationControllerExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "Refresh",

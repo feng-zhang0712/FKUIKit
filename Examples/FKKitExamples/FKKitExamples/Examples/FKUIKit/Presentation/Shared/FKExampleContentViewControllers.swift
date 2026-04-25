@@ -64,11 +64,11 @@ final class FKExampleTableContentViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-    var config = cell.defaultContentConfiguration()
-    config.text = "Row \(indexPath.row + 1)"
-    config.secondaryText = "Scroll to the top/bottom, then drag the sheet to see gesture handoff."
-    config.secondaryTextProperties.color = .secondaryLabel
-    cell.contentConfiguration = config
+    var configuration = cell.defaultContentConfiguration()
+    configuration.text = "Row \(indexPath.row + 1)"
+    configuration.secondaryText = "Scroll to the top/bottom, then drag the sheet to see gesture handoff."
+    configuration.secondaryTextProperties.color = .secondaryLabel
+    cell.contentConfiguration = configuration
     return cell
   }
 }

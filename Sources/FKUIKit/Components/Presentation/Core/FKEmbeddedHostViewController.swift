@@ -24,7 +24,7 @@ final class FKEmbeddedHostViewController: UIViewController {
   var onProgress: ((CGFloat) -> Void)?
 
   private let configuration: FKPresentationConfiguration
-  private let embeddedConfig: FKEmbeddedAnchorConfig
+  private let embeddedConfiguration: FKEmbeddedAnchorConfiguration
 
   let contentContainerView = UIView()
   let chromeView = UIView()
@@ -46,9 +46,9 @@ final class FKEmbeddedHostViewController: UIViewController {
     view as! FKEmbeddedRootView
   }
 
-  init(configuration: FKPresentationConfiguration, embeddedConfig: FKEmbeddedAnchorConfig) {
+  init(configuration: FKPresentationConfiguration, embeddedConfiguration: FKEmbeddedAnchorConfiguration) {
     self.configuration = configuration
-    self.embeddedConfig = embeddedConfig
+    self.embeddedConfiguration = embeddedConfiguration
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -103,14 +103,14 @@ final class FKEmbeddedHostViewController: UIViewController {
     view.addSubview(wrapperView)
 
     // Gestures
-    if embeddedConfig.dismissBehavior.allowsTapToDismiss {
+    if embeddedConfiguration.dismissBehavior.allowsTapToDismiss {
       maskView.isUserInteractionEnabled = true
       maskView.addGestureRecognizer(tapToDismiss)
     } else {
       maskView.isUserInteractionEnabled = false
     }
 
-    if embeddedConfig.dismissBehavior.allowsSwipeToDismiss {
+    if embeddedConfiguration.dismissBehavior.allowsSwipeToDismiss {
       panToDismiss.maximumNumberOfTouches = 1
       wrapperView.addGestureRecognizer(panToDismiss)
     }
@@ -127,7 +127,7 @@ final class FKEmbeddedHostViewController: UIViewController {
     shadowContainerView.frame = wrapperView.bounds
     cardView.frame = shadowContainerView.bounds
     chromeView.frame = cardView.bounds
-    contentContainerView.frame = cardView.bounds
+    contentContainerView.frame = cardView.bounds.inset(by: UIEdgeInsets(configuration.contentInsets))
 
     // Corner strategy: keep the attached edge “straight” to avoid a modal-card feel.
     switch layout.direction {
@@ -194,12 +194,12 @@ final class FKEmbeddedHostViewController: UIViewController {
   }
 
   @objc private func handleTapMask(_ recognizer: UITapGestureRecognizer) {
-    guard embeddedConfig.dismissBehavior.allowsTapToDismiss else { return }
+    guard embeddedConfiguration.dismissBehavior.allowsTapToDismiss else { return }
     onRequestDismiss?()
   }
 
   @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
-    guard embeddedConfig.dismissBehavior.allowsSwipeToDismiss else { return }
+    guard embeddedConfiguration.dismissBehavior.allowsSwipeToDismiss else { return }
     guard let currentLayout else { return }
     let translation = recognizer.translation(in: view)
 
@@ -218,6 +218,8 @@ final class FKEmbeddedHostViewController: UIViewController {
       }()
 
       let startHeight = max(1, panStartFrame.height)
+      // Use real frame/height updates (instead of transform-only translation) so clipping, corners,
+      // shadow path, and content insets stay physically correct during interactive drag.
       let newHeight = max(0, min(startHeight, startHeight - signedDismissDrag))
 
       let newFrame = frame(forHeight: newHeight, basedOn: panStartFrame, anchorLineY: currentLayout.anchorLineY, direction: currentLayout.direction)
@@ -225,7 +227,7 @@ final class FKEmbeddedHostViewController: UIViewController {
       shadowContainerView.frame = wrapperView.bounds
       cardView.frame = shadowContainerView.bounds
       chromeView.frame = cardView.bounds
-      contentContainerView.frame = cardView.bounds
+      contentContainerView.frame = cardView.bounds.inset(by: UIEdgeInsets(configuration.contentInsets))
       updateShadowPath(for: currentLayout.direction)
 
       let progress = min(max(1 - (newHeight / startHeight), 0), 1)
@@ -256,7 +258,7 @@ final class FKEmbeddedHostViewController: UIViewController {
           self.shadowContainerView.frame = self.wrapperView.bounds
           self.cardView.frame = self.shadowContainerView.bounds
           self.chromeView.frame = self.cardView.bounds
-          self.contentContainerView.frame = self.cardView.bounds
+          self.contentContainerView.frame = self.cardView.bounds.inset(by: UIEdgeInsets(self.configuration.contentInsets))
           self.updateShadowPath(for: currentLayout.direction)
           self.maskView.alpha = 1
         } completion: { _ in

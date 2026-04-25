@@ -20,6 +20,7 @@ final class FKModalPresentationHost: NSObject, FKPresentationHosting {
     super.init()
 
     transitioningDelegateBox.owner = owner
+    // Modal path relies on UIKit custom presentation so we configure style/delegate once up front.
     contentController.modalPresentationStyle = .custom
     contentController.transitioningDelegate = transitioningDelegateBox
     objc_setAssociatedObject(
