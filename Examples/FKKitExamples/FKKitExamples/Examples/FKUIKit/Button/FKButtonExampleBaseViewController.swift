@@ -33,6 +33,20 @@ class FKButtonExampleBaseViewController: UIViewController {
     rootStackView.addArrangedSubview(content)
   }
 
+  func addExampleCategory(title: String, description: String? = nil) {
+    let categoryTitle = UILabel()
+    categoryTitle.text = title
+    categoryTitle.font = .preferredFont(forTextStyle: .title3)
+    categoryTitle.textColor = .label
+    categoryTitle.numberOfLines = 0
+    categoryTitle.textAlignment = .left
+    rootStackView.addArrangedSubview(fullWidthLayoutWrapping(categoryTitle))
+
+    if let description, !description.isEmpty {
+      rootStackView.addArrangedSubview(fullWidthLayoutWrapping(captionLabel(description)))
+    }
+  }
+
   /// Pins `view` to the container’s leading/trailing so multiline labels wrap to the scroll view width.
   func fullWidthLayoutWrapping(_ view: UIView) -> UIView {
     let box = UIView()

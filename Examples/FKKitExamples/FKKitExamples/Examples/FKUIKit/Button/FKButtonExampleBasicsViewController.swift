@@ -8,9 +8,18 @@ final class FKButtonExampleBasicsViewController: FKButtonExampleBaseViewControll
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    addExampleCategory(
+      title: "Text-focused examples",
+      description: "Demonstrates text rendering, state transitions, and text+image composition."
+    )
     addExampleSection(title: "Text only", content: makeTextOnlyExample())
-    addExampleSection(title: "Icon only", content: makeIconOnlyExample())
     addExampleSection(title: "Composition", content: makeCompositionExample())
+
+    addExampleCategory(
+      title: "Image-focused examples",
+      description: "Demonstrates image-only visuals and stateful icon styling."
+    )
+    addExampleSection(title: "Icon only", content: makeIconOnlyExample())
   }
 
   private func makeTextOnlyStatefulAppearances(highlightedForegroundColor: UIColor) -> StatefulAppearances {

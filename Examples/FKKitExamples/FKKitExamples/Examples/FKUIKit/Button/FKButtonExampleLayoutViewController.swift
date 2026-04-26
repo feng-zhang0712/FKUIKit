@@ -8,10 +8,27 @@ final class FKButtonExampleLayoutViewController: FKButtonExampleBaseViewControll
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    addExampleCategory(
+      title: "Geometry & sizing",
+      description: "How axis, corner behavior, width fitting, and subtitle sizing affect layout."
+    )
     addExampleSection(title: "Vertical layout", content: makeVerticalLayoutExample())
     addExampleSection(title: "Capsule corner", content: makeCapsuleCornerExample())
     addExampleSection(title: "Different width", content: makeDifferentLengthExample())
     addExampleSection(title: "Subtitle", content: makeSubtitleExample())
+
+    addExampleCategory(
+      title: "Compound content",
+      description: "Mixed content layouts using both-side images with center content."
+    )
+    addExampleSection(
+      title: "Leading + trailing image + center title/subtitle",
+      content: makeBothSideImagesWithTitleSubtitleExample()
+    )
+    addExampleSection(
+      title: "Leading + center + trailing image",
+      content: makeThreeImagesInCenterExample()
+    )
   }
 
   private func makeVerticalLayoutExample() -> UIView {
@@ -73,6 +90,82 @@ final class FKButtonExampleLayoutViewController: FKButtonExampleBaseViewControll
     b.widthAnchor.constraint(equalToConstant: 240).isActive = true
     addTap(b, name: "Layout subtitle")
     let stack = UIStackView(arrangedSubviews: [captionLabel("Subtitle participates in accessibility value and adaptive layout."), horizontallyCentered(b)])
+    stack.axis = .vertical
+    stack.spacing = 10
+    return stack
+  }
+
+  private func makeBothSideImagesWithTitleSubtitleExample() -> UIView {
+    let b = FKButton()
+    b.content = .init(kind: .textAndImage(.bothSides))
+    b.setTitle(.init(text: "Transfer", font: .systemFont(ofSize: 15, weight: .semibold), color: .label), for: .normal)
+    b.setSubtitle(.init(text: "2 files pending", font: .systemFont(ofSize: 12, weight: .regular), color: .secondaryLabel), for: .normal)
+    b.setLeadingImage(.init(systemName: "arrow.left.circle.fill", tintColor: .systemBlue, spacingToTitle: 10), for: .normal)
+    b.setTrailingImage(.init(systemName: "arrow.right.circle.fill", tintColor: .systemGreen, spacingToTitle: 10), for: .normal)
+    b.setAppearances(
+      .init(
+        normal: .init(
+          cornerStyle: .init(corner: .fixed(12)),
+          border: .init(width: 1, color: .separator),
+          backgroundColor: .tertiarySystemBackground,
+          contentInsets: .init(top: 10, leading: 14, bottom: 10, trailing: 14)
+        )
+      )
+    )
+    b.widthAnchor.constraint(equalToConstant: 290).isActive = true
+    b.heightAnchor.constraint(greaterThanOrEqualToConstant: 64).isActive = true
+    addTap(b, name: "Layout both-side with title/subtitle")
+
+    let stack = UIStackView(
+      arrangedSubviews: [
+        captionLabel("Both-side image slots with center title/subtitle for dense list actions."),
+        horizontallyCentered(b),
+      ]
+    )
+    stack.axis = .vertical
+    stack.spacing = 10
+    return stack
+  }
+
+  private func makeThreeImagesInCenterExample() -> UIView {
+    let b = FKButton()
+    b.content = .init(kind: .custom)
+
+    let row = UIStackView()
+    row.axis = .horizontal
+    row.alignment = .center
+    row.spacing = 16
+    row.isUserInteractionEnabled = false
+    ["chevron.left.circle.fill", "camera.circle.fill", "chevron.right.circle.fill"].forEach { name in
+      let iv = UIImageView(image: UIImage(systemName: name))
+      iv.tintColor = .systemIndigo
+      iv.contentMode = .scaleAspectFit
+      iv.widthAnchor.constraint(equalToConstant: 22).isActive = true
+      iv.heightAnchor.constraint(equalToConstant: 22).isActive = true
+      row.addArrangedSubview(iv)
+    }
+
+    b.setCustomContent(.init(view: row), for: .normal)
+    b.setAppearances(
+      .init(
+        normal: .init(
+          cornerStyle: .init(corner: .fixed(12)),
+          border: .init(width: 1, color: .separator),
+          backgroundColor: .tertiarySystemBackground,
+          contentInsets: .init(top: 10, leading: 14, bottom: 10, trailing: 14)
+        )
+      )
+    )
+    b.widthAnchor.constraint(equalToConstant: 230).isActive = true
+    b.heightAnchor.constraint(equalToConstant: 52).isActive = true
+    addTap(b, name: "Layout three-image center row")
+
+    let stack = UIStackView(
+      arrangedSubviews: [
+        captionLabel("Custom content mode can render leading + center + trailing images in one row."),
+        horizontallyCentered(b),
+      ]
+    )
     stack.axis = .vertical
     stack.spacing = 10
     return stack
