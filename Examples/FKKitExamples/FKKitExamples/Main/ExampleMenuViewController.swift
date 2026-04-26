@@ -80,8 +80,8 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "Presentation",
-          subtitle: "Anchored panel with mask",
-          make: { FKPresentationExampleViewController() }
+          subtitle: "Custom presentation controller examples (sheet/center/anchor, animation, backdrop, keyboard, rotation)",
+          make: { FKPresentationControllerExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "Refresh",
@@ -184,11 +184,6 @@ final class ExampleMenuViewController: UITableViewController {
           title: "Base",
           subtitle: "Controller foundation demos: lifecycle, navigation and tab bar infrastructure",
           make: { FKBaseExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "Filter",
-          subtitle: "Composite dropdown filters (top bar + panels)",
-          make: { FKFilterExampleViewController() }
         ),
         ExampleMenuItem(
           title: "ListKit",
