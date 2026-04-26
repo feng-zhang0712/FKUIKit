@@ -6,6 +6,7 @@
 // linear gradient backgrounds, per-state `Appearance`, `FKButton.GlobalStyle`, and IB attributes.
 //
 
+import AudioToolbox
 import UIKit
 
 /// A `UIControl`-subclass button with explicit per-state models (title, images, appearance).
@@ -23,10 +24,18 @@ import UIKit
 ///
 /// Subclasses may override `layoutSubviews`, `intrinsicContentSize`, `point(inside:with:)`, etc. (`open`).
 @IBDesignable open class FKButton: UIControl {
+  // MARK: - Internal typealiases
+
   private typealias StateKey = UInt
   private typealias StatefulValues<T> = [StateKey: T]
 
-  // MARK: - Nested types (axis & slots)
+  // MARK: - State key canonicalization
+
+  /// Canonicalizes `UIControl.State` into an internal key for state maps.
+  /// Currently uses `rawValue` directly to support arbitrary user-defined combinations.
+  private static func makeStateKey(_ state: UIControl.State) -> StateKey { state.rawValue }
+
+  // MARK: - Public nested types
 
   /// The layout axis for the button content (affects how image and title are arranged).
   ///
@@ -52,10 +61,17 @@ import UIKit
   }
 
   /// Resolves state lookup candidates for stateful maps.
-  /// Return order must be from high to low priority.
+  /// Return order must be from high to low priority, and may include combined candidates
+  /// such as `.selected.union(.highlighted)`.
   public typealias StateResolutionProvider = (_ isEnabled: Bool, _ isSelected: Bool, _ isHighlighted: Bool) -> [UIControl.State]
 
-  // MARK: - Configuration
+  /// Label roles rendered by `FKButton`.
+  public enum LabelRole: Sendable {
+    case title
+    case subtitle
+  }
+
+  // MARK: - Public configuration
 
   /// Content composition model. Updating this rebinds internal subviews immediately.
   public var content: FKButton.Content {
@@ -69,13 +85,42 @@ import UIKit
     didSet { applyAxis() }
   }
 
-  /// Optional custom provider for state resolution order.
-  /// When `nil`, the default order is used: disabled -> selected -> highlighted -> normal.
+  /// Optional custom provider for state lookup candidates.
+  ///
+  /// - Important: Return candidates from highest to lowest priority.
+  /// - Note: You may include combined states such as `.selected.union(.highlighted)`.
+  ///
+  /// When `nil`, the default candidates follow UIKit intuition:
+  /// `disabled` > `selected+highlighted` > `highlighted` > `selected` > `normal`.
   public var stateResolutionProvider: StateResolutionProvider? {
     didSet { requestVisualRefresh() }
   }
 
-  // MARK: - Content subviews & state storage
+  /// Controls how `accessibilityLabel`, `accessibilityValue`, and `accessibilityHint` are computed.
+  public var accessibilityConfiguration: FKButtonAccessibilityConfiguration = .init() {
+    didSet { requestVisualRefresh() }
+  }
+
+  /// Optional haptics configuration. Defaults to off.
+  public var hapticsConfiguration: FKButtonHapticsConfiguration = .init() {
+    didSet {
+      guard hapticsConfiguration.impactStyle != oldValue.impactStyle else { return }
+      impactFeedbackGenerator = UIImpactFeedbackGenerator(style: hapticsConfiguration.impactStyle)
+      impactFeedbackGenerator.prepare()
+    }
+  }
+
+  /// Optional sound-feedback configuration. Defaults to off.
+  public var soundFeedbackConfiguration: FKButtonSoundFeedbackConfiguration = .init() {
+    didSet { syncSoundFeedbackResourcesIfNeeded() }
+  }
+
+  /// Optional pointer interaction configuration. Defaults to off.
+  public var pointerConfiguration: FKButtonPointerConfiguration = .init() {
+    didSet { syncPointerInteractionIfNeeded() }
+  }
+
+  // MARK: - View hierarchy (container + stack)
 
   /// Hosts `stackView`; `Appearance.contentInsets` pin this view to `FKButton` edges so `contentHorizontalAlignment` /
   /// `contentVerticalAlignment` can position the stack inside without fighting appearance insets.
@@ -89,6 +134,8 @@ import UIKit
 
   private let stackView = UIStackView()
   private var contentAlignmentConstraints: [NSLayoutConstraint] = []
+
+  // MARK: - Lazily created content subviews
 
   /// Created only when `content.kind` is `.textOnly` / `.textAndImage` (added via the title container).
   /// When switching to `.imageOnly` / `.custom`, it is released via `releaseTitleLabel()`.
@@ -121,6 +168,8 @@ import UIKit
   private var customContentHost: FKButtonCustomContentHostView?
   private var embeddedCustomContentView: UIView?
 
+  // MARK: - Stateful value storage
+
   private var appearanceByState: StatefulValues<Appearance> = [UIControl.State.normal.rawValue: .default]
 
   private var titleByState: StatefulValues<LabelAttributes> = [:]
@@ -141,13 +190,13 @@ import UIKit
   private var needsVisualRefresh = false
   private var needsContentLayoutRefresh = false
 
-  // MARK: - Tap throttle / hit area / loading / long press
+  // MARK: - Interaction & behavior configuration
 
   /// Ignores duplicate `touchUpInside` / `primaryActionTriggered` deliveries within this interval (seconds). `0` disables throttling.
   ///
   /// Throttling is applied in `sendAction(_:to:for:)` because UIKit often dispatches `UIAction` / target-action by calling
   /// `sendAction` directly, without going through `sendActions(for:)` (so overriding only `sendActions` would not intercept taps).
-  public var minimumTapInterval: TimeInterval = 1.0
+  public var minimumTapInterval: TimeInterval = 0
   private var lastPrimaryActionDeliveryTime: CFAbsoluteTime = 0
   /// `UIEvent.timestamp` of the last accepted user interaction wave (touches / presses); used to allow every `sendAction` in the same event.
   private var lastThrottledInteractionEventTimestamp: TimeInterval = -1
@@ -196,7 +245,35 @@ import UIKit
   private nonisolated(unsafe) var longPressRepeatTimer: Timer?
 
   private static let paddedImageCache = NSCache<NSString, UIImage>()
-  
+  /// Internal feedback trigger source used to route interaction feedback.
+  ///
+  /// `FKButton` supports two independent feedback channels (haptics and sound),
+  /// and this enum keeps the dispatch path unified for both channels.
+  private enum InteractionFeedbackTrigger {
+    /// Triggered when the button first enters highlighted state.
+    case pressDown
+    /// Triggered when a primary action is delivered (`touchUpInside` / `primaryActionTriggered`).
+    case primaryAction
+  }
+
+  // Tracks which control events are currently being dispatched. Used to throttle primary events only.
+  private var currentlySendingControlEvents: UIControl.Event = []
+
+  private var impactFeedbackGenerator = UIImpactFeedbackGenerator(style: .light)
+  private var cachedPressDownSoundURL: URL?
+  private var cachedPressDownSoundID: SystemSoundID?
+  private var cachedPrimaryActionSoundURL: URL?
+  private var cachedPrimaryActionSoundID: SystemSoundID?
+
+  @available(iOS 13.4, *)
+  private var pointerInteraction: UIPointerInteraction?
+
+  private var isPointerHovered: Bool = false {
+    didSet { applyPointerHoverVisualsIfNeeded() }
+  }
+
+  // MARK: - Initialization
+
   /// Creates a button with default content (`.textOnly`).
   public init() {
     self.content = .default
@@ -224,7 +301,9 @@ import UIKit
     super.init(coder: coder)
     commonInit()
   }
-  
+
+  // MARK: - Setup
+
   private func commonInit() {
     isAccessibilityElement = true
     accessibilityTraits = .button
@@ -255,6 +334,9 @@ import UIKit
     longPressRecognizer.cancelsTouchesInView = false
     addGestureRecognizer(longPressRecognizer)
     applyFactoryDefaultsFromGlobalStyle()
+    impactFeedbackGenerator = UIImpactFeedbackGenerator(style: hapticsConfiguration.impactStyle)
+    impactFeedbackGenerator.prepare()
+    syncSoundFeedbackResourcesIfNeeded()
 
     applyAxis()
     applyContentLayout()
@@ -262,6 +344,7 @@ import UIKit
     applyImagesForCurrentState()
     applyCustomContentForCurrentState()
     applyAppearanceForCurrentState()
+    applyAccessibilityForCurrentState()
 
     if let appearances = FKButton.GlobalStyle.defaultAppearances {
       setAppearances(appearances)
@@ -271,20 +354,95 @@ import UIKit
     super.contentHorizontalAlignment = .center
     super.contentVerticalAlignment = .center
     applyContentAlignmentLayout()
+    syncPointerInteractionIfNeeded()
   }
 
-  // MARK: - Public — Appearance
+  // MARK: - Public API — State models
+
+  /// Registers a state model for an exact `UIControl.State` key.
+  ///
+  /// - Important: The lookup supports combined states such as `.selected.union(.highlighted)`.
+  ///   Configure these combinations to customize pressed-selected visuals.
+  /// - Note: This API is intentionally *partial* for maintainability. Fields omitted in `model`
+  ///   keep previously registered values for the same `state`.
+  public func setModel(_ model: FKButtonStateModel?, for state: UIControl.State) {
+    performBatchUpdates {
+      if let appearance = model?.appearance {
+        setAppearance(appearance, for: state)
+      }
+      setLabel(model?.title, role: .title, for: state)
+      setLabel(model?.subtitle, role: .subtitle, for: state)
+      if let images = model?.images {
+        for (slot, img) in images {
+          storeImage(img, slot: slot, for: state)
+        }
+      } else if model != nil {
+        // Explicitly leave images unchanged if not provided (partial model).
+      }
+      setCustomContent(model?.customContent, for: state)
+    }
+  }
+
+  /// Registers a label configuration for an exact state key.
+  ///
+  /// Use `role: .title` for the primary text line and `role: .subtitle` for secondary text.
+  /// In the default accessibility strategy, title maps to `accessibilityLabel` and subtitle maps to `accessibilityValue`.
+  public func setLabel(_ configuration: LabelAttributes?, role: LabelRole, for state: UIControl.State) {
+    let key = Self.makeStateKey(state)
+    switch role {
+    case .title:
+      if let configuration {
+        titleByState[key] = configuration
+      } else {
+        titleByState.removeValue(forKey: key)
+      }
+    case .subtitle:
+      if let configuration {
+        subtitleByState[key] = configuration
+      } else {
+        subtitleByState.removeValue(forKey: key)
+      }
+    }
+    requestVisualRefresh()
+  }
+
+  /// Reads the registered label configuration for an exact state key.
+  public func label(role: LabelRole, for state: UIControl.State) -> LabelAttributes? {
+    let key = Self.makeStateKey(state)
+    switch role {
+    case .title: return titleByState[key]
+    case .subtitle: return subtitleByState[key]
+    }
+  }
+
+  /// Registers an image configuration for an exact state key and slot.
+  ///
+  /// Prefer the slot conveniences (`setCenterImage`, `setLeadingImage`, `setTrailingImage`) in app code
+  /// for readability; use this method when slot is selected dynamically.
+  public func setImage(_ image: ImageAttributes?, slot: ImageSlot, for state: UIControl.State) {
+    storeImage(image, slot: slot, for: state)
+    requestVisualRefresh()
+  }
+
+  /// Reads the registered image configuration for an exact state key and slot.
+  public func image(slot: ImageSlot, for state: UIControl.State) -> ImageAttributes? {
+    imagesBySlotAndState[slot]?[Self.makeStateKey(state)]
+  }
+
+  // MARK: - Public API — Appearance
 
   /// Register an appearance for the given state.
   /// If the current state matches, it is applied immediately.
+  ///
+  /// For global theming in multilingual apps, keep content colors and contrast WCAG-friendly in every state.
   public func setAppearance(_ appearance: Appearance, for state: UIControl.State) {
-    appearanceByState[state.rawValue] = appearance
+    appearanceByState[Self.makeStateKey(state)] = appearance
     requestVisualRefresh()
   }
   
   /// Reads the registered appearance for an exact state key.
   public func appearance(for state: UIControl.State) -> Appearance? {
-    appearanceByState[state.rawValue]
+    appearanceByState[Self.makeStateKey(state)]
   }
 
   /// Apply an appearance bundle for normal/selected/highlighted/disabled.
@@ -297,67 +455,9 @@ import UIKit
     }
   }
 
-  /// Convenience API to register title values for common states in one call.
-  public func setTitles(normal: LabelAttributes?, selected: LabelAttributes? = nil, highlighted: LabelAttributes? = nil, disabled: LabelAttributes? = nil) {
-    performBatchUpdates {
-      setTitle(normal, for: .normal)
-      setTitle(selected ?? normal, for: .selected)
-      setTitle(highlighted ?? selected ?? normal, for: .highlighted)
-      setTitle(disabled ?? normal, for: .disabled)
-    }
-  }
-
-  /// Convenience API to register subtitle values for common states in one call.
-  public func setSubtitles(normal: LabelAttributes?, selected: LabelAttributes? = nil, highlighted: LabelAttributes? = nil, disabled: LabelAttributes? = nil) {
-    performBatchUpdates {
-      setSubtitle(normal, for: .normal)
-      setSubtitle(selected ?? normal, for: .selected)
-      setSubtitle(highlighted ?? selected ?? normal, for: .highlighted)
-      setSubtitle(disabled ?? normal, for: .disabled)
-    }
-  }
-
-  /// Convenience API to register center-image values for common states in one call.
-  public func setImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
-    performBatchUpdates {
-      setImage(normal, for: .normal)
-      setImage(selected ?? normal, for: .selected)
-      setImage(highlighted ?? selected ?? normal, for: .highlighted)
-      setImage(disabled ?? normal, for: .disabled)
-    }
-  }
-
-  /// Convenience API to register leading-image values for common states in one call.
-  public func setLeadingImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
-    performBatchUpdates {
-      setLeadingImage(normal, for: .normal)
-      setLeadingImage(selected ?? normal, for: .selected)
-      setLeadingImage(highlighted ?? selected ?? normal, for: .highlighted)
-      setLeadingImage(disabled ?? normal, for: .disabled)
-    }
-  }
-
-  /// Convenience API to register trailing-image values for common states in one call.
-  public func setTrailingImages(normal: ImageAttributes?, selected: ImageAttributes? = nil, highlighted: ImageAttributes? = nil, disabled: ImageAttributes? = nil) {
-    performBatchUpdates {
-      setTrailingImage(normal, for: .normal)
-      setTrailingImage(selected ?? normal, for: .selected)
-      setTrailingImage(highlighted ?? selected ?? normal, for: .highlighted)
-      setTrailingImage(disabled ?? normal, for: .disabled)
-    }
-  }
-
-  /// Convenience API to register custom-content values for common states in one call.
-  public func setCustomContents(normal: CustomContent?, selected: CustomContent? = nil, highlighted: CustomContent? = nil, disabled: CustomContent? = nil) {
-    performBatchUpdates {
-      setCustomContent(normal, for: .normal)
-      setCustomContent(selected ?? normal, for: .selected)
-      setCustomContent(highlighted ?? selected ?? normal, for: .highlighted)
-      setCustomContent(disabled ?? normal, for: .disabled)
-    }
-  }
-
   /// Applies multiple stateful updates and refreshes rendering once.
+  ///
+  /// This helps avoid transient intermediate visuals while multiple state entries are updated.
   public func performBatchUpdates(_ updates: () -> Void) {
     batchUpdateDepth += 1
     updates()
@@ -367,84 +467,65 @@ import UIKit
       flushPendingRefresh()
     }
   }
-
-  // MARK: - Public — Title & subtitle
-
-  /// Registers the main title row for an exact `UIControl.State` key.
-  /// Pass `nil` to remove registration for that key.
-  public func setTitle(_ attributes: LabelAttributes?, for state: UIControl.State) {
-    if let attributes {
-      titleByState[state.rawValue] = attributes
-    } else {
-      titleByState.removeValue(forKey: state.rawValue)
-    }
-    requestVisualRefresh()
-  }
   
-  /// Reads the registered title attributes for an exact state key.
+  // MARK: - Public API — Title & subtitle role conveniences
+
+  /// Registers title attributes for an exact state key.
+  public func setTitle(_ configuration: LabelAttributes?, for state: UIControl.State) {
+    setLabel(configuration, role: .title, for: state)
+  }
+
+  /// Reads title attributes for an exact state key.
   public func title(for state: UIControl.State) -> LabelAttributes? {
-    titleByState[state.rawValue]
+    label(role: .title, for: state)
   }
-  
-  /// Registers the subtitle row for an exact `UIControl.State` key.
-  public func setSubtitle(_ attributes: LabelAttributes?, for state: UIControl.State) {
-    if let attributes {
-      subtitleByState[state.rawValue] = attributes
-    } else {
-      subtitleByState.removeValue(forKey: state.rawValue)
-    }
-    requestVisualRefresh()
+
+  /// Registers subtitle attributes for an exact state key.
+  public func setSubtitle(_ configuration: LabelAttributes?, for state: UIControl.State) {
+    setLabel(configuration, role: .subtitle, for: state)
   }
-  
-  /// Reads the registered subtitle attributes for an exact state key.
+
+  /// Reads subtitle attributes for an exact state key.
   public func subtitle(for state: UIControl.State) -> LabelAttributes? {
-    subtitleByState[state.rawValue]
+    label(role: .subtitle, for: state)
   }
 
-  // MARK: - Public — Images
+  // MARK: - Public API — Image slot conveniences
 
-  /// Set the centered image slot (`.center`).
-  public func setImage(_ image: ImageAttributes?, for state: UIControl.State) {
-    setImage(image, for: state, slot: .center)
-    requestVisualRefresh()
+  /// Registers the center image slot for an exact state key.
+  public func setCenterImage(_ image: ImageAttributes?, for state: UIControl.State) {
+    setImage(image, slot: .center, for: state)
   }
-  
-  /// Set the leading-side image slot (relative to the title's leading side,
-  /// mapped to concrete geometry based on `axis` and layout direction).
+
+  /// Registers the leading image slot for an exact state key.
   public func setLeadingImage(_ image: ImageAttributes?, for state: UIControl.State) {
-    setImage(image, for: state, slot: .leading)
-    requestVisualRefresh()
-  }
-  
-  /// Set the trailing-side image slot.
-  public func setTrailingImage(_ image: ImageAttributes?, for state: UIControl.State) {
-    setImage(image, for: state, slot: .trailing)
-    requestVisualRefresh()
-  }
-  
-  /// Read the registered image for a given slot/state pair.
-  public func image(for state: UIControl.State, slot: ImageSlot) -> ImageAttributes? {
-    imagesBySlotAndState[slot]?[state.rawValue]
+    setImage(image, slot: .leading, for: state)
   }
 
-  // MARK: - Public — Custom content
+  /// Registers the trailing image slot for an exact state key.
+  public func setTrailingImage(_ image: ImageAttributes?, for state: UIControl.State) {
+    setImage(image, slot: .trailing, for: state)
+  }
+
+  // MARK: - Public API — Custom content
 
   /// Requires `content.kind == .custom`. Use `nil` to clear this state.
   public func setCustomContent(_ content: CustomContent?, for state: UIControl.State) {
+    let key = Self.makeStateKey(state)
     if let content {
-      customContentByState[state.rawValue] = content
+      customContentByState[key] = content
     } else {
-      customContentByState.removeValue(forKey: state.rawValue)
+      customContentByState.removeValue(forKey: key)
     }
     requestVisualRefresh()
   }
 
   /// Reads the registered custom content for an exact state key.
   public func customContent(for state: UIControl.State) -> CustomContent? {
-    customContentByState[state.rawValue]
+    customContentByState[Self.makeStateKey(state)]
   }
   
-  // MARK: - Layout
+  // MARK: - Layout (UIControl overrides)
 
   open override var contentHorizontalAlignment: UIControl.ContentHorizontalAlignment {
     get { super.contentHorizontalAlignment }
@@ -468,6 +549,9 @@ import UIKit
     super.traitCollectionDidChange(previousTraitCollection)
     if traitCollection.layoutDirection != previousTraitCollection?.layoutDirection {
       applyContentAlignmentLayout()
+    }
+    if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
+      requestVisualRefresh()
     }
   }
 
@@ -506,7 +590,7 @@ import UIKit
     hitTestingBounds().contains(point)
   }
   
-  // MARK: - State
+  // MARK: - Control state (UIControl overrides)
   
   open override var isEnabled: Bool {
     didSet {
@@ -517,7 +601,6 @@ import UIKit
   open override var isSelected: Bool {
     didSet {
       requestVisualRefresh()
-      accessibilityTraits = isSelected ? [.button, .selected] : .button
     }
   }
   
@@ -526,40 +609,67 @@ import UIKit
       requestVisualRefresh()
       let appearance = resolveAppearance()
       let feedback = appearance.interaction.isHighlightFeedbackEnabled
+      let shouldScale = !UIAccessibility.isReduceMotionEnabled
+      if isHighlighted, feedback {
+        emitInteractionFeedback(for: .pressDown)
+      }
       UIView.animate(withDuration: 0.12) {
         self.alpha = self.resolvedAlpha(for: appearance) * self.disabledVisualMultiplier()
-        self.transform = (self.isHighlighted && feedback)
+        self.transform = (self.isHighlighted && feedback && shouldScale)
           ? CGAffineTransform(scaleX: appearance.interaction.pressedScale, y: appearance.interaction.pressedScale)
           : .identity
       }
     }
   }
 
+  /// Dispatches control events. Throttling (when enabled) applies to primary actions only:
+  /// `.primaryActionTriggered` and `.touchUpInside`.
+  ///
+  /// Non-primary control events are not throttled by design, so custom automation hooks remain predictable.
   open override func sendActions(for controlEvents: UIControl.Event) {
     guard !isLoading else { return }
+    currentlySendingControlEvents = controlEvents
+    defer { currentlySendingControlEvents = [] }
+    if shouldSuppressThrottledPrimaryAction(for: controlEvents) {
+      return
+    }
+    if controlEvents.contains(.primaryActionTriggered) || controlEvents.contains(.touchUpInside) {
+      emitInteractionFeedback(for: .primaryAction)
+    }
     super.sendActions(for: controlEvents)
   }
 
   open override func sendAction(_ action: Selector, to target: Any?, for event: UIEvent?) {
     guard !isLoading else { return }
-    if shouldSuppressThrottledPrimaryAction(for: event) {
-      return
-    }
+    // Some UIKit dispatch paths call `sendAction` directly and skip `sendActions(for:)`.
+    // In that case, default to primary-action semantics so tap throttling still works.
+    let effectiveEvents: UIControl.Event = currentlySendingControlEvents.isEmpty ? [.touchUpInside] : currentlySendingControlEvents
+    if shouldSuppressThrottledPrimaryAction(for: effectiveEvents, event: event) { return }
     super.sendAction(action, to: target, for: event)
   }
 
   open override func sendAction(_ action: UIAction) {
     guard !isLoading else { return }
     // `addAction(_:for:)` / UIAction dispatch commonly uses this overload without a `UIEvent`.
-    if shouldSuppressThrottledPrimaryAction(for: nil) {
-      return
-    }
+    let effectiveEvents: UIControl.Event = currentlySendingControlEvents.isEmpty ? [.touchUpInside] : currentlySendingControlEvents
+    if shouldSuppressThrottledPrimaryAction(for: effectiveEvents, event: nil) { return }
     super.sendAction(action)
   }
 
-  /// Returns `true` if this `sendAction` should be dropped due to `minimumTapInterval`.
-  private func shouldSuppressThrottledPrimaryAction(for event: UIEvent?) -> Bool {
+  // MARK: - Primary-action throttling
+
+  private func shouldSuppressThrottledPrimaryAction(for controlEvents: UIControl.Event) -> Bool {
+    let isPrimary = controlEvents.contains(.primaryActionTriggered) || controlEvents.contains(.touchUpInside)
+    guard isPrimary else { return false }
+    return shouldSuppressThrottledPrimaryAction(for: controlEvents, event: nil)
+  }
+
+  /// Returns `true` if this dispatch should be dropped due to `minimumTapInterval`.
+  /// Throttling applies to primary actions only (`.primaryActionTriggered` / `.touchUpInside`).
+  private func shouldSuppressThrottledPrimaryAction(for controlEvents: UIControl.Event, event: UIEvent?) -> Bool {
     guard minimumTapInterval > 0 else { return false }
+    let isPrimary = controlEvents.contains(.primaryActionTriggered) || controlEvents.contains(.touchUpInside)
+    guard isPrimary else { return false }
     let now = CFAbsoluteTimeGetCurrent()
 
     if let event, event.type == .touches || event.type == .presses {
@@ -586,6 +696,8 @@ import UIKit
     return false
   }
 
+  // MARK: - Loading
+
   /// Shows the loading chrome, blocks interaction, and optionally updates `loadingPresentationStyle` for this transition.
   public func setLoading(_ loading: Bool, presentation: LoadingPresentationStyle? = nil) {
     guard loading != isLoading else { return }
@@ -608,7 +720,6 @@ import UIKit
       stackView.alpha = 1
       loadingMessageLabel.text = nil
       loadingMessageLabel.isHidden = true
-      accessibilityValue = nil
     }
     requestVisualRefresh()
   }
@@ -641,12 +752,20 @@ import UIKit
 
   deinit {
     longPressRepeatTimer?.invalidate()
+    if let cachedPressDownSoundID {
+      AudioServicesDisposeSystemSoundID(cachedPressDownSoundID)
+    }
+    if let cachedPrimaryActionSoundID {
+      AudioServicesDisposeSystemSoundID(cachedPrimaryActionSoundID)
+    }
   }
 
   open override func prepareForInterfaceBuilder() {
     super.prepareForInterfaceBuilder()
     flushPendingRefresh()
   }
+
+  // MARK: - Global defaults
 
   private func applyFactoryDefaultsFromGlobalStyle() {
     minimumTapInterval = FKButton.GlobalStyle.minimumTapInterval
@@ -656,6 +775,8 @@ import UIKit
     disabledDimmingAlpha = FKButton.GlobalStyle.disabledDimmingAlpha
     longPressRecognizer.minimumPressDuration = longPressMinimumDuration
   }
+
+  // MARK: - Loading overlay (internal views)
 
   private func configureLoadingOverlay() {
     loadingOverlayHost.isUserInteractionEnabled = false
@@ -724,6 +845,8 @@ import UIKit
     }
   }
 
+  // MARK: - Hit testing
+
   private func hitTestingBounds() -> CGRect {
     let appearanceOutsets = resolveAppearance().interaction.hitTestOutsets
     let imageOutsets = activeImageElements().reduce(UIEdgeInsets.zero) { current, element in
@@ -755,6 +878,8 @@ import UIKit
     return max(0, min(1, disabledDimmingAlpha))
   }
 
+  // MARK: - Long press
+
   @objc private func handleLongPress(_ sender: UILongPressGestureRecognizer) {
     switch sender.state {
     case .began:
@@ -776,7 +901,7 @@ import UIKit
     }
   }
   
-  // MARK: - Private
+  // MARK: - Internal layout engine
   
   private func applyAxis() {
     switch axis {
@@ -940,9 +1065,10 @@ import UIKit
     applyImagesForCurrentState()
     applyCustomContentForCurrentState()
     applyAppearanceForCurrentState()
+    applyAccessibilityForCurrentState()
   }
   
-  // MARK: - Title & Subtitle lifecycle (lazy creation / timely cleanup)
+  // MARK: - Title & subtitle lifecycle (lazy creation / cleanup)
 
   private func makeTitleLabel() -> UILabel {
     let label = UILabel()
@@ -1161,6 +1287,8 @@ import UIKit
     customContentHost = nil
   }
   
+  // MARK: - Content layout (stack composition)
+
   private func applyContentLayout() {
     stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
     
@@ -1189,6 +1317,8 @@ import UIKit
     }
   }
   
+  // MARK: - Appearance rendering
+
   private func applyAppearanceForCurrentState() {
     let appearance = resolveAppearance()
 
@@ -1269,6 +1399,10 @@ import UIKit
       layer.shadowPath = nil
       return
     }
+    guard bounds.width > 0.5, bounds.height > 0.5 else {
+      layer.shadowPath = nil
+      return
+    }
     layer.shadowPath = UIBezierPath(
       roundedRect: bounds,
       byRoundingCorners: appearance.cornerStyle.maskedCorners.uiRectCorner,
@@ -1303,6 +1437,8 @@ import UIKit
     }
   }
   
+  // MARK: - Text rendering
+
   private func applyTextForCurrentState() {
     switch content.kind {
     case .textOnly, .textAndImage:
@@ -1314,18 +1450,14 @@ import UIKit
       releaseTitleLabel()
       releaseSubtitleLabel()
       let image = resolveImageElement(for: .center)
-      accessibilityLabel = image?.accessibilityLabel
-      accessibilityHint = image?.accessibilityHint
     case .custom:
       releaseTitleLabel()
       releaseSubtitleLabel()
       let customView = resolveCustomContent()?.view
-      accessibilityLabel = customView?.accessibilityLabel
-      accessibilityHint = customView?.accessibilityHint
     }
   }
 
-  // MARK: - Subviews rendering
+  // MARK: - Element resolution & rendering (stateful lookups)
 
   private func resolveSubtitleElement() -> LabelAttributes? {
     resolveFromStateMap(subtitleByState)
@@ -1345,6 +1477,8 @@ import UIKit
     applySubtitle(subtitle)
   }
   
+  // MARK: - Image rendering
+
   private func applyImagesForCurrentState() {
     switch content.kind {
     case .imageOnly:
@@ -1387,6 +1521,8 @@ import UIKit
     resolveFromStateMap(customContentByState)
   }
 
+  // MARK: - Custom content rendering
+
   private func applyCustomContentForCurrentState() {
     guard case .custom = content.kind else {
       releaseCustomContentHost()
@@ -1424,19 +1560,27 @@ import UIKit
     invalidateIntrinsicContentSize()
   }
 
+  // MARK: - State resolution (supports combined states)
+
   private var stateResolutionOrder: [UIControl.State] {
     if let provider = stateResolutionProvider {
       return provider(isEnabled, isSelected, isHighlighted)
     }
-    if !isEnabled { return [.disabled, .normal] }
-    if isSelected { return [.selected, .normal] }
+    if !isEnabled {
+      // Support explicit combined registrations like `.disabled.union(.selected)`.
+      if isSelected { return [.disabled.union(.selected), .disabled, .normal] }
+      return [.disabled, .normal]
+    }
+    // Support `.selected + .highlighted` as a first-class candidate.
+    if isHighlighted, isSelected { return [.highlighted.union(.selected), .highlighted, .selected, .normal] }
     if isHighlighted { return [.highlighted, .normal] }
+    if isSelected { return [.selected, .normal] }
     return [.normal]
   }
 
   private func resolveFromStateMap<T>(_ map: StatefulValues<T>) -> T? {
     for state in stateResolutionOrder {
-      if let value = map[state.rawValue] {
+      if let value = map[Self.makeStateKey(state)] {
         return value
       }
     }
@@ -1456,40 +1600,36 @@ import UIKit
     return resolveFromStateMap(map)
   }
 
-  private func setImage(_ image: ImageAttributes?, for state: UIControl.State, slot: ImageSlot) {
+  private func storeImage(_ image: ImageAttributes?, slot: ImageSlot, for state: UIControl.State) {
+    let key = Self.makeStateKey(state)
     if var map = imagesBySlotAndState[slot] {
       if let image {
-        map[state.rawValue] = image
+        map[key] = image
       } else {
-        map.removeValue(forKey: state.rawValue)
+        map.removeValue(forKey: key)
       }
       imagesBySlotAndState[slot] = map
     } else {
-      imagesBySlotAndState[slot] = image.map { [state.rawValue: $0] } ?? [:]
+      imagesBySlotAndState[slot] = image.map { [key: $0] } ?? [:]
     }
   }
+
+  // MARK: - UILabel application
 
   private func applyTitle(_ title: LabelAttributes) {
     let label = titleLabelIfNeeded()
     label.textAlignment = title.alignment
     label.numberOfLines = title.numberOfLines
     label.lineBreakMode = title.lineBreakMode
+    label.adjustsFontForContentSizeCategory = title.adjustsFontForContentSizeCategory
     label.adjustsFontSizeToFitWidth = title.adjustsFontSizeToFitWidth
     label.minimumScaleFactor = title.minimumScaleFactor
     label.allowsDefaultTighteningForTruncation = title.allowsDefaultTighteningForTruncation
     label.shadowColor = title.shadowColor
     label.shadowOffset = title.shadowOffset
 
-    if let accessibilityLabel = title.accessibilityLabel {
-      self.accessibilityLabel = accessibilityLabel
-    }
-    accessibilityHint = title.accessibilityHint
-
     if let attributed = title.attributedText {
       label.attributedText = attributed
-      if self.accessibilityLabel == nil {
-        self.accessibilityLabel = attributed.string
-      }
       return
     }
 
@@ -1507,15 +1647,12 @@ import UIKit
     }
 
     let attributes: [NSAttributedString.Key: Any] = [
-      .font: title.font,
+      .font: scaledFont(for: title),
       .foregroundColor: title.color,
       .kern: title.kerning,
       .paragraphStyle: paragraph,
     ]
     label.attributedText = NSAttributedString(string: text, attributes: attributes)
-    if self.accessibilityLabel == nil {
-      self.accessibilityLabel = text
-    }
   }
 
   private func applySubtitle(_ subtitle: LabelAttributes) {
@@ -1523,6 +1660,7 @@ import UIKit
     label.textAlignment = subtitle.alignment
     label.numberOfLines = subtitle.numberOfLines
     label.lineBreakMode = subtitle.lineBreakMode
+    label.adjustsFontForContentSizeCategory = subtitle.adjustsFontForContentSizeCategory
     label.adjustsFontSizeToFitWidth = subtitle.adjustsFontSizeToFitWidth
     label.minimumScaleFactor = subtitle.minimumScaleFactor
     label.allowsDefaultTighteningForTruncation = subtitle.allowsDefaultTighteningForTruncation
@@ -1548,13 +1686,23 @@ import UIKit
     }
 
     let attributes: [NSAttributedString.Key: Any] = [
-      .font: subtitle.font,
+      .font: scaledFont(for: subtitle),
       .foregroundColor: subtitle.color,
       .kern: subtitle.kerning,
       .paragraphStyle: paragraph,
     ]
     label.attributedText = NSAttributedString(string: text, attributes: attributes)
   }
+
+  private func scaledFont(for configuration: LabelAttributes) -> UIFont {
+    guard configuration.adjustsFontForContentSizeCategory else { return configuration.font }
+    if let style = configuration.textStyle {
+      return UIFontMetrics(forTextStyle: style).scaledFont(for: configuration.font, compatibleWith: traitCollection)
+    }
+    return UIFontMetrics.default.scaledFont(for: configuration.font, compatibleWith: traitCollection)
+  }
+
+  // MARK: - UIImageView application
 
   private func applyImage(_ element: ImageAttributes?, to imageView: UIImageView) {
     guard let element else {
@@ -1644,11 +1792,16 @@ import UIKit
     }
   }
 
+  // MARK: - Image padding (rendered cache)
+
   /// Applies directional insets by rendering into a padded bitmap.
   private func paddedImage(from image: UIImage, contentInsets: NSDirectionalEdgeInsets) -> UIImage {
     guard contentInsets != .zero else { return image }
     let directional = effectiveDirectionalInsets(contentInsets)
-    let cacheKey = "\(ObjectIdentifier(image).hashValue)-\(directional.top)-\(directional.left)-\(directional.bottom)-\(directional.right)-\(image.scale)" as NSString
+    // `ObjectIdentifier(image).hashValue` is not guaranteed stable/unique across executions.
+    // Use the object pointer address + insets + scale to reduce collision risk.
+    let ptr = Unmanaged.passUnretained(image).toOpaque()
+    let cacheKey = "\(ptr)-\(directional.top)-\(directional.left)-\(directional.bottom)-\(directional.right)-\(image.scale)" as NSString
     if let cached = Self.paddedImageCache.object(forKey: cacheKey) {
       return cached
     }
@@ -1676,6 +1829,198 @@ import UIKit
       right: max(0, isRTL ? insets.leading : insets.trailing)
     )
   }
+
+  // MARK: - Accessibility (a11y)
+
+  private func applyAccessibilityForCurrentState() {
+    // Traits: keep `.button` always; add `.selected` and `.updatesFrequently` while loading.
+    var traits: UIAccessibilityTraits = [.button]
+    if isSelected { traits.insert(.selected) }
+    if isLoading { traits.insert(.updatesFrequently) }
+    accessibilityTraits = traits
+
+    accessibilityLabel = accessibilityConfiguration.labelProvider?(self) ?? defaultAccessibilityLabel()
+    accessibilityValue = accessibilityConfiguration.valueProvider?(self) ?? defaultAccessibilityValue()
+    accessibilityHint = accessibilityConfiguration.hintProvider?(self) ?? defaultAccessibilityHint()
+  }
+
+  private func defaultAccessibilityLabel() -> String? {
+    // Strategy:
+    // - Keep the semantic "title" as `accessibilityLabel` (stable meaning).
+    // - Put subtitle / loading text into `accessibilityValue`.
+    switch content.kind {
+    case .textOnly, .textAndImage:
+      let title = resolveTitleElement()
+      if let explicit = title.accessibilityLabel { return explicit }
+      if let attributed = title.attributedText { return attributed.string }
+      if let text = title.text, !text.isEmpty { return transformedText(from: text, by: title.textTransform) }
+      return nil
+    case .imageOnly:
+      return activeImageElements().first?.accessibilityLabel
+    case .custom:
+      return resolveCustomContent()?.view?.accessibilityLabel
+    }
+  }
+
+  private func defaultAccessibilityValue() -> String? {
+    // Prefer loading message while loading; otherwise use subtitle when present.
+    if isLoading {
+      switch loadingPresentationStyle {
+      case .overlay:
+        return "Loading"
+      case .replacesContent(let options):
+        let trimmed = options.message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? "Loading" : trimmed
+      }
+    }
+
+    switch content.kind {
+    case .textOnly, .textAndImage:
+      guard let subtitle = resolveSubtitleElement(), subtitleHasRenderableContent(subtitle) else { return nil }
+      if let attributed = subtitle.attributedText { return attributed.string }
+      if let text = subtitle.text, !text.isEmpty { return transformedText(from: text, by: subtitle.textTransform) }
+      return nil
+    case .imageOnly, .custom:
+      return nil
+    }
+  }
+
+  private func defaultAccessibilityHint() -> String? {
+    switch content.kind {
+    case .textOnly, .textAndImage:
+      return resolveTitleElement().accessibilityHint
+    case .imageOnly:
+      return activeImageElements().first?.accessibilityHint
+    case .custom:
+      return resolveCustomContent()?.view?.accessibilityHint
+    }
+  }
+
+  // MARK: - Sound feedback
+
+  private func syncSoundFeedbackResourcesIfNeeded() {
+    syncCustomSoundResource(
+      for: soundFeedbackConfiguration.pressDownSound,
+      cachedURL: &cachedPressDownSoundURL,
+      cachedSoundID: &cachedPressDownSoundID
+    )
+    syncCustomSoundResource(
+      for: soundFeedbackConfiguration.primaryActionSound,
+      cachedURL: &cachedPrimaryActionSoundURL,
+      cachedSoundID: &cachedPrimaryActionSoundID
+    )
+  }
+
+  private func syncCustomSoundResource(
+    for sound: FKButtonSoundFeedbackConfiguration.Sound,
+    cachedURL: inout URL?,
+    cachedSoundID: inout SystemSoundID?
+  ) {
+    guard case .customFileURL(let url) = sound else {
+      cachedURL = nil
+      disposeCachedSoundIfNeeded(soundID: &cachedSoundID)
+      return
+    }
+    guard cachedURL != url else { return }
+    cachedURL = url
+    disposeCachedSoundIfNeeded(soundID: &cachedSoundID)
+    var createdSoundID: SystemSoundID = 0
+    let status = AudioServicesCreateSystemSoundID(url as CFURL, &createdSoundID)
+    guard status == kAudioServicesNoError else {
+      cachedURL = nil
+      return
+    }
+    cachedSoundID = createdSoundID
+  }
+
+  private func playSoundFeedback(
+    for sound: FKButtonSoundFeedbackConfiguration.Sound,
+    cachedCustomSoundID: SystemSoundID?
+  ) {
+    switch sound {
+    case .system(let systemSoundID):
+      AudioServicesPlaySystemSound(systemSoundID)
+    case .customFileURL:
+      guard let cachedCustomSoundID else { return }
+      AudioServicesPlaySystemSound(cachedCustomSoundID)
+    }
+  }
+
+  private func emitInteractionFeedback(for trigger: InteractionFeedbackTrigger) {
+    switch trigger {
+    case .pressDown:
+      if hapticsConfiguration.onPressDown {
+        impactFeedbackGenerator.impactOccurred()
+      }
+      if soundFeedbackConfiguration.onPressDown {
+        playSoundFeedback(for: soundFeedbackConfiguration.pressDownSound, cachedCustomSoundID: cachedPressDownSoundID)
+      }
+    case .primaryAction:
+      if hapticsConfiguration.onPrimaryAction {
+        impactFeedbackGenerator.impactOccurred()
+      }
+      if soundFeedbackConfiguration.onPrimaryAction {
+        playSoundFeedback(for: soundFeedbackConfiguration.primaryActionSound, cachedCustomSoundID: cachedPrimaryActionSoundID)
+      }
+    }
+  }
+
+  private func disposeCachedSoundIfNeeded(soundID: inout SystemSoundID?) {
+    guard let unwrappedSoundID = soundID else { return }
+    AudioServicesDisposeSystemSoundID(unwrappedSoundID)
+    soundID = nil
+  }
+  
+  // MARK: - Pointer interaction (iPadOS)
+
+  private func syncPointerInteractionIfNeeded() {
+    guard #available(iOS 13.4, *), traitCollection.userInterfaceIdiom == .pad || traitCollection.userInterfaceIdiom == .mac else {
+      return
+    }
+    if pointerConfiguration.isEnabled {
+      if pointerInteraction == nil {
+        let interaction = UIPointerInteraction(delegate: self)
+        addInteraction(interaction)
+        pointerInteraction = interaction
+      }
+    } else {
+      if let interaction = pointerInteraction {
+        removeInteraction(interaction)
+        pointerInteraction = nil
+      }
+      isPointerHovered = false
+    }
+  }
+
+  private func applyPointerHoverVisualsIfNeeded() {
+    guard pointerConfiguration.isEnabled, pointerConfiguration.showsHoverHighlight else { return }
+    // Keep simple: apply an alpha multiplier on top of current computed alpha.
+    if isPointerHovered {
+      alpha *= pointerConfiguration.hoverAlphaMultiplier
+    } else {
+      requestVisualRefresh()
+    }
+  }
+}
+
+@available(iOS 13.4, *)
+extension FKButton: UIPointerInteractionDelegate {
+  public func pointerInteraction(_ interaction: UIPointerInteraction, regionFor request: UIPointerRegionRequest, defaultRegion: UIPointerRegion?) -> UIPointerRegion? {
+    UIPointerRegion(rect: bounds)
+  }
+
+  public func pointerInteraction(_ interaction: UIPointerInteraction, styleFor region: UIPointerRegion) -> UIPointerStyle? {
+    let preview = UITargetedPreview(view: self)
+    return UIPointerStyle(effect: .highlight(preview), shape: nil)
+  }
+
+  public func pointerInteraction(_ interaction: UIPointerInteraction, willEnter region: UIPointerRegion, animator: UIPointerInteractionAnimating) {
+    animator.addAnimations { self.isPointerHovered = true }
+  }
+
+  public func pointerInteraction(_ interaction: UIPointerInteraction, willExit region: UIPointerRegion, animator: UIPointerInteractionAnimating) {
+    animator.addAnimations { self.isPointerHovered = false }
+  }
 }
 
 private extension CACornerMask {
@@ -1686,51 +2031,5 @@ private extension CACornerMask {
     if contains(.layerMinXMaxYCorner) { corners.insert(.bottomLeft) }
     if contains(.layerMaxXMaxYCorner) { corners.insert(.bottomRight) }
     return corners
-  }
-}
-
-// MARK: - Custom content sizing
-
-/// Custom content host: a single subview pinned to fill, reporting fitting/intrinsic size to `UIStackView`.
-private final class FKButtonCustomContentHostView: UIView {
-  override init(frame: CGRect) {
-    super.init(frame: frame)
-    isOpaque = false
-  }
-
-  required init?(coder: NSCoder) {
-    super.init(coder: coder)
-    isOpaque = false
-  }
-
-  override func didAddSubview(_ subview: UIView) {
-    super.didAddSubview(subview)
-    invalidateIntrinsicContentSize()
-  }
-
-  override func willRemoveSubview(_ subview: UIView) {
-    super.willRemoveSubview(subview)
-    invalidateIntrinsicContentSize()
-  }
-
-  override var intrinsicContentSize: CGSize {
-    guard let subview = subviews.first else {
-      return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
-    }
-    let fitted = subview.systemLayoutSizeFitting(
-      CGSize(width: UIView.layoutFittingCompressedSize.width, height: UIView.layoutFittingCompressedSize.height),
-      withHorizontalFittingPriority: .fittingSizeLevel,
-      verticalFittingPriority: .fittingSizeLevel
-    )
-    if fitted.width > 0.5, fitted.height > 0.5 {
-      return fitted
-    }
-    let intrinsic = subview.intrinsicContentSize
-    let width = intrinsic.width > 0 ? intrinsic.width : UIView.noIntrinsicMetric
-    let height = intrinsic.height > 0 ? intrinsic.height : UIView.noIntrinsicMetric
-    if width != UIView.noIntrinsicMetric || height != UIView.noIntrinsicMetric {
-      return CGSize(width: width, height: height)
-    }
-    return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
   }
 }

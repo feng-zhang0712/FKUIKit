@@ -336,7 +336,7 @@ final class FKTabBarItemCell: UICollectionViewCell {
     // Always clear previous state before applying new content; FKButton stores per-state values.
     let states: [UIControl.State] = [.normal, .selected, .disabled]
     states.forEach {
-      tabButton.setImage(nil, for: $0)
+      tabButton.setCenterImage(nil, for: $0)
       tabButton.setLeadingImage(nil, for: $0)
       tabButton.setTrailingImage(nil, for: $0)
       tabButton.setCustomContent(nil, for: $0)
@@ -483,9 +483,9 @@ final class FKTabBarItemCell: UICollectionViewCell {
     )
     switch slot {
     case .center:
-      tabButton.setImage(normalImage, for: .normal)
-      tabButton.setImage(selectedImage, for: .selected)
-      tabButton.setImage(disabledImage, for: .disabled)
+      tabButton.setCenterImage(normalImage, for: .normal)
+      tabButton.setCenterImage(selectedImage, for: .selected)
+      tabButton.setCenterImage(disabledImage, for: .disabled)
     case .leading:
       tabButton.setLeadingImage(normalImage, for: .normal)
       tabButton.setLeadingImage(selectedImage, for: .selected)
