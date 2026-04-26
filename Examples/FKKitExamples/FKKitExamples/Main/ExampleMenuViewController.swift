@@ -35,12 +35,12 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "BlurView",
-          subtitle: "High-performance blur view demos (UIKit / SwiftUI / IB)",
+          subtitle: "High-performance blur view examples (UIKit / SwiftUI / IB)",
           make: { FKBlurViewExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "Button",
-          subtitle: "Split demos: basics, layout, interaction, appearance, loading",
+          subtitle: "Split deexmos: basics, layout, interaction, appearance, loading",
           make: { FKButtonExamplesHubViewController() }
         ),
         ExampleMenuItem(
@@ -55,7 +55,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "Divider",
-          subtitle: "Horizontal/vertical, dashed/gradient, auto pin, IB and SwiftUI divider demos",
+          subtitle: "Horizontal/vertical, dashed/gradient, auto pin, IB and SwiftUI divider examples",
           make: { FKDividerExamplesHubViewController() }
         ),
         ExampleMenuItem(
@@ -65,7 +65,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "ExpandableText",
-          subtitle: "Hub: basic, table and collection expandable text demos",
+          subtitle: "Hub: basic, table and collection expandable text examples",
           make: { FKExpandableTextExamplesHubViewController() }
         ),
         ExampleMenuItem(
@@ -95,7 +95,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "StarRating",
-          subtitle: "5-star, half-star, precise decimal, image/color styles, callbacks, and table reuse demos",
+          subtitle: "5-star, half-star, precise decimal, image/color styles, callbacks, and table reuse examples",
           make: { FKStarRatingExamplesHubViewController() }
         ),
         ExampleMenuItem(
@@ -110,7 +110,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "TabBar",
-          subtitle: "Segmented tab bar with indicators, dynamic data, width policies, and a11y/i18n demos",
+          subtitle: "Segmented tab bar with indicators, dynamic data, width policies, and a11y/i18n examples",
           make: { FKTabBarExamplesHubViewController() }
         ),
         ExampleMenuItem(
@@ -182,7 +182,7 @@ final class ExampleMenuViewController: UITableViewController {
       items: [
         ExampleMenuItem(
           title: "Base",
-          subtitle: "Controller foundation demos: lifecycle, navigation and tab bar infrastructure",
+          subtitle: "Controller foundation examples: lifecycle, navigation and tab bar infrastructure",
           make: { FKBaseExamplesHubViewController() }
         ),
         ExampleMenuItem(
