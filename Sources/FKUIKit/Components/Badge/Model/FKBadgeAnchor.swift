@@ -1,7 +1,9 @@
 import Foundation
 
-/// Semantic corner for pinning the badge to the target (uses leading/trailing for RTL-safe layout).
-/// Uses `leading` / `trailing` so the attachment follows RTL layout.
+/// Semantic anchor for pinning the badge to the target (uses leading/trailing for RTL-safe layout).
+///
+/// - Important: Corner anchors align the target's corner to the badge view's **center**.
+///   Use `FKBadgeController.offset` to fine-tune placement.
 public enum FKBadgeAnchor: Sendable, Equatable {
   /// Top + leading (often “top-left” in LTR).
   case topLeading

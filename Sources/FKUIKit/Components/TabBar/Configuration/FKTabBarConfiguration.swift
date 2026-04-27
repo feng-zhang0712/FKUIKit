@@ -52,30 +52,6 @@ public enum FKTabBarSelectionScrollPosition: Equatable {
   case minimalVisible
 }
 
-/// Animation curve for selection scroll.
-public enum FKTabBarScrollAnimationCurve: Equatable {
-  case easeInOut
-  case easeIn
-  case easeOut
-  case linear
-}
-
-/// Selection scroll animation configuration.
-public struct FKTabBarSelectionScrollAnimation: Equatable {
-  /// Whether animated scrolling is enabled.
-  public var isEnabled: Bool
-  /// Duration used when `isEnabled` is true. Default is `0.25`.
-  public var duration: TimeInterval
-  /// Curve used when `isEnabled` is true.
-  public var curve: FKTabBarScrollAnimationCurve
-
-  public init(isEnabled: Bool = true, duration: TimeInterval = 0.25, curve: FKTabBarScrollAnimationCurve = .easeInOut) {
-    self.isEnabled = isEnabled
-    self.duration = duration
-    self.curve = curve
-  }
-}
-
 /// Title overflow strategy for tab labels.
 public enum FKTabBarTitleOverflowMode: Equatable {
   /// Truncate tail when space is insufficient.
@@ -228,8 +204,8 @@ public struct FKTabBarLayoutConfiguration {
   ///
   /// This also affects post-rotation realignment behavior.
   public var selectionScrollPosition: FKTabBarSelectionScrollPosition
-  /// Animation config for selection auto-scroll.
-  public var selectionScrollAnimation: FKTabBarSelectionScrollAnimation
+  /// Whether selection auto-scroll uses animation.
+  public var isSelectionScrollAnimationEnabled: Bool
 
   public init(
     isScrollable: Bool = true,
@@ -248,7 +224,7 @@ public struct FKTabBarLayoutConfiguration {
     itemLayoutDirection: FKTabBarItemLayoutDirection = .horizontal,
     rtlBehavior: FKTabBarRTLBehavior = .automatic,
     selectionScrollPosition: FKTabBarSelectionScrollPosition = .center,
-    selectionScrollAnimation: FKTabBarSelectionScrollAnimation = FKTabBarSelectionScrollAnimation()
+    isSelectionScrollAnimationEnabled: Bool = true
   ) {
     self.isScrollable = isScrollable
     self.itemSpacing = itemSpacing
@@ -266,7 +242,7 @@ public struct FKTabBarLayoutConfiguration {
     self.itemLayoutDirection = itemLayoutDirection
     self.rtlBehavior = rtlBehavior
     self.selectionScrollPosition = selectionScrollPosition
-    self.selectionScrollAnimation = selectionScrollAnimation
+    self.isSelectionScrollAnimationEnabled = isSelectionScrollAnimationEnabled
   }
 }
 

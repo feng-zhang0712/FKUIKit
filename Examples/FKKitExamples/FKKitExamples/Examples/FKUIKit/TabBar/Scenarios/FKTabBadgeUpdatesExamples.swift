@@ -23,6 +23,7 @@ final class FKTabBarBadgeUpdatesExampleViewController: UIViewController {
   private let offsetX = UISlider()
   private let offsetY = UISlider()
   private let offsetValueLabel = UILabel()
+  private var pendingBadgePlacementWorkItem: DispatchWorkItem?
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -54,14 +55,14 @@ final class FKTabBarBadgeUpdatesExampleViewController: UIViewController {
     offsetX.minimumValue = -20
     offsetX.maximumValue = 20
     offsetX.value = 6
-    offsetX.addAction(UIAction { [weak self] _ in self?.applyBadgePlacement() }, for: .valueChanged)
+    offsetX.addAction(UIAction { [weak self] _ in self?.scheduleBadgePlacementUpdate() }, for: .valueChanged)
     stack.addArrangedSubview(FKTabBarExampleSupport.captionLabel("badge.offset.x"))
     stack.addArrangedSubview(offsetX)
 
     offsetY.minimumValue = -20
     offsetY.maximumValue = 20
     offsetY.value = -4
-    offsetY.addAction(UIAction { [weak self] _ in self?.applyBadgePlacement() }, for: .valueChanged)
+    offsetY.addAction(UIAction { [weak self] _ in self?.scheduleBadgePlacementUpdate() }, for: .valueChanged)
     stack.addArrangedSubview(FKTabBarExampleSupport.captionLabel("badge.offset.y"))
     stack.addArrangedSubview(offsetY)
 
@@ -132,6 +133,7 @@ final class FKTabBarBadgeUpdatesExampleViewController: UIViewController {
       }
       items[idx].badge.state.normal = badge
       tabView.setBadge(badge, at: idx, animated: true)
+      verticalTabView.setBadge(badge, at: idx, animated: true)
     }
     updateCount += 1
     statusLabel.text = "Updates: \(updateCount) (local badge updates, no full reload)"
@@ -163,8 +165,19 @@ final class FKTabBarBadgeUpdatesExampleViewController: UIViewController {
       items[idx].badge.anchor = anchor
       items[idx].badge.offset = offset
     }
-    tabView.reload(items: items, updatePolicy: .preserveSelection)
-    verticalTabView.reload(items: items, updatePolicy: .preserveSelection)
+    UIView.performWithoutAnimation {
+      tabView.reload(items: items, updatePolicy: .preserveSelection)
+      verticalTabView.reload(items: items, updatePolicy: .preserveSelection)
+    }
+  }
+
+  private func scheduleBadgePlacementUpdate() {
+    pendingBadgePlacementWorkItem?.cancel()
+    let workItem = DispatchWorkItem { [weak self] in
+      self?.applyBadgePlacement()
+    }
+    pendingBadgePlacementWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: workItem)
   }
 }
 

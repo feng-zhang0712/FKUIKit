@@ -1,59 +1,5 @@
 import UIKit
 
-// MARK: - Delegate
-
-@MainActor
-public protocol FKTabBarDelegate: AnyObject {
-  /// Asks whether selection can proceed.
-  ///
-  /// Return `false` to block selection before visual state and callbacks are emitted.
-  ///
-  /// - Parameters:
-  ///   - tabBar: The sender tab bar.
-  ///   - item: The candidate item.
-  ///   - index: The candidate visible index.
-  ///   - reason: The semantic source of the selection request.
-  /// - Returns: `true` to allow selection commit; `false` to reject.
-  func tabBar(_ tabBar: FKTabBar, shouldSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason) -> Bool
-  /// Called after selection gating passes and before visual commit.
-  func tabBar(_ tabBar: FKTabBar, willSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason)
-  /// Called after selection is committed and rendered.
-  func tabBar(_ tabBar: FKTabBar, didSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason)
-  /// Called when user taps the already selected tab and reducer resolves to reselect.
-  func tabBar(_ tabBar: FKTabBar, didReselect item: FKTabBarItem, at index: Int)
-
-  /// Called when user long-presses a tab item.
-  ///
-  /// - Important: This callback is UI-only and does not imply selection.
-  func tabBar(_ tabBar: FKTabBar, didLongPress item: FKTabBarItem, at index: Int)
-
-  /// Called in controlled mode when a user tap requests selection.
-  ///
-  /// This callback does not imply selection has been committed.
-  func tabBar(_ tabBar: FKTabBar, didRequestSelection item: FKTabBarItem, at index: Int)
-
-  /// Called after tabs are reloaded and effective visible items are finalized.
-  func tabBar(_ tabBar: FKTabBar, didReloadItems items: [FKTabBarItem], visibleItems: [FKTabBarItem], selectedIndex: Int)
-}
-
-public extension FKTabBarDelegate {
-  func tabBar(_ tabBar: FKTabBar, shouldSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason) -> Bool { true }
-  func tabBar(_ tabBar: FKTabBar, willSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason) {}
-  func tabBar(_ tabBar: FKTabBar, didSelect item: FKTabBarItem, at index: Int, reason: FKTabBar.SelectionReason) {}
-  func tabBar(_ tabBar: FKTabBar, didReselect item: FKTabBarItem, at index: Int) {}
-  func tabBar(_ tabBar: FKTabBar, didLongPress item: FKTabBarItem, at index: Int) {}
-  func tabBar(_ tabBar: FKTabBar, didRequestSelection item: FKTabBarItem, at index: Int) {}
-  func tabBar(_ tabBar: FKTabBar, didReloadItems items: [FKTabBarItem], visibleItems: [FKTabBarItem], selectedIndex: Int) {}
-}
-
-@MainActor
-public protocol FKTabBarDataSource: AnyObject {
-  /// Returns number of items available for the tab bar.
-  func numberOfItems(in tabBar: FKTabBar) -> Int
-  /// Returns item for a data-source index in `[0..<numberOfItems]`.
-  func tabBar(_ tabBar: FKTabBar, itemAt index: Int) -> FKTabBarItem
-}
-
 /// A high-performance tab header component.
 ///
 /// `FKTabBar` is UI-only: it manages tab rendering, selection state, and indicator animation.
@@ -150,7 +96,7 @@ public final class FKTabBar: UIView {
     didSet {
       invalidateIntrinsicContentSize()
       applyAppearance()
-      invalidateLayoutAndRelayout(reason: "configuration changed", animatedScroll: false)
+      invalidateLayoutAndRelayout(animatedScroll: false)
     }
   }
 
@@ -311,7 +257,6 @@ public final class FKTabBar: UIView {
   private var progressSnapshotFromFrame: CGRect?
   private var progressSnapshotToFrame: CGRect?
   private let selectionFeedbackGenerator = UISelectionFeedbackGenerator()
-  private var isRelayoutInProgress = false
 
   // MARK: - Lifecycle / Overrides
 
@@ -382,7 +327,7 @@ public final class FKTabBar: UIView {
       // Size changes (rotation, split view, parent relayout) are funneled into one relayout path
       // to keep item geometry, selected visibility, and indicator position in sync.
       lastLayoutSize = bounds.size
-      invalidateLayoutAndRelayout(reason: "bounds changed", animatedScroll: false)
+      invalidateLayoutAndRelayout(animatedScroll: false)
     }
     updateIndicatorFrame(animated: false)
   }
@@ -392,14 +337,14 @@ public final class FKTabBar: UIView {
     super.traitCollectionDidChange(previousTraitCollection)
     if traitCollection.layoutDirection != previousTraitCollection?.layoutDirection {
       applySemanticDirection()
-      invalidateLayoutAndRelayout(reason: "layout direction changed", animatedScroll: false)
+      invalidateLayoutAndRelayout(animatedScroll: false)
     }
     if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
       // Dynamic Type changes affect text measurement and thus intrinsic item widths/heights.
       // Invalidate layout and reload to keep item sizing and indicator geometry stable.
       invalidateIntrinsicContentSize()
       collectionView.reloadData()
-      invalidateLayoutAndRelayout(reason: "content size category changed", animatedScroll: false)
+      invalidateLayoutAndRelayout(animatedScroll: false)
     }
   }
 
@@ -407,7 +352,7 @@ public final class FKTabBar: UIView {
     assertMainThreadInDebug()
     super.safeAreaInsetsDidChange()
     invalidateIntrinsicContentSize()
-    invalidateLayoutAndRelayout(reason: "safe area changed", animatedScroll: false)
+    invalidateLayoutAndRelayout(animatedScroll: false)
   }
 
   public override var intrinsicContentSize: CGSize {
@@ -490,7 +435,7 @@ public final class FKTabBar: UIView {
     clearProgressSnapshot()
 
     collectionView.reloadData()
-    invalidateLayoutAndRelayout(reason: "items reloaded", animatedScroll: false)
+    invalidateLayoutAndRelayout(animatedScroll: false)
     updateIndicatorFrame(animated: false)
     delegate?.tabBar(self, didReloadItems: self.items, visibleItems: visibleItems, selectedIndex: selectedIndex)
   }
@@ -602,7 +547,7 @@ public final class FKTabBar: UIView {
   /// Use this after container rotation or major bounds/safe-area changes.
   public func realignSelection(animated: Bool = false) {
     assertMainThreadInDebug()
-    invalidateLayoutAndRelayout(reason: "manual realignSelection", animatedScroll: animated)
+    invalidateLayoutAndRelayout(animatedScroll: animated)
     updateIndicatorFrame(animated: false)
   }
 
@@ -691,8 +636,6 @@ public final class FKTabBar: UIView {
     setBadge(badge, at: visibleIndex, animated: animated, accessibilityValue: accessibilityValue)
   }
 
-  deinit {}
-
   // MARK: - Configuration / Appearance
 
   private func commonInit() {
@@ -766,15 +709,10 @@ public final class FKTabBar: UIView {
       layout: layout,
       scrollView: collectionView
     )
-    let config = layout.selectionScrollAnimation
-    let shouldAnimate = animated && config.isEnabled
-    if shouldAnimate {
-      UIView.animate(withDuration: config.duration, delay: 0, options: [animationOption(for: config.curve), .beginFromCurrentState, .allowUserInteraction]) {
-        self.collectionView.setContentOffset(targetOffset, animated: false)
-      }
-    } else {
-      collectionView.setContentOffset(targetOffset, animated: false)
-    }
+    let shouldAnimate = animated && layout.isSelectionScrollAnimationEnabled
+    // Prefer UIScrollView's own offset animation. Wrapping contentOffset in UIView.animate can
+    // interact poorly with concurrent reload/layout updates and cause unexpected cell appearances.
+    collectionView.setContentOffset(targetOffset, animated: shouldAnimate)
   }
 
   private func modelForCell(at index: Int, selectionProgress: CGFloat) -> FKTabBarItemCell.Model {
@@ -1147,7 +1085,7 @@ extension FKTabBar: UICollectionViewDelegateFlowLayout {
     }
   }
 
-  private func invalidateLayoutAndRelayout(reason: String, animatedScroll: Bool) {
+  private func invalidateLayoutAndRelayout(animatedScroll: Bool) {
     guard !visibleItems.isEmpty else {
       return
     }
@@ -1238,15 +1176,6 @@ extension FKTabBar: UICollectionViewDelegateFlowLayout {
       trailingInset: logicalRight,
       dynamicSpacing: spacing
     )
-  }
-
-  private func animationOption(for curve: FKTabBarScrollAnimationCurve) -> UIView.AnimationOptions {
-    switch curve {
-    case .easeInOut: return .curveEaseInOut
-    case .easeIn: return .curveEaseIn
-    case .easeOut: return .curveEaseOut
-    case .linear: return .curveLinear
-    }
   }
 
   private func resolvedFollowMode() -> FKTabBarIndicatorFollowMode {

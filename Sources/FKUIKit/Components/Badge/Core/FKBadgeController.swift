@@ -1,7 +1,7 @@
 import ObjectiveC
 import UIKit
 
-/// Hosts a badge as a **sibling** of the target view (never inserted into the target), with constraints tied to the target’s corners.
+/// Hosts a badge as a **sibling** of the target view (never inserted into the target), with constraints tied to the target’s anchors.
 @MainActor
 public final class FKBadgeController: NSObject {
   /// Weak reference to the view this badge decorates.
@@ -19,16 +19,19 @@ public final class FKBadgeController: NSObject {
     }
   }
 
-  /// Which corner of `targetView` the badge aligns to (uses leading/trailing for RTL).
+  /// Which anchor of `targetView` the badge aligns to (uses leading/trailing for RTL).
+  ///
+  /// - Important: Alignment is **center-based**. For corner anchors, the target’s corner is aligned to the
+  ///   badge view’s **center** (not the badge view’s corner). Use `offset` to fine-tune placement.
   public var anchor: FKBadgeAnchor {
     didSet {
       perform { self.rebuildLayoutConstraints() }
     }
   }
 
-  /// Extra shift from the anchor along horizontal and vertical axes (same coordinate space as constraints).
+  /// Extra shift from the anchor point along horizontal and vertical axes.
   ///
-  /// Positive/negative direction follows Auto Layout constants of the selected anchor constraints.
+  /// Positive/negative direction follows Auto Layout constant semantics for the selected anchor constraints.
   public var offset: UIOffset {
     didSet {
       perform { self.rebuildLayoutConstraints() }
@@ -386,23 +389,23 @@ public final class FKBadgeController: NSObject {
     switch anchor {
     case .topLeading:
       layoutConstraints = [
-        badgeView.leadingAnchor.constraint(equalTo: target.leadingAnchor, constant: h),
-        badgeView.topAnchor.constraint(equalTo: target.topAnchor, constant: v),
+        badgeView.centerXAnchor.constraint(equalTo: target.leadingAnchor, constant: h),
+        badgeView.centerYAnchor.constraint(equalTo: target.topAnchor, constant: v),
       ]
     case .topTrailing:
       layoutConstraints = [
-        badgeView.trailingAnchor.constraint(equalTo: target.trailingAnchor, constant: h),
-        badgeView.topAnchor.constraint(equalTo: target.topAnchor, constant: v),
+        badgeView.centerXAnchor.constraint(equalTo: target.trailingAnchor, constant: h),
+        badgeView.centerYAnchor.constraint(equalTo: target.topAnchor, constant: v),
       ]
     case .bottomLeading:
       layoutConstraints = [
-        badgeView.leadingAnchor.constraint(equalTo: target.leadingAnchor, constant: h),
-        badgeView.bottomAnchor.constraint(equalTo: target.bottomAnchor, constant: v),
+        badgeView.centerXAnchor.constraint(equalTo: target.leadingAnchor, constant: h),
+        badgeView.centerYAnchor.constraint(equalTo: target.bottomAnchor, constant: v),
       ]
     case .bottomTrailing:
       layoutConstraints = [
-        badgeView.trailingAnchor.constraint(equalTo: target.trailingAnchor, constant: h),
-        badgeView.bottomAnchor.constraint(equalTo: target.bottomAnchor, constant: v),
+        badgeView.centerXAnchor.constraint(equalTo: target.trailingAnchor, constant: h),
+        badgeView.centerYAnchor.constraint(equalTo: target.bottomAnchor, constant: v),
       ]
     case .center:
       layoutConstraints = [
