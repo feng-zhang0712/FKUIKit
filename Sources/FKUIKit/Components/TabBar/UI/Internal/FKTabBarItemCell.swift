@@ -92,9 +92,6 @@ final class FKTabBarItemCell: UICollectionViewCell {
     // When progress crosses midpoint, we switch to selected typography.
     let useSelectedFont = progress >= 0.5 ? true : selected
     let baseFont = useSelectedFont ? appearance.typography.selectedFont : appearance.typography.normalFont
-    let resolvedFont = appearance.typography.adjustsForContentSizeCategory
-      ? UIFontMetrics(forTextStyle: .subheadline).scaledFont(for: baseFont)
-      : baseFont
 
     let textColor: UIColor
     let iconColor: UIColor
@@ -146,11 +143,13 @@ final class FKTabBarItemCell: UICollectionViewCell {
     tabButton.setAppearance(sharedAppearance, for: .disabled)
     let label = FKButton.LabelAttributes(
       text: titleText,
-      font: resolvedFont,
+      font: baseFont,
       color: textColor,
       alignment: .center,
       numberOfLines: max(1, model.maximumTitleLines),
       lineBreakMode: lineBreakMode,
+      adjustsFontForContentSizeCategory: appearance.typography.adjustsForContentSizeCategory,
+      textStyle: .subheadline,
       adjustsFontSizeToFitWidth: adjustsFontSizeToFitWidth,
       minimumScaleFactor: minimumScaleFactor
     )
@@ -163,9 +162,6 @@ final class FKTabBarItemCell: UICollectionViewCell {
     if let subtitleConfiguration = item.subtitle {
       let subtitleState = subtitleConfiguration.resolved(isSelected: selected, isEnabled: item.isEnabled)
       if let subtitle = subtitleState.text, !subtitle.isEmpty {
-        let subtitleFont = subtitleState.style.adjustsForContentSizeCategory
-          ? UIFontMetrics(forTextStyle: .caption2).scaledFont(for: subtitleState.style.font)
-          : subtitleState.style.font
         let subtitleColor: UIColor
         if !item.isEnabled {
           subtitleColor = subtitleState.style.color
@@ -178,11 +174,13 @@ final class FKTabBarItemCell: UICollectionViewCell {
         }
         let attrs = FKButton.LabelAttributes(
           text: subtitle,
-          font: subtitleFont,
+          font: subtitleState.style.font,
           color: subtitleColor,
           alignment: subtitleState.style.alignment,
           numberOfLines: subtitleState.style.numberOfLines,
           lineBreakMode: subtitleState.style.lineBreakMode,
+          adjustsFontForContentSizeCategory: subtitleState.style.adjustsForContentSizeCategory,
+          textStyle: .caption2,
           adjustsFontSizeToFitWidth: subtitleState.style.adjustsFontSizeToFitWidth,
           minimumScaleFactor: subtitleState.style.minimumScaleFactor,
           contentInsets: .init(
