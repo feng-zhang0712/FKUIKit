@@ -46,6 +46,13 @@ final class AnchorTopSingleExampleViewController: UIViewController {
     anchorBar.configuration?.cornerStyle = .fixed
     anchorBar.configuration?.background.cornerRadius = 0
     anchorBar.contentHorizontalAlignment = .leading
+    // Keep anchor visuals stable while pressed (no highlight flash).
+    anchorBar.configurationUpdateHandler = { button in
+      guard var configuration = button.configuration else { return }
+      configuration.baseBackgroundColor = .white
+      configuration.baseForegroundColor = .label
+      button.configuration = configuration
+    }
     anchorBar.addAction(UIAction { [weak self] _ in
       self?.togglePopup()
     }, for: .touchUpInside)
@@ -132,7 +139,12 @@ final class AnchorTopSingleExampleViewController: UIViewController {
     configuration.dismissBehavior = .init(allowsTapOutside: true, allowsSwipe: true, allowsBackdropTap: true)
     configuration.backdropStyle = .dim(color: .black, alpha: CGFloat(maskAlpha))
     configuration.cornerRadius = CGFloat(cornerRadius)
-    if !showsShadow {
+    // Make the "Show shadow" toggle explicit and visible in this demo.
+    if showsShadow {
+      configuration.shadow.opacity = 0.18
+      configuration.shadow.radius = 16
+      configuration.shadow.offset = .init(width: 0, height: 8)
+    } else {
       configuration.shadow.opacity = 0
       configuration.shadow.radius = 0
       configuration.shadow.offset = .zero

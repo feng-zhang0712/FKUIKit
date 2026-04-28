@@ -322,6 +322,7 @@ enum FKAnimationStyleResolver {
       )
     case .sheetLike:
       return resolveSheetLikeStyle(
+        mode: mode,
         animationConfiguration: animationConfiguration,
         isPresentation: isPresentation,
         interactionState: interactionState
@@ -377,6 +378,7 @@ enum FKAnimationStyleResolver {
   }
 
   private static func resolveSheetLikeStyle(
+    mode: FKPresentationMode,
     animationConfiguration: FKAnimationConfiguration,
     isPresentation: Bool,
     interactionState: InteractionState
@@ -388,11 +390,15 @@ enum FKAnimationStyleResolver {
     switch animationConfiguration.preset {
     case .systemLike:
       duration = isPresentation ? 0.36 : 0.28
-      timing = .spring(dampingRatio: 0.9)
+      timing = anchorLikeMode(mode) ? .curve(.easeInOut) : .spring(dampingRatio: 0.9)
     case .spring:
       let clamped = max(0.3, min(0.42, animationConfiguration.duration))
       duration = isPresentation ? clamped : max(0.22, clamped * 0.82)
-      timing = .spring(dampingRatio: min(max(animationConfiguration.dampingRatio, 0.8), 0.95))
+      if anchorLikeMode(mode) {
+        timing = .curve(.easeInOut)
+      } else {
+        timing = .spring(dampingRatio: min(max(animationConfiguration.dampingRatio, 0.8), 0.95))
+      }
     case .easeInOut:
       let clamped = max(0.24, min(0.38, animationConfiguration.duration))
       duration = isPresentation ? clamped : max(0.22, clamped * 0.82)
@@ -415,6 +421,17 @@ enum FKAnimationStyleResolver {
       initialScale: 1,
       finalScale: 1
     )
+  }
+
+  private static func anchorLikeMode(_ mode: FKPresentationMode) -> Bool {
+    switch mode {
+    case .anchor, .anchorEmbedded:
+      // Anchor-attached surfaces should feel "edge-locked" to the source view.
+      // Spring rebound can briefly expose a gap between anchor and panel, which reads as a visual seam.
+      return true
+    default:
+      return false
+    }
   }
 
   private static func family(for mode: FKPresentationMode) -> Family {
