@@ -27,7 +27,7 @@ public extension FKPresentationControllerDelegate {
 }
 
 /// Closure-based lifecycle callbacks for teams that prefer lightweight integration.
-public struct FKPresentationLifecycleCallbacks {
+public struct FKPresentationControllerLifecycleCallbacks {
   /// Called before the presentation animation starts.
   public var willPresent: (@MainActor () -> Void)?
   /// Called after the presentation animation finishes.

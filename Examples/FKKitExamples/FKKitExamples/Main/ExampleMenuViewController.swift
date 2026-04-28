@@ -79,8 +79,8 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKMultiPickerExampleViewController() }
         ),
         ExampleMenuItem(
-          title: "Presentation",
-          subtitle: "Custom presentation controller examples (sheet/center/anchor, animation, backdrop, keyboard, rotation)",
+          title: "PresentationController",
+          subtitle: "Custom PresentationController examples (sheet/center/anchor, animation, backdrop, keyboard, rotation)",
           make: { FKPresentationControllerExamplesHubViewController() }
         ),
         ExampleMenuItem(

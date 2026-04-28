@@ -11,7 +11,7 @@ public final class FKPresentationController: NSObject {
   /// Optional delegate receiving lifecycle updates.
   public weak var delegate: FKPresentationControllerDelegate?
   /// Closure-based callbacks.
-  public var callbacks: FKPresentationLifecycleCallbacks
+  public var callbacks: FKPresentationControllerLifecycleCallbacks
   /// Whether content is currently visible.
   public private(set) var isPresented: Bool = false
   /// Whether a transition is running.
@@ -30,7 +30,7 @@ public final class FKPresentationController: NSObject {
     contentController: UIViewController,
     configuration: FKPresentationConfiguration = .default,
     delegate: FKPresentationControllerDelegate? = nil,
-    callbacks: FKPresentationLifecycleCallbacks = .init()
+    callbacks: FKPresentationControllerLifecycleCallbacks = .init()
   ) {
     self.contentController = contentController
     self.configuration = configuration
@@ -137,7 +137,7 @@ public final class FKPresentationController: NSObject {
     from presentingViewController: UIViewController,
     configuration: FKPresentationConfiguration = .default,
     delegate: FKPresentationControllerDelegate? = nil,
-    callbacks: FKPresentationLifecycleCallbacks = .init(),
+    callbacks: FKPresentationControllerLifecycleCallbacks = .init(),
     animated: Bool = true,
     completion: (() -> Void)? = nil
   ) -> FKPresentationController {

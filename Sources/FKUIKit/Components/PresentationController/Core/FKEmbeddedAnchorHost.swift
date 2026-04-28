@@ -348,7 +348,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
         hostVC.wrapperView.frame = resolved.targetFrame
       } else {
         hostVC.animateMaskAlpha(0)
-        hostVC.wrapperView.frame = self.collapsedFrame(from: hostVC.currentPresentationFrame, anchorLineY: resolved.anchorLineY, direction: resolved.direction)
+        hostVC.wrapperView.frame = self.offsetFrameByHeight(from: hostVC.currentPresentationFrame, direction: resolved.direction)
       }
       hostVC.applyLayout(.init(
         hostBounds: hostView.bounds,
@@ -360,9 +360,9 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     }
 
     if duration == 0 {
-      let a = UIViewPropertyAnimator(duration: 0, curve: .linear, animations: animations)
-      a.addAnimations(animations)
-      return a
+      // `UIViewPropertyAnimator(duration:animations:)` already captures the animation block,
+      // so adding the same block again would run layout updates twice.
+      return UIViewPropertyAnimator(duration: 0, curve: .linear, animations: animations)
     }
 
     let animator: UIViewPropertyAnimator = {
@@ -378,7 +378,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     if isPresentation {
       if let hostView = hostView {
         let resolved = resolveLayout(in: hostView)
-        hostVC.wrapperView.frame = collapsedFrame(from: resolved.targetFrame, anchorLineY: resolved.anchorLineY, direction: resolved.direction)
+        hostVC.wrapperView.frame = offsetFrameByHeight(from: resolved.targetFrame, direction: resolved.direction)
         hostVC.applyLayout(.init(
           hostBounds: hostView.bounds,
           presentationFrame: hostVC.wrapperView.frame,
@@ -394,18 +394,20 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     return animator
   }
 
-  private func collapsedFrame(from baseFrame: CGRect, anchorLineY: CGFloat, direction: FKAnchor.Direction) -> CGRect {
-    var frame = baseFrame
-    frame.size.height = 0
+  private func offsetFrameByHeight(from baseFrame: CGRect, direction: FKAnchor.Direction) -> CGRect {
+    let offsetY: CGFloat
     switch direction {
     case .down:
-      frame.origin.y = anchorLineY
+      // Downward-attached panel enters from above and exits upward.
+      offsetY = -baseFrame.height
     case .up:
-      frame.origin.y = anchorLineY
+      // Upward-attached panel enters from below and exits downward.
+      offsetY = baseFrame.height
     case .auto:
-      frame.origin.y = anchorLineY
+      // Auto should already be resolved, but keep a safe fallback.
+      offsetY = -baseFrame.height
     }
-    return frame
+    return baseFrame.offsetBy(dx: 0, dy: offsetY)
   }
 
   // MARK: - Gestures

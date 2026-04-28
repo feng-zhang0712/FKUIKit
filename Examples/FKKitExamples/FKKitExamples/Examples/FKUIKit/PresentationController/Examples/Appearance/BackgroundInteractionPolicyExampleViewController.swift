@@ -42,6 +42,8 @@ final class BackgroundInteractionPolicyExampleViewController: FKPresentationExam
       var configuration = FKPresentationConfiguration.default
       configuration.mode = .center
       configuration.center.dismissEnabled = true
+      // Use a stable center size to avoid over-compression when text wraps on narrow devices.
+      configuration.center.size = .fixed(.init(width: 300, height: 240))
 
       configuration.backgroundInteraction.isEnabled = self.allowsBackgroundInteraction
       configuration.backgroundInteraction.showsBackdropWhenEnabled = self.showsBackdropWhenEnabled
