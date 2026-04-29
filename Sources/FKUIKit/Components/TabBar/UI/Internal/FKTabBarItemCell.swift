@@ -347,9 +347,9 @@ final class FKTabBarItemCell: UICollectionViewCell {
       tabButton.content = .imageOnly
       applyImageConfiguration(item.image, item: item)
     case .textAndImage:
-      // Use semantic "leading" slot instead of hard-coded left so RTL can mirror naturally.
-      tabButton.content = .textAndImage(.leading)
-      applyImageConfiguration(item.image, item: item, slot: .leading)
+      let slot = resolvedImageSlot(for: item.image)
+      tabButton.content = .textAndImage(slot == .trailing ? .trailing : .leading)
+      applyImageConfiguration(item.image, item: item, slot: slot)
     case .custom:
       tabButton.content = .custom
       // Host provides the view. We reuse the same view across control states so selection does not
@@ -454,6 +454,16 @@ final class FKTabBarItemCell: UICollectionViewCell {
     if hasText && hasImage { return .textAndImage }
     if hasImage { return .imageOnly }
     return .textOnly
+  }
+
+  private func resolvedImageSlot(for configuration: FKTabBarImageConfiguration?) -> FKButton.ImageSlot {
+    let position = configuration?.normal.style.position ?? .leading
+    switch position {
+    case .leading:
+      return .leading
+    case .trailing:
+      return .trailing
+    }
   }
 
   private func applyImageConfiguration(_ configuration: FKTabBarImageConfiguration?, item: FKTabBarItem, slot: FKButton.ImageSlot = .center) {

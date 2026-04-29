@@ -105,6 +105,23 @@ public final class FKPresentationController: NSObject {
     }
   }
 
+  /// Re-applies host layout with optional animation.
+  ///
+  /// This is especially useful for embedded anchor presentations when content height changes and
+  /// you want the container frame to resize smoothly.
+  public func updateLayout(
+    animated: Bool = false,
+    duration: TimeInterval = 0.24,
+    options: UIView.AnimationOptions = .curveEaseInOut
+  ) {
+    guard Thread.isMainThread else {
+      assertionFailure("FKPresentationController.updateLayout must be called on the main thread.")
+      return
+    }
+    guard host.isPresented else { return }
+    host.updateLayout(animated: animated, duration: duration, options: options)
+  }
+
   /// Programmatically switches to a target detent when the active mode supports sheet detents.
   public func setDetent(_ detent: FKPresentationDetent, animated: Bool = true) {
     guard Thread.isMainThread else {

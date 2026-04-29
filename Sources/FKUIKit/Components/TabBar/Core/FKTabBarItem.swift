@@ -94,14 +94,27 @@ public enum FKTabBarImageSource: Equatable {
 
 /// Image rendering style.
 public struct FKTabBarImageStyle: Equatable {
+  /// Position of image relative to title when both are present.
+  public enum Position: Equatable {
+    case leading
+    case trailing
+  }
+
   public var tintColor: UIColor?
   public var fixedSize: CGSize
   public var spacingToTitle: CGFloat
+  public var position: Position
 
-  public init(tintColor: UIColor? = nil, fixedSize: CGSize = .init(width: 22, height: 22), spacingToTitle: CGFloat = 6) {
+  public init(
+    tintColor: UIColor? = nil,
+    fixedSize: CGSize = .init(width: 22, height: 22),
+    spacingToTitle: CGFloat = 6,
+    position: Position = .leading
+  ) {
     self.tintColor = tintColor
     self.fixedSize = fixedSize
     self.spacingToTitle = spacingToTitle
+    self.position = position
   }
 }
 

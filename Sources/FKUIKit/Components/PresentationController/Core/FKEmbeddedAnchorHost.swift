@@ -77,7 +77,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     let hostVC = ensureEmbeddedHostViewController(parent: parentViewController, hostView: hostView)
     embedContent(into: hostVC)
 
-    updateLayout()
+    updateLayout(animated: false, duration: 0, options: .curveLinear)
     applyZOrderPolicy()
 
     isPresented = true
@@ -108,28 +108,52 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     animator.startAnimation()
   }
 
-  func updateLayout() {
+  func updateLayout(animated: Bool, duration: TimeInterval, options: UIView.AnimationOptions) {
     guard let hostView, let hostVC = embeddedHostViewController else { return }
 
     let resolved = resolveLayout(in: hostView)
-    hostVC.applyLayout(.init(
-      hostBounds: hostView.bounds,
-      presentationFrame: resolved.targetFrame,
-      maskCoverageRect: resolved.maskCoverageRect,
-      anchorLineY: resolved.anchorLineY,
-      direction: resolved.direction
-    ))
-    hostVC.contentContainerView.layoutIfNeeded()
-    applyZOrderPolicy()
+    let applyLayout = {
+      hostVC.applyLayout(.init(
+        hostBounds: hostView.bounds,
+        presentationFrame: resolved.targetFrame,
+        maskCoverageRect: resolved.maskCoverageRect,
+        anchorLineY: resolved.anchorLineY,
+        direction: resolved.direction
+      ))
+      hostVC.contentContainerView.layoutIfNeeded()
+    }
+
+    guard animated else {
+      applyLayout()
+      applyZOrderPolicy()
+      return
+    }
+
+    let animations = {
+      applyLayout()
+    }
+    UIView.animate(
+      withDuration: max(0, duration),
+      delay: 0,
+      options: [options, .beginFromCurrentState, .allowUserInteraction],
+      animations: animations
+    ) { _ in
+      self.applyZOrderPolicy()
+    }
   }
 
   // MARK: - Host resolution
 
   private func resolveHostAndParent(for embeddedConfiguration: FKEmbeddedAnchorConfiguration, fallbackParent: UIViewController) {
+    if case let .view(box) = embeddedConfiguration.anchor.source {
+      self.sourceView = box.object
+    } else {
+      self.sourceView = nil
+    }
+
     switch embeddedConfiguration.hostStrategy {
     case .inSameSuperviewBelowAnchor:
-      guard case let .view(box) = embeddedConfiguration.anchor.source, let sourceView = box.object else { return }
-      self.sourceView = sourceView
+      guard let sourceView else { return }
       let host = findHostView(for: sourceView)
       hostView = host
       directAnchorChild = findDirectChild(of: host, containing: sourceView)
@@ -141,7 +165,11 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
       parentViewController = host.firstViewController ?? fallbackParent
     case let .inProvidedContainer(box):
       hostView = box.object
-      directAnchorChild = nil
+      if let hostView, let sourceView {
+        directAnchorChild = findDirectChild(of: hostView, containing: sourceView)
+      } else {
+        directAnchorChild = nil
+      }
       if hostView?.firstViewController == nil {
         assertionFailure("FKEmbeddedAnchorHost: Provided host container does not have a parent view controller in responder chain. Falling back to the presenting view controller as containment parent.")
       }
@@ -151,7 +179,11 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
         .compactMap { ($0 as? UIWindowScene)?.keyWindow }
         .first
       hostView = win
-      directAnchorChild = nil
+      if let win, let sourceView {
+        directAnchorChild = findDirectChild(of: win, containing: sourceView)
+      } else {
+        directAnchorChild = nil
+      }
       parentViewController = win?.rootViewController ?? fallbackParent
     }
   }
@@ -425,7 +457,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     ) { [weak self] in
       guard let self else { return }
       self.refreshAnchorHierarchy()
-      self.updateLayout()
+      self.updateLayout(animated: false, duration: 0, options: .curveLinear)
     }
 
     if policy.listensToOrientationChanges {
@@ -435,7 +467,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
         queue: .main
       ) { [weak self] _ in
         self?.refreshAnchorHierarchy()
-        self?.updateLayout()
+        self?.updateLayout(animated: false, duration: 0, options: .curveLinear)
       }
       UIDevice.current.beginGeneratingDeviceOrientationNotifications()
     }
@@ -452,19 +484,26 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
   private func refreshAnchorHierarchy() {
     guard let hostView else { return }
-    guard case .inSameSuperviewBelowAnchor = embeddedConfiguration.hostStrategy else { return }
     guard let sourceView else { return }
     guard sourceView.window != nil else { return }
 
-    let newHost = findHostView(for: sourceView)
-    if newHost !== hostView {
-      // The source view moved to another host container. Rebind our host and restart observation.
-      self.hostView = newHost
-      stopRepositionObservation()
-      startRepositionObservation(in: newHost)
+    let activeHost: UIView
+    switch embeddedConfiguration.hostStrategy {
+    case .inSameSuperviewBelowAnchor:
+      let newHost = findHostView(for: sourceView)
+      if newHost !== hostView {
+        // The source view moved to another host container. Rebind our host and restart observation.
+        self.hostView = newHost
+        stopRepositionObservation()
+        startRepositionObservation(in: newHost)
+      }
+      activeHost = self.hostView ?? newHost
+    case .inProvidedContainer:
+      activeHost = hostView
+    case .inWindowLevel:
+      activeHost = hostView
     }
 
-    let activeHost = self.hostView ?? newHost
     // The direct child relationship can change after layout updates, so resolve it every cycle before z-order.
     directAnchorChild = findDirectChild(of: activeHost, containing: sourceView)
     if let hostVC = embeddedHostViewController, hostVC.view.superview !== activeHost {
@@ -539,7 +578,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
     let options = UIView.AnimationOptions(rawValue: UInt(curveRaw << 16))
     UIView.animate(withDuration: duration, delay: 0, options: [options, .allowUserInteraction]) {
-      self.updateLayout()
+      self.updateLayout(animated: false, duration: 0, options: .curveLinear)
     }
   }
 
