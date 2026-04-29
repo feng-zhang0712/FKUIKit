@@ -186,7 +186,7 @@ class AnchorSingleExampleBaseViewController: UIViewController {
       widthPolicy: .matchContainer,
       offset: 0
     )
-    let embedded = FKEmbeddedAnchorConfiguration(
+    let anchorConfig = FKAnchorConfiguration(
       anchor: anchor,
       hostStrategy: .inSameSuperviewBelowAnchor,
       zOrderPolicy: .keepAnchorAbovePresentation,
@@ -194,7 +194,7 @@ class AnchorSingleExampleBaseViewController: UIViewController {
     )
 
     var configuration = FKPresentationConfiguration()
-    configuration.mode = .embeddedAnchor(embedded)
+    configuration.mode = .anchor(anchorConfig)
     configuration.dismissBehavior = .init(allowsTapOutside: true, allowsSwipe: true, allowsBackdropTap: true)
     configuration.backdropStyle = .dim(color: .black, alpha: CGFloat(maskAlpha))
     configuration.cornerRadius = CGFloat(cornerRadius)

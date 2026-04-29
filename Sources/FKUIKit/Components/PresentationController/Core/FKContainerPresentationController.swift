@@ -11,7 +11,7 @@ final class FKContainerPresentationController: UIPresentationController {
   private let wrapperView = UIView()
   private let contentContainerView = UIView()
   private let grabberView = UIView()
-  private weak var embeddedPresentedView: UIView?
+  private weak var hostedPresentedView: UIView?
 
   private lazy var tapToDismissGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapToDismiss(_:)))
   private lazy var panToDismissGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanToDismiss(_:)))
@@ -68,10 +68,8 @@ final class FKContainerPresentationController: UIPresentationController {
       return CGRect(x: x, y: y, width: width, height: height)
     case .center:
       return resolvedCenterFrame(in: containerView, bounds: bounds, safeInsets: safeInsets)
-    case let .anchor(anchor):
-      return anchoredFrame(in: containerView, bounds: bounds, safeInsets: safeInsets, anchor: anchor)
-    case .embeddedAnchor:
-      // Embedded anchors are not presented via UIPresentationController.
+    case .anchor:
+      // Anchor-hosteds are not presented via UIPresentationController.
       // Fall back to center frame for safety if misconfigured.
       return resolvedCenterFrame(in: containerView, bounds: bounds, safeInsets: safeInsets)
     case let .edge(edge):
@@ -98,8 +96,8 @@ final class FKContainerPresentationController: UIPresentationController {
     contentContainerView.clipsToBounds = true
 
     if let systemPresentedView = super.presentedViewController.view {
-      embeddedPresentedView?.removeFromSuperview()
-      embeddedPresentedView = systemPresentedView
+      hostedPresentedView?.removeFromSuperview()
+      hostedPresentedView = systemPresentedView
       systemPresentedView.removeFromSuperview()
       contentContainerView.addSubview(systemPresentedView)
     }
@@ -142,7 +140,7 @@ final class FKContainerPresentationController: UIPresentationController {
     wrapperView.frame = frameOfPresentedViewInContainerView
     chromeView.frame = wrapperView.bounds
     layoutContentContainer()
-    embeddedPresentedView?.frame = contentContainerView.bounds
+    hostedPresentedView?.frame = contentContainerView.bounds
 
     applyContainerAppearance()
     if let containerView {
@@ -173,7 +171,7 @@ final class FKContainerPresentationController: UIPresentationController {
       self.wrapperView.frame = targetFrame
       self.chromeView.frame = self.wrapperView.bounds
       self.layoutContentContainer()
-      self.embeddedPresentedView?.frame = self.contentContainerView.bounds
+      self.hostedPresentedView?.frame = self.contentContainerView.bounds
       self.applyContainerAppearance()
       self.applyKeyboardAvoidance(in: containerView)
       self.updateBackdropForCurrentState()
@@ -265,7 +263,7 @@ final class FKContainerPresentationController: UIPresentationController {
           return .init(top: safe.top, left: 0, bottom: 0, right: 0)
         case .center:
           return safe
-        case .anchor, .embeddedAnchor:
+        case .anchor:
           // Anchors are typically popover-like; keep content away from unsafe regions.
           return safe
         case let .edge(edge):
@@ -510,7 +508,7 @@ final class FKContainerPresentationController: UIPresentationController {
     let preferred = presentedViewController.preferredContentSize.height
     if preferred > 0 { return preferred }
 
-    guard let view = embeddedPresentedView else { return 360 }
+    guard let view = hostedPresentedView else { return 360 }
     let size = view.systemLayoutSizeFitting(
       CGSize(width: targetWidth, height: UIView.layoutFittingCompressedSize.height),
       withHorizontalFittingPriority: .required,
@@ -660,7 +658,7 @@ final class FKContainerPresentationController: UIPresentationController {
       wrapperView.frame = frame
       chromeView.frame = wrapperView.bounds
       layoutContentContainer()
-      embeddedPresentedView?.frame = contentContainerView.bounds
+      hostedPresentedView?.frame = contentContainerView.bounds
       applyContainerAppearance()
 
       let progress = sheetDismissProgress(in: containerView)
@@ -843,7 +841,7 @@ final class FKContainerPresentationController: UIPresentationController {
       self.wrapperView.frame = targetFrame
       self.chromeView.frame = self.wrapperView.bounds
       self.layoutContentContainer()
-      self.embeddedPresentedView?.frame = self.contentContainerView.bounds
+      self.hostedPresentedView?.frame = self.contentContainerView.bounds
       self.applyContainerAppearance()
       self.updateBackdropForCurrentState()
     }
@@ -1031,24 +1029,6 @@ final class FKContainerPresentationController: UIPresentationController {
     presentingBlurView?.removeFromSuperview()
     presentingBlurView = nil
     presentingEffectHostView = nil
-  }
-
-  private func anchoredFrame(in containerView: UIView, bounds: CGRect, safeInsets: UIEdgeInsets, anchor: FKAnchor) -> CGRect {
-    let result = FKPresentationAnchorLayout.anchoredFrame(
-      in: containerView,
-      bounds: bounds,
-      safeInsets: safeInsets,
-      anchor: anchor,
-      measuredContentHeight: { [weak self] in
-        guard let self, let containerView = self.containerView else { return 320 }
-        return self.measuredFitContentHeight(in: containerView)
-      }
-    )
-    return result.frame
-  }
-
-  private func resolveSourceRect(in containerView: UIView, anchor: FKAnchor) -> CGRect? {
-    FKPresentationAnchorLayout.resolveSourceRect(in: containerView, anchor: anchor)
   }
 
   private func edgeFrame(in bounds: CGRect, edge: UIRectEdge) -> CGRect {

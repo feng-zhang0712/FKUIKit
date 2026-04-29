@@ -1,8 +1,8 @@
 import UIKit
 
-/// Configuration for `FKPresentationMode.embeddedAnchor(_:)`.
+/// Configuration for `FKPresentationMode.anchor(_:)`.
 ///
-/// Embedded anchor presentations are hosted inside an existing view hierarchy (instead of a modal
+/// Anchor-hosted presentations are hosted inside the existing view hierarchy (instead of a modal
 /// `UIPresentationController` container). This enables "menu-like" overlays that appear attached
 /// to a navigation bar, toolbar, or any in-page anchor view, while keeping the anchor visually above
 /// the overlay (optional) and limiting the mask coverage (optional).
@@ -10,13 +10,13 @@ import UIKit
 /// This mode is intended to replace ad-hoc dropdown implementations with a consistent, reusable API
 /// while remaining resilient to layout changes (rotation, safe area changes, trait changes, and dynamic
 /// anchor movement).
-public struct FKEmbeddedAnchorConfiguration {
+public struct FKAnchorConfiguration {
   /// Anchor geometry and expansion direction.
   ///
-  /// This reuses `FKAnchor` so the mental model stays consistent across `.anchor` and `.embeddedAnchor`.
+  /// This reuses `FKAnchor` so the mental model stays consistent with the anchor geometry model.
   public var anchor: FKAnchor
 
-  /// Where the embedded overlay is inserted.
+  /// Where the anchor overlay is inserted.
   public var hostStrategy: HostStrategy
 
   /// Policy controlling the overlay's z-order relative to the anchor.
@@ -28,7 +28,7 @@ public struct FKEmbeddedAnchorConfiguration {
   /// Reposition behavior when host or anchor geometry changes.
   public var repositionPolicy: RepositionPolicy
 
-  /// Creates an embedded anchor configuration.
+  /// Creates an anchor-hosted configuration.
   public init(
     anchor: FKAnchor,
     hostStrategy: HostStrategy = .inSameSuperviewBelowAnchor,
@@ -44,8 +44,8 @@ public struct FKEmbeddedAnchorConfiguration {
   }
 }
 
-public extension FKEmbeddedAnchorConfiguration {
-  /// Strategy used to decide where to host the embedded overlay.
+public extension FKAnchorConfiguration {
+  /// Strategy used to decide where to host the anchor overlay.
   enum HostStrategy {
     /// Inserts the overlay into the anchor's host view and keeps it below the anchor's direct child view.
     ///
@@ -65,11 +65,11 @@ public extension FKEmbeddedAnchorConfiguration {
     case inWindowLevel
   }
 
-  /// Controls whether FK keeps the anchor above the embedded overlay.
+  /// Controls whether FK keeps the anchor above the anchor overlay.
   enum ZOrderPolicy {
-    /// Ensures the anchor (or its direct host child) stays above the embedded overlay.
+    /// Ensures the anchor (or its direct host child) stays above the anchor overlay.
     ///
-    /// This is the recommended default for "embedded" dropdown menus.
+    /// This is the recommended default for anchor dropdown menus.
     case keepAnchorAbovePresentation
 
     /// No special z-order handling.
@@ -88,7 +88,7 @@ public extension FKEmbeddedAnchorConfiguration {
     case fullScreen
   }
 
-  /// Reposition policy for embedded overlays.
+  /// Reposition policy for anchor overlays.
   struct RepositionPolicy {
     /// Whether to listen to host layout changes.
     public var listensToLayoutChanges: Bool

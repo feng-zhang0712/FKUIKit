@@ -166,25 +166,8 @@ final class FKPresentationAnimator: NSObject, UIViewControllerAnimatedTransition
       return baseFrame.offsetBy(dx: 0, dy: -baseFrame.height)
     case .center:
       return baseFrame
-    case let .anchor(anchor):
-      // Anchor animations should follow the expansion direction to avoid “always from bottom” awkwardness.
-      let delta: CGFloat = 12
-      switch anchor.direction {
-      case .up:
-        return baseFrame.offsetBy(dx: 0, dy: delta)
-      case .down:
-        return baseFrame.offsetBy(dx: 0, dy: -delta)
-      case .auto:
-        // When auto, use attachment edge as a reasonable hint.
-        switch anchor.edge {
-        case .top:
-          return baseFrame.offsetBy(dx: 0, dy: -delta)
-        case .bottom:
-          return baseFrame.offsetBy(dx: 0, dy: delta)
-        }
-      }
-    case let .embeddedAnchor(configuration):
-      // Embedded anchors use the same motion baseline as modal anchors.
+    case let .anchor(configuration):
+      // Anchor mode uses anchor-hosted hosting and follows anchor geometry for motion direction hints.
       return initialFrame(for: baseFrame, anchor: configuration.anchor)
     case let .edge(edge):
       if edge.contains(.left) { return baseFrame.offsetBy(dx: -baseFrame.width, dy: 0) }
@@ -425,7 +408,7 @@ enum FKAnimationStyleResolver {
 
   private static func anchorLikeMode(_ mode: FKPresentationMode) -> Bool {
     switch mode {
-    case .anchor, .embeddedAnchor:
+    case .anchor:
       // Anchor-attached surfaces should feel "edge-locked" to the source view.
       // Spring rebound can briefly expose a gap between anchor and panel, which reads as a visual seam.
       return true

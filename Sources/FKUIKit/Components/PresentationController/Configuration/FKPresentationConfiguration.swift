@@ -2,7 +2,7 @@ import UIKit
 
 /// Top-level configuration that describes what kind of presentation experience to build.
 public struct FKPresentationConfiguration {
-  /// Unified dismissal behavior used across modal and embedded presentations.
+  /// Unified dismissal behavior used across modal and anchor-hosted presentations.
   public struct DismissBehavior {
     /// Whether tapping outside content can dismiss.
     public var allowsTapOutside: Bool

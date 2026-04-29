@@ -1,7 +1,7 @@
 import UIKit
 import FKUIKit
 
-/// Encourages rotating the device while an anchored presentation is visible.
+/// Encourages rotating the device while an anchor-hosted presentation is visible.
 ///
 /// Key highlights:
 /// - Anchor mode relies on resolving the source geometry; rotation/size changes must keep alignment stable.
@@ -40,8 +40,14 @@ final class RotationResilienceExampleViewController: FKPresentationExamplePageVi
     addPrimaryButton(title: "Present anchored panel") { [weak self] in
       guard let self else { return }
       let anchor = FKAnchor(sourceView: self.anchorBar, edge: .bottom, direction: .auto, alignment: .fill, widthPolicy: .matchContainer, offset: 8)
+      let anchorConfig = FKAnchorConfiguration(
+        anchor: anchor,
+        hostStrategy: .inSameSuperviewBelowAnchor,
+        zOrderPolicy: .keepAnchorAbovePresentation,
+        maskCoveragePolicy: .fullScreen
+      )
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .anchor(anchor)
+      configuration.mode = .anchor(anchorConfig)
       configuration.sheet.detents = [.fixed(240), .fraction(0.6)]
       configuration.rotationHandling = .relayoutAnimated
       _ = FKPresentationExampleHelpers.present(from: self, title: "Rotate the device", configuration: configuration)

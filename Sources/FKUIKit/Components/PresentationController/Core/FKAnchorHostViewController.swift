@@ -1,13 +1,13 @@
 import UIKit
 
-/// Internal view controller used by `FKEmbeddedAnchorHost`.
+/// Internal view controller used by `FKAnchorHost`.
 ///
 /// Responsibilities:
-/// - Hosts the embedded presentation root view (mask/backdrop + chrome + content container)
+/// - Hosts the anchor presentation root view (mask/backdrop + chrome + content container)
 /// - Installs gestures (tap to dismiss, pan to dismiss)
 /// - Exposes a single layout update entry point
 @MainActor
-final class FKEmbeddedHostViewController: UIViewController {
+final class FKAnchorHostViewController: UIViewController {
   struct MaskStyle {
     var alpha: CGFloat
   }
@@ -34,15 +34,15 @@ final class FKEmbeddedHostViewController: UIViewController {
   /// Public handle for layout/animation; maps to `shadowContainerView`.
   let wrapperView = UIView()
 
-  private let maskView = FKEmbeddedMaskView()
+  private let maskView = FKAnchorMaskView()
   private lazy var tapToDismiss = UITapGestureRecognizer(target: self, action: #selector(handleTapMask(_:)))
   private lazy var panToDismiss = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
 
   private var panStartFrame: CGRect = .zero
   private var currentLayout: Layout?
 
-  private var rootView: FKEmbeddedRootView {
-    view as! FKEmbeddedRootView
+  private var rootView: FKAnchorRootView {
+    view as! FKAnchorRootView
   }
 
   init(configuration: FKPresentationConfiguration) {
@@ -54,7 +54,7 @@ final class FKEmbeddedHostViewController: UIViewController {
   required init?(coder: NSCoder) { nil }
 
   override func loadView() {
-    view = FKEmbeddedRootView()
+    view = FKAnchorRootView()
   }
 
   override func viewDidLoad() {
@@ -158,7 +158,7 @@ final class FKEmbeddedHostViewController: UIViewController {
   }
 
   private func maskColor() -> UIColor {
-    // Keep embedded mask aligned with the configured backdrop dim when possible.
+    // Keep anchor mask aligned with the configured backdrop dim when possible.
     switch configuration.backdropStyle {
     case let .dim(color, alpha):
       return color.withAlphaComponent(alpha)
@@ -288,7 +288,7 @@ final class FKEmbeddedHostViewController: UIViewController {
   }
 }
 
-private final class FKEmbeddedMaskView: UIView {
+private final class FKAnchorMaskView: UIView {
   var coverageRect: CGRect = .zero
 
   override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
@@ -296,7 +296,7 @@ private final class FKEmbeddedMaskView: UIView {
   }
 }
 
-private final class FKEmbeddedRootView: UIView {
+private final class FKAnchorRootView: UIView {
   var interactiveRect: CGRect = .zero
 
   override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {

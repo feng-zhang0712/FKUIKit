@@ -1,11 +1,11 @@
 import UIKit
 
 @MainActor
-final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
+final class FKAnchorHost: NSObject, FKPresentationHosting {
   /*
    Regression notes (legacy FKPresentation as gold standard)
    --------------------------------------------------------
-   Current embedded path must match the old UIView-based FKPresentation behavior:
+   Current anchor-host path must match the old UIView-based FKPresentation behavior:
    - Host container: legacy hosts inside the anchor's resolved container (not window-level by default).
    - Insertion: legacy inserts presentation above other subviews and inserts mask below it; then brings
      the anchor (or its direct host child) to front on every reposition.
@@ -17,7 +17,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   private unowned let owner: FKPresentationController
   private let contentController: UIViewController
   private let configuration: FKPresentationConfiguration
-  private let embeddedConfiguration: FKEmbeddedAnchorConfiguration
+  private let anchorConfiguration: FKAnchorConfiguration
 
   private(set) var isPresented: Bool = false
 
@@ -27,9 +27,9 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   private weak var directAnchorChild: UIView?
   private weak var sourceView: UIView?
 
-  private var embeddedHostViewController: FKEmbeddedHostViewController?
+  private var anchorHostViewController: FKAnchorHostViewController?
 
-  private let repositionCoordinator = FKEmbeddedRepositionCoordinator()
+  private let repositionCoordinator = FKAnchorRepositionCoordinator()
   private var orientationObserver: NSObjectProtocol?
   private var keyboardObservers: [NSObjectProtocol] = []
   private var keyboardBottomInset: CGFloat = 0
@@ -47,12 +47,12 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     owner: FKPresentationController,
     contentController: UIViewController,
     configuration: FKPresentationConfiguration,
-    embeddedConfiguration: FKEmbeddedAnchorConfiguration
+    anchorConfiguration: FKAnchorConfiguration
   ) {
     self.owner = owner
     self.contentController = contentController
     self.configuration = configuration
-    self.embeddedConfiguration = embeddedConfiguration
+    self.anchorConfiguration = anchorConfiguration
     super.init()
   }
 
@@ -71,10 +71,10 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
       return
     }
 
-    resolveHostAndParent(for: embeddedConfiguration, fallbackParent: presentingViewController)
+    resolveHostAndParent(for: anchorConfiguration, fallbackParent: presentingViewController)
     guard let hostView, let parentViewController else { completion?(); return }
 
-    let hostVC = ensureEmbeddedHostViewController(parent: parentViewController, hostView: hostView)
+    let hostVC = ensureAnchorHostViewController(parent: parentViewController, hostView: hostView)
     embedContent(into: hostVC)
 
     updateLayout()
@@ -109,7 +109,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   }
 
   func updateLayout() {
-    guard let hostView, let hostVC = embeddedHostViewController else { return }
+    guard let hostView, let hostVC = anchorHostViewController else { return }
 
     let resolved = resolveLayout(in: hostView)
     hostVC.applyLayout(.init(
@@ -125,25 +125,25 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
   // MARK: - Host resolution
 
-  private func resolveHostAndParent(for embeddedConfiguration: FKEmbeddedAnchorConfiguration, fallbackParent: UIViewController) {
-    switch embeddedConfiguration.hostStrategy {
+  private func resolveHostAndParent(for anchorConfiguration: FKAnchorConfiguration, fallbackParent: UIViewController) {
+    switch anchorConfiguration.hostStrategy {
     case .inSameSuperviewBelowAnchor:
-      guard case let .view(box) = embeddedConfiguration.anchor.source, let sourceView = box.object else { return }
+      guard case let .view(box) = anchorConfiguration.anchor.source, let sourceView = box.object else { return }
       self.sourceView = sourceView
       let host = findHostView(for: sourceView)
       hostView = host
       directAnchorChild = findDirectChild(of: host, containing: sourceView)
       if host.firstViewController == nil {
         // We still allow presentation in Release by falling back to the caller-provided parent.
-        // This keeps the embedded path safe and avoids crashes even in unusual view hierarchies.
-        assertionFailure("FKEmbeddedAnchorHost: Failed to resolve parentViewController from hostView responder chain. Falling back to the presenting view controller as containment parent.")
+        // This keeps the anchor-host path safe and avoids crashes even in unusual view hierarchies.
+        assertionFailure("FKAnchorHost: Failed to resolve parentViewController from hostView responder chain. Falling back to the presenting view controller as containment parent.")
       }
       parentViewController = host.firstViewController ?? fallbackParent
     case let .inProvidedContainer(box):
       hostView = box.object
       directAnchorChild = nil
       if hostView?.firstViewController == nil {
-        assertionFailure("FKEmbeddedAnchorHost: Provided host container does not have a parent view controller in responder chain. Falling back to the presenting view controller as containment parent.")
+        assertionFailure("FKAnchorHost: Provided host container does not have a parent view controller in responder chain. Falling back to the presenting view controller as containment parent.")
       }
       parentViewController = hostView?.firstViewController ?? fallbackParent
     case .inWindowLevel:
@@ -180,7 +180,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   }
 
   private func applyZOrderPolicy() {
-    guard embeddedConfiguration.zOrderPolicy == .keepAnchorAbovePresentation else { return }
+    guard anchorConfiguration.zOrderPolicy == .keepAnchorAbovePresentation else { return }
     guard let hostView else { return }
     // Re-apply on every layout/reposition pass because host subview order may be mutated externally
     // (e.g. other features inserting overlays). Without this, anchor-attached visuals regress quickly.
@@ -195,12 +195,12 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
   // MARK: - Containment
 
-  private func ensureEmbeddedHostViewController(parent: UIViewController, hostView: UIView) -> FKEmbeddedHostViewController {
-    if let existing = embeddedHostViewController, existing.parent === parent {
+  private func ensureAnchorHostViewController(parent: UIViewController, hostView: UIView) -> FKAnchorHostViewController {
+    if let existing = anchorHostViewController, existing.parent === parent {
       return existing
     }
 
-    let vc = FKEmbeddedHostViewController(configuration: configuration)
+    let vc = FKAnchorHostViewController(configuration: configuration)
     vc.onRequestDismiss = { [weak self] in
       // Route dismiss through owner to keep lifecycle callbacks/state in sync.
       self?.owner.dismiss(animated: true, completion: nil)
@@ -217,31 +217,31 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     vc.didMove(toParent: parent)
 
-    embeddedHostViewController = vc
+    anchorHostViewController = vc
     return vc
   }
 
-  private func embedContent(into embeddedHostViewController: FKEmbeddedHostViewController) {
-    if contentController.parent === embeddedHostViewController {
+  private func embedContent(into anchorHostViewController: FKAnchorHostViewController) {
+    if contentController.parent === anchorHostViewController {
       return
     }
 
-    embeddedHostViewController.addChild(contentController)
+    anchorHostViewController.addChild(contentController)
     contentController.view.translatesAutoresizingMaskIntoConstraints = false
-    embeddedHostViewController.contentContainerView.addSubview(contentController.view)
+    anchorHostViewController.contentContainerView.addSubview(contentController.view)
     NSLayoutConstraint.activate([
-      contentController.view.leadingAnchor.constraint(equalTo: embeddedHostViewController.contentContainerView.leadingAnchor),
-      contentController.view.trailingAnchor.constraint(equalTo: embeddedHostViewController.contentContainerView.trailingAnchor),
-      contentController.view.topAnchor.constraint(equalTo: embeddedHostViewController.contentContainerView.topAnchor),
-      contentController.view.bottomAnchor.constraint(equalTo: embeddedHostViewController.contentContainerView.bottomAnchor),
+      contentController.view.leadingAnchor.constraint(equalTo: anchorHostViewController.contentContainerView.leadingAnchor),
+      contentController.view.trailingAnchor.constraint(equalTo: anchorHostViewController.contentContainerView.trailingAnchor),
+      contentController.view.topAnchor.constraint(equalTo: anchorHostViewController.contentContainerView.topAnchor),
+      contentController.view.bottomAnchor.constraint(equalTo: anchorHostViewController.contentContainerView.bottomAnchor),
     ])
-    contentController.didMove(toParent: embeddedHostViewController)
+    contentController.didMove(toParent: anchorHostViewController)
   }
 
   private func cleanup() {
     stopRepositionObservation()
 
-    if let hostVC = embeddedHostViewController {
+    if let hostVC = anchorHostViewController {
       if contentController.parent === hostVC {
         contentController.willMove(toParent: nil)
         contentController.view.removeFromSuperview()
@@ -252,7 +252,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
       hostVC.removeFromParent()
     }
 
-    embeddedHostViewController = nil
+    anchorHostViewController = nil
     parentViewController = nil
     hostView = nil
     directAnchorChild = nil
@@ -269,7 +269,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
       in: host,
       bounds: bounds,
       safeInsets: safeInsets,
-      anchor: embeddedConfiguration.anchor,
+      anchor: anchorConfiguration.anchor,
       measuredContentHeight: { [weak self] in
         guard let self else { return 320 }
         let preferred = self.contentController.preferredContentSize.height
@@ -283,25 +283,25 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     frame = applyKeyboardAvoidance(to: frame, in: host)
 
     let sourceRect = result.sourceRect ?? .zero
-    let attachmentY: CGFloat = (embeddedConfiguration.anchor.edge == .top) ? sourceRect.minY : sourceRect.maxY
+    let attachmentY: CGFloat = (anchorConfiguration.anchor.edge == .top) ? sourceRect.minY : sourceRect.maxY
     let anchorLineY: CGFloat = {
       switch result.resolvedDirection {
       case .down:
-        return attachmentY + embeddedConfiguration.anchor.offset
+        return attachmentY + anchorConfiguration.anchor.offset
       case .up:
-        return attachmentY - embeddedConfiguration.anchor.offset
+        return attachmentY - anchorConfiguration.anchor.offset
       case .auto:
-        return attachmentY + embeddedConfiguration.anchor.offset
+        return attachmentY + anchorConfiguration.anchor.offset
       }
     }()
 
     let maskCoverageRect: CGRect = {
-      switch embeddedConfiguration.maskCoveragePolicy {
+      switch anchorConfiguration.maskCoveragePolicy {
       case .fullScreen:
         return host.bounds
       case .belowAnchorOnly:
         // Keep interaction mask local to the anchor side so controls above the anchor remain interactive.
-        // This intentionally preserves legacy embedded-dropdown behavior instead of modal full-screen capture.
+        // This intentionally preserves legacy anchor-dropdown behavior instead of modal full-screen capture.
         let top = sourceRect.maxY
         return CGRect(x: host.bounds.minX, y: top, width: host.bounds.width, height: max(0, host.bounds.maxY - top))
       }
@@ -328,11 +328,11 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
   private func makeAnimator(isPresentation: Bool, animated: Bool) -> UIViewPropertyAnimator {
     let reduceMotion = UIAccessibility.isReduceMotionEnabled
-    guard let hostVC = embeddedHostViewController else {
+    guard let hostVC = anchorHostViewController else {
       return UIViewPropertyAnimator(duration: 0, curve: .linear) {}
     }
     let style = FKAnimationStyleResolver.resolveTransitionStyle(
-      mode: .anchor(embeddedConfiguration.anchor),
+      mode: .anchor(anchorConfiguration),
       animationConfiguration: configuration.animation,
       isPresentation: isPresentation,
       reduceMotionEnabled: reduceMotion,
@@ -411,12 +411,12 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   }
 
   // MARK: - Gestures
-  // Gestures are owned by FKEmbeddedHostViewController.
+  // Gestures are owned by FKAnchorHostViewController.
 
   // MARK: - Reposition observation
 
   private func startRepositionObservation(in host: UIView) {
-    let policy = embeddedConfiguration.repositionPolicy
+    let policy = anchorConfiguration.repositionPolicy
     repositionCoordinator.startObserving(
       in: host,
       listenLayoutChanges: policy.listensToLayoutChanges,
@@ -452,7 +452,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
 
   private func refreshAnchorHierarchy() {
     guard let hostView else { return }
-    guard case .inSameSuperviewBelowAnchor = embeddedConfiguration.hostStrategy else { return }
+    guard case .inSameSuperviewBelowAnchor = anchorConfiguration.hostStrategy else { return }
     guard let sourceView else { return }
     guard sourceView.window != nil else { return }
 
@@ -467,7 +467,7 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
     let activeHost = self.hostView ?? newHost
     // The direct child relationship can change after layout updates, so resolve it every cycle before z-order.
     directAnchorChild = findDirectChild(of: activeHost, containing: sourceView)
-    if let hostVC = embeddedHostViewController, hostVC.view.superview !== activeHost {
+    if let hostVC = anchorHostViewController, hostVC.view.superview !== activeHost {
       activeHost.addSubview(hostVC.view)
       hostVC.view.frame = activeHost.bounds
       hostVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -476,12 +476,12 @@ final class FKEmbeddedAnchorHost: NSObject, FKPresentationHosting {
   }
 
   private func shouldDeferPresentationBecauseSourceViewIsNotInWindow() -> Bool {
-    guard case .inSameSuperviewBelowAnchor = embeddedConfiguration.hostStrategy else { return false }
-    guard case let .view(box) = embeddedConfiguration.anchor.source, let sourceView = box.object else { return false }
+    guard case .inSameSuperviewBelowAnchor = anchorConfiguration.hostStrategy else { return false }
+    guard case let .view(box) = anchorConfiguration.anchor.source, let sourceView = box.object else { return false }
     return sourceView.window == nil
   }
 
-  // MARK: - Keyboard avoidance (embedded)
+  // MARK: - Keyboard avoidance (anchor)
 
   private func startKeyboardTrackingIfNeeded() {
     guard configuration.keyboardAvoidance.isEnabled else { return }
@@ -602,8 +602,8 @@ private extension UIView {
 }
 
 @MainActor
-private final class FKEmbeddedRepositionCoordinator {
-  private weak var probeView: FKEmbeddedRepositionProbeView?
+private final class FKAnchorRepositionCoordinator {
+  private weak var probeView: FKAnchorRepositionProbeView?
   private var isScheduled = false
   private var onReposition: (() -> Void)?
   private var debounceInterval: TimeInterval = 0
@@ -619,12 +619,12 @@ private final class FKEmbeddedRepositionCoordinator {
     self.onReposition = onRepositionRequested
     self.debounceInterval = max(0, debounceInterval)
 
-    let probe: FKEmbeddedRepositionProbeView
+    let probe: FKAnchorRepositionProbeView
     if let existing = probeView, existing.superview === host {
       probe = existing
     } else {
       probeView?.removeFromSuperview()
-      let newProbe = FKEmbeddedRepositionProbeView(frame: host.bounds)
+      let newProbe = FKAnchorRepositionProbeView(frame: host.bounds)
       newProbe.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       newProbe.isUserInteractionEnabled = false
       host.addSubview(newProbe)
@@ -671,7 +671,7 @@ private final class FKEmbeddedRepositionCoordinator {
   }
 }
 
-private final class FKEmbeddedRepositionProbeView: UIView {
+private final class FKAnchorRepositionProbeView: UIView {
   var onHostChange: ((_ didLayoutChange: Bool, _ didTraitChange: Bool) -> Void)?
   private var lastBoundsSize: CGSize = .zero
 

@@ -1,6 +1,6 @@
 # FKPresentationController
 
-`FKPresentationController` is a UIKit-first presentation infrastructure for FKKit. It unifies bottom/top sheets, center modals, anchor popups, and embedded anchor dropdowns under one API, with production-focused configuration for animation, safe area, keyboard, backdrop, interaction, and lifecycle callbacks.
+`FKPresentationController` is a UIKit-first presentation infrastructure for FKKit. It unifies bottom/top sheets, center modals, and anchor dropdowns under one API, with production-focused configuration for animation, safe area, keyboard, backdrop, interaction, and lifecycle callbacks.
 
 ## Table of Contents
 
@@ -15,7 +15,6 @@
   - [Top Sheet](#top-sheet)
   - [Center Modal](#center-modal)
   - [Anchor Popup](#anchor-popup)
-  - [Embedded Anchor Popup](#embedded-anchor-popup)
 - [Advanced Usage](#advanced-usage)
   - [Sheet Detents and Programmatic Switching](#sheet-detents-and-programmatic-switching)
   - [Backdrop Styles](#backdrop-styles)
@@ -38,14 +37,14 @@ This component is designed for large UIKit codebases:
 
 - Unified API across multiple presentation paradigms
 - Modal host path for sheet/center/anchor/edge
-- Embedded host path for in-hierarchy anchor dropdowns
+- Anchor host path for in-hierarchy anchor dropdowns
 - Strongly-typed configuration model
 - Main-actor friendly lifecycle and callbacks
 - Interactive dismissal and detent change hooks
 
 ## Features
 
-- Supports `bottomSheet`, `topSheet`, `center`, `anchor`, `embeddedAnchor`, and `edge`
+- Supports `bottomSheet`, `topSheet`, `center`, `anchor`, and `edge`
 - Detent-based sheet sizing (`fitContent`, `fixed`, `fraction`, `full`)
 - Programmatic detent switching through controller API
 - Backdrop styles: `none`, `dim`, `blur`, `liquidGlass`
@@ -54,15 +53,14 @@ This component is designed for large UIKit codebases:
 - Configurable animation preset/timing/custom animator
 - Flexible dismiss behavior (tap outside, swipe, backdrop tap)
 - Background interaction policy with optional passthrough behavior
-- Embedded anchor hosting with z-order and mask coverage policies
+- Anchor-hosted hosting with z-order and mask coverage policies
 
 ## Presentation Modes
 
 - **`.bottomSheet`**: bottom-attached sheet presentation (default)
 - **`.topSheet`**: top-attached sheet presentation
 - **`.center`**: centered floating modal
-- **`.anchor(FKAnchor)`**: modal anchor popup relative to source view/rect
-- **`.embeddedAnchor(FKEmbeddedAnchorConfiguration)`**: anchor popup embedded in existing view hierarchy
+- **`.anchor(FKAnchorConfiguration)`**: anchor popup hosted in existing view hierarchy
 - **`.edge(UIRectEdge)`**: custom edge-based tray/panel behavior
 
 ## Requirements
@@ -158,36 +156,13 @@ let anchor = FKAnchor(
 )
 
 var configuration = FKPresentationConfiguration()
-configuration.mode = .anchor(anchor)
-
-FKPresentationController.present(
-  contentController: popupVC,
-  from: self,
-  configuration: configuration
-)
-```
-
-### Embedded Anchor Popup
-
-```swift
-let anchor = FKAnchor(
-  sourceView: anchorView,
-  edge: .bottom,
-  direction: .down,
-  alignment: .fill,
-  widthPolicy: .matchContainer,
-  offset: 0
-)
-
-let embedded = FKEmbeddedAnchorConfiguration(
+let anchorConfig = FKAnchorConfiguration(
   anchor: anchor,
   hostStrategy: .inSameSuperviewBelowAnchor,
   zOrderPolicy: .keepAnchorAbovePresentation,
   maskCoveragePolicy: .fullScreen
 )
-
-var configuration = FKPresentationConfiguration()
-configuration.mode = .embeddedAnchor(embedded)
+configuration.mode = .anchor(anchorConfig)
 
 FKPresentationController.present(
   contentController: popupVC,
@@ -299,8 +274,7 @@ configuration.backgroundInteraction.showsBackdropWhenEnabled = true
 - `FKPresentationConfiguration`
 - `FKPresentationMode`
 - `FKPresentationDetent`
-- `FKAnchor`
-- `FKEmbeddedAnchorConfiguration`
+- `FKAnchorConfiguration`
 - `FKBackdropStyle`
 - `FKSafeAreaPolicy`
 - `FKKeyboardAvoidanceStrategy`
@@ -330,18 +304,17 @@ configuration.backgroundInteraction.showsBackdropWhenEnabled = true
 ## Best Practices
 
 - Keep all presentation operations on main actor (`present`, `dismiss`, `setDetent`).
-- Prefer `.embeddedAnchor` for in-page dropdown UX where anchor z-order matters.
-- Prefer `.anchor` for modal-like anchor popups that should follow full modal lifecycle.
+- Prefer `.anchor` for in-page dropdown UX where anchor z-order and hierarchy attachment matter.
 - Use `preferredContentSize` on content controllers for predictable fit-content behavior.
 - Use callback/delegate hooks to sync business state with transition state.
 - For deterministic no-motion UX, set `configuration.animation.preset = .none`.
 
 ## Notes
 
-- `embeddedAnchor` and modal modes use different host paths by design.
+- `anchor` mode uses anchor hosting and does not go through the modal `UIPresentationController` path.
 - Detent APIs are meaningful for sheet modes; non-sheet modes ignore detent switching.
 - `backgroundInteraction.isEnabled` is an advanced setting; enable only when passthrough behavior is intentional.
-- In embedded anchor mode, choose `maskCoveragePolicy` carefully (`fullScreen` vs `belowAnchorOnly`) based on expected touch interception.
+- In anchor-hosted mode, choose `maskCoveragePolicy` carefully (`fullScreen` vs `belowAnchorOnly`) based on expected touch interception.
 
 ## License
 

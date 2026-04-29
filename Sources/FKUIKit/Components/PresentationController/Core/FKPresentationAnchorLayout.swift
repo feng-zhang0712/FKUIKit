@@ -1,8 +1,8 @@
 import UIKit
 
-// MARK: - Shared anchor layout (modal + embedded)
+// MARK: - Shared anchor layout (anchor-hosted)
 
-/// Shared anchor frame resolver used by both modal and embedded anchor modes.
+/// Shared anchor frame resolver used by both modal and anchor-hosted modes.
 @MainActor
 enum FKPresentationAnchorLayout {
   struct Result {
@@ -16,7 +16,7 @@ enum FKPresentationAnchorLayout {
     case let .view(box):
       guard let view = box.object else { return nil }
       guard view.window != nil else { return nil }
-      // Convert to the host/container coordinate space so modal and embedded paths share identical
+      // Convert to the host/container coordinate space so modal and anchor-hosted paths share identical
       // geometry decisions even when the anchor is deeply nested.
       return view.convert(view.bounds, to: containerView)
     case let .rect(provider):

@@ -1,6 +1,6 @@
 import UIKit
 
-/// Anchor specification used by `FKPresentationMode.anchor(_:)`.
+/// Anchor specification used by `FKAnchorConfiguration`.
 ///
 /// This type is designed to be resilient in dynamic UI environments where the source view may move,
 /// appear/disappear, or change size (e.g. navigation bars, tab bars, animated toolbars).
