@@ -52,7 +52,7 @@ public struct FKPresentationConfiguration {
   /// Sheet-specific behavior and allowed heights.
   public struct SheetConfiguration {
     public enum WidthPolicy {
-      /// Uses full container width (legacy behavior).
+      /// Uses full container width.
       case fill
       /// Uses a fraction of container width and centers the sheet.
       case fraction(CGFloat)

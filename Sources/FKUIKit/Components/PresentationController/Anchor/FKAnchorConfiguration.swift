@@ -80,7 +80,7 @@ public extension FKAnchorConfiguration {
   enum MaskCoveragePolicy {
     /// Only covers the area *below* the anchor attachment line.
     ///
-    /// This matches the legacy `FKPresentation` behavior and reduces accidental blocking of UI
+    /// This reduces accidental blocking of UI
     /// above the anchor (e.g. navigation bar items).
     case belowAnchorOnly
 

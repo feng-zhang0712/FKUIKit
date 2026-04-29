@@ -3,16 +3,15 @@ import UIKit
 @MainActor
 final class FKAnchorHost: NSObject, FKPresentationHosting {
   /*
-   Regression notes (legacy FKPresentation as gold standard)
-   --------------------------------------------------------
-   Current anchor-host path must match the old UIView-based FKPresentation behavior:
-   - Host container: legacy hosts inside the anchor's resolved container (not window-level by default).
-   - Insertion: legacy inserts presentation above other subviews and inserts mask below it; then brings
-     the anchor (or its direct host child) to front on every reposition.
-   - Geometry: the presentation edge is attached to the anchor edge with zero vertical spacing by default.
-   - Mask coverage: legacy default covers only the region *below sourceView* (not full screen).
-   - Animation: legacy is edge-attached (sheet-like), not alert-like scaling.
-   - Corners/shadow: legacy defaults to rounding only the free edge corners and follows the free-edge shadow.
+   Anchor-host behavior notes
+   --------------------------
+   - Host container defaults to the anchor's resolved container (not window-level).
+   - Insertion places presentation above other subviews and mask below it; the anchor (or its direct host child)
+     is then brought to front on reposition.
+   - Geometry keeps the presentation edge attached to the anchor edge with zero vertical spacing by default.
+   - Default mask coverage only includes the region *below sourceView* (not full screen).
+   - Animation is edge-attached (sheet-like), not alert-like scaling.
+   - Corners/shadow round the free edge and follow free-edge shadow behavior.
    */
   private unowned let owner: FKPresentationController
   private let contentController: UIViewController
@@ -157,8 +156,7 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
   }
 
   private func findHostView(for sourceView: UIView) -> UIView {
-    // Match legacy FKPresentation behavior:
-    // prefer the source's immediate superview as hosting container.
+    // Prefer the source's immediate superview as hosting container.
     if let superview = sourceView.superview {
       return superview
     }
@@ -211,7 +209,7 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
 
     parent.addChild(vc)
 
-    // Legacy semantics: presentation layer is added to host, then anchor/direct-child is brought to front.
+    // Presentation layer is added to host, then anchor/direct-child is brought to front.
     hostView.addSubview(vc.view)
     vc.view.frame = hostView.bounds
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -301,7 +299,7 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
         return host.bounds
       case .belowAnchorOnly:
         // Keep interaction mask local to the anchor side so controls above the anchor remain interactive.
-        // This intentionally preserves legacy anchor-dropdown behavior instead of modal full-screen capture.
+        // This keeps anchor-dropdown interaction localized instead of modal full-screen capture.
         let top = sourceRect.maxY
         return CGRect(x: host.bounds.minX, y: top, width: host.bounds.width, height: max(0, host.bounds.maxY - top))
       }
