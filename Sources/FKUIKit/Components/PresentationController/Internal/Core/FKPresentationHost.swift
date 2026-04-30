@@ -8,7 +8,7 @@ protocol FKPresentationHost: AnyObject {
   func present(from presentingViewController: UIViewController, animated: Bool, completion: (() -> Void)?)
   /// Dismisses content managed by this host.
   func dismiss(animated: Bool, completion: (() -> Void)?)
-  /// Re-applies layout when external geometry changes.
-  func updateLayout()
+  /// Re-applies layout with optional animation.
+  func updateLayout(animated: Bool, duration: TimeInterval, options: UIView.AnimationOptions)
 }
 

@@ -49,7 +49,7 @@ final class FKModalPresentationHost: NSObject, FKPresentationHost {
     contentController.dismiss(animated: animated, completion: completion)
   }
 
-  func updateLayout() {
+  func updateLayout(animated: Bool, duration: TimeInterval, options: UIView.AnimationOptions) {
     // Modal path updates via UIPresentationController layout lifecycle.
   }
 }
