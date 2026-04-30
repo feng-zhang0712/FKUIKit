@@ -11,7 +11,7 @@ import FKUIKit
 ///
 /// The dropdown presentation is powered by `FKPresentationController` in `.anchorEmbedded` mode.
 @MainActor
-public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
+public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewController {
   /// Close reasons unified across user interactions and programmatic control.
   public enum CloseReason: Equatable, Sendable {
     /// The user tapped the already-expanded tab again.
@@ -47,13 +47,13 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
   public var expandedTab: TabID? { expandedTabID }
 
   /// Tab bar host. You may provide your own host to customize the full tab bar container UI.
-  public let tabBarHost: any FKTabDropdownTabBarHosting
+  public let tabBarHost: any FKAnchoredDropdownTabBarHost
 
   /// Underlying tab bar used for interaction and selection rendering.
   public var tabBar: FKTabBar { tabBarHost.tabBar }
 
   /// Component configuration.
-  public var configuration: FKTabDropdownConfiguration {
+  public var configuration: FKAnchoredDropdownConfiguration {
     didSet {
       applyConfiguration()
       rebuildTabBarItems(keepSelectedTab: selectedTabID)
@@ -61,7 +61,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
   }
 
   /// State callbacks.
-  public var callbacks: FKTabDropdownConfiguration.Callbacks<TabID>
+  public var callbacks: FKAnchoredDropdownConfiguration.Callbacks<TabID>
 
   /// Creates a dropdown controller.
   ///
@@ -71,10 +71,10 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
   ///   - configuration: Configuration applied to the tab bar and presentation.
   ///   - callbacks: State callbacks.
   public init(
-    tabs: [FKTabDropdownTab<TabID>],
-    tabBarHost: (any FKTabDropdownTabBarHosting)? = nil,
-    configuration: FKTabDropdownConfiguration = .default,
-    callbacks: FKTabDropdownConfiguration.Callbacks<TabID> = .init()
+    tabs: [FKAnchoredDropdownTab<TabID>],
+    tabBarHost: (any FKAnchoredDropdownTabBarHost)? = nil,
+    configuration: FKAnchoredDropdownConfiguration = .default,
+    callbacks: FKAnchoredDropdownConfiguration.Callbacks<TabID> = .init()
   ) {
     self.tabs = tabs
     self.tabBarHost = tabBarHost ?? FKDefaultTabDropdownTabBarHost()
@@ -91,7 +91,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
   /// Updates tabs at runtime.
   ///
   /// This method keeps the current selection when possible.
-  public func setTabs(_ tabs: [FKTabDropdownTab<TabID>]) {
+  public func setTabs(_ tabs: [FKAnchoredDropdownTab<TabID>]) {
     self.tabs = tabs
     rebuildTabBarItems(keepSelectedTab: selectedTabID)
 
@@ -175,14 +175,14 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
 
   // MARK: - Internal storage
 
-  private var tabs: [FKTabDropdownTab<TabID>] = []
+  private var tabs: [FKAnchoredDropdownTab<TabID>] = []
   private var selectedTabID: TabID?
   private var expandedTabID: TabID? {
     didSet { callbacks.expandedTabDidChange?(expandedTabID) }
   }
 
   private var fkPresentationController: FKPresentationController?
-  private var presentedContentContainer: FKTabDropdownContentContainerViewController?
+  private var presentedContentContainer: FKAnchoredDropdownContentContainerViewController?
   private var scheduledCloseReason: CloseReason?
   private var lastClosingTabID: TabID?
   private var pendingSwitchTargetTabID: TabID?
@@ -249,7 +249,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
   // MARK: - Tab bar items
 
   private func rebuildTabBarItems(keepSelectedTab: TabID?) {
-    let snapshot = FKTabDropdownTab<TabID>.StateSnapshot(
+    let snapshot = FKAnchoredDropdownTab<TabID>.StateSnapshot(
       expandedTab: expandedTabID,
       selectedTab: keepSelectedTab
     )
@@ -323,7 +323,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
     expandedTabID = id
     rebuildTabBarItems(keepSelectedTab: selectedTabID ?? id)
 
-    let container = FKTabDropdownContentContainerViewController()
+    let container = FKAnchoredDropdownContentContainerViewController()
     container.onPreferredContentSizeDidChange = { [weak self] in
       guard let self else { return }
       let shouldAnimate = self.configuration.switchAnimationStyle.isReplaceInPlace
@@ -341,8 +341,8 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
     cfg.dismissBehavior.allowsTapOutside = configuration.allowsTapOutsideToDismiss
     cfg.dismissBehavior.allowsSwipe = configuration.allowsSwipeToDismiss
     cfg.dismissBehavior.allowsBackdropTap = configuration.allowsBackdropTapToDismiss
-    cfg.mode = .anchorEmbedded(
-      FKEmbeddedAnchorConfiguration(
+    cfg.layout = .anchor (
+      FKAnchorConfiguration(
         anchor: FKAnchor(
           sourceView: tabBarHost.tabBar,
           edge: .bottom,
@@ -365,7 +365,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
     return true
   }
 
-  private func resolveContentController(for tab: FKTabDropdownTab<TabID>) -> UIViewController {
+  private func resolveContentController(for tab: FKAnchoredDropdownTab<TabID>) -> UIViewController {
     switch configuration.contentCachingPolicy {
     case .recreate:
       return makeContentController(for: tab)
@@ -379,7 +379,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
     }
   }
 
-  private func makeContentController(for tab: FKTabDropdownTab<TabID>) -> UIViewController {
+  private func makeContentController(for tab: FKAnchoredDropdownTab<TabID>) -> UIViewController {
     switch tab.content {
     case let .viewController(make):
       return make()
@@ -458,7 +458,7 @@ public final class FKTabDropdownController<TabID: Hashable>: UIViewController {
 
 // MARK: - FKPresentationControllerDelegate
 
-extension FKTabDropdownController: FKPresentationControllerDelegate {
+extension FKAnchoredDropdownController: FKPresentationControllerDelegate {
   public func presentationControllerWillPresent(_ controller: FKPresentationController) {}
 
   public func presentationControllerDidPresent(_ controller: FKPresentationController) {
@@ -509,26 +509,26 @@ extension FKTabDropdownController: FKPresentationControllerDelegate {
   public func presentationController(_ controller: FKPresentationController, didChangeDetent detent: FKPresentationDetent, index: Int) {}
 }
 
-private extension FKTabDropdownController {
-  func containerTransition(for animation: FKTabDropdownConfiguration.ReplaceInPlaceAnimation) -> FKTabDropdownContentContainerViewController.Transition {
+private extension FKAnchoredDropdownController {
+  func containerTransition(for animation: FKAnchoredDropdownConfiguration.ReplaceInPlaceAnimation) -> FKAnchoredDropdownContentContainerViewController.Transition {
     switch animation {
     case let .crossfade(duration):
       return .crossfade(duration: duration)
     case let .slideVertical(direction, duration):
-      let d: FKTabDropdownContentContainerViewController.Transition.SlideDirection = (direction == .up) ? .up : .down
+      let d: FKAnchoredDropdownContentContainerViewController.Transition.SlideDirection = (direction == .up) ? .up : .down
       return .slideVertical(direction: d, duration: duration)
     }
   }
 }
 
-private extension FKTabDropdownConfiguration.SwitchAnimationStyle {
+private extension FKAnchoredDropdownConfiguration.SwitchAnimationStyle {
   var isReplaceInPlace: Bool {
     if case .replaceInPlace = self { return true }
     return false
   }
 }
 
-private extension FKTabDropdownController {
+private extension FKAnchoredDropdownController {
   func setState(_ newValue: State) {
     if state == newValue { return }
     state = newValue
@@ -536,7 +536,7 @@ private extension FKTabDropdownController {
   }
 }
 
-private extension FKTabDropdownController {
+private extension FKAnchoredDropdownController {
   func resolvePendingSwitchAfterDismiss(previouslyExpanded: TabID?) -> (from: TabID, to: TabID, animated: Bool)? {
     guard let from = previouslyExpanded else {
       pendingSwitchTargetTabID = nil

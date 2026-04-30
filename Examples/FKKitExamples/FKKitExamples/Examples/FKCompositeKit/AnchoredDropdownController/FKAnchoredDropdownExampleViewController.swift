@@ -2,8 +2,8 @@ import UIKit
 import FKCompositeKit
 import FKUIKit
 
-/// Examples for `FKTabDropdownController`.
-final class FKTabDropdownExampleViewController: UIViewController {
+/// Examples for `FKAnchoredDropdownController`.
+final class FKAnchoredDropdownExampleViewController: UIViewController {
   private enum TabID: String, CaseIterable, Hashable {
     case sort
     case filters
@@ -18,7 +18,7 @@ final class FKTabDropdownExampleViewController: UIViewController {
     }
   }
 
-  private final class TabBarHostView: UIView, FKTabDropdownTabBarHosting {
+  private final class TabBarHostView: UIView, FKAnchoredDropdownTabBarHost {
     let tabBar: FKTabBar = {
       let bar = FKTabBar()
       bar.translatesAutoresizingMaskIntoConstraints = false
@@ -73,7 +73,7 @@ final class FKTabDropdownExampleViewController: UIViewController {
 
   private let logView = UITextView()
   private let host = TabBarHostView()
-  private lazy var dropdown: FKTabDropdownController<TabID> = makeDropdown()
+  private lazy var dropdown: FKAnchoredDropdownController<TabID> = makeDropdown()
   private let animationControl = UISegmentedControl(items: ["Replace", "Dismiss→Present"])
 
   override func viewDidLoad() {
@@ -132,8 +132,8 @@ final class FKTabDropdownExampleViewController: UIViewController {
     view.bringSubviewToFront(dropdown.view)
   }
 
-  private func makeDropdown() -> FKTabDropdownController<TabID> {
-    let tabs: [FKTabDropdownTab<TabID>] = [
+  private func makeDropdown() -> FKAnchoredDropdownController<TabID> {
+    let tabs: [FKAnchoredDropdownTab<TabID>] = [
       .chevronTitle(
         id: .sort,
         itemID: "sort",
@@ -155,13 +155,13 @@ final class FKTabDropdownExampleViewController: UIViewController {
       ),
     ]
 
-    var config = FKTabDropdownConfiguration.default
+    var config = FKAnchoredDropdownConfiguration.default
     config.presentationConfiguration.contentInsets = .init(top: 8, leading: 12, bottom: 12, trailing: 12)
     config.presentationConfiguration.cornerRadius = 12
     config.presentationConfiguration.backdropStyle = .dim(alpha: 0.25)
     config.switchAnimationStyle = .replaceInPlace(animation: .crossfade(duration: 0.18))
 
-    let callbacks = FKTabDropdownConfiguration.Callbacks<TabID>(
+    let callbacks = FKAnchoredDropdownConfiguration.Callbacks<TabID>(
       stateDidChange: { [weak self] state in self?.appendLog("state: \(state)") },
       expandedTabDidChange: { [weak self] expanded in self?.appendLog("expandedTab: \(expanded?.rawValue ?? "nil")") },
       willOpen: { [weak self] tab in self?.appendLog("willOpen: \(tab.rawValue)") },
@@ -172,7 +172,7 @@ final class FKTabDropdownExampleViewController: UIViewController {
       didSwitch: { [weak self] from, to in self?.appendLog("didSwitch: \(from.rawValue) → \(to.rawValue)") }
     )
 
-    let vc = FKTabDropdownController<TabID>(
+    let vc = FKAnchoredDropdownController<TabID>(
       tabs: tabs,
       tabBarHost: host,
       configuration: config,

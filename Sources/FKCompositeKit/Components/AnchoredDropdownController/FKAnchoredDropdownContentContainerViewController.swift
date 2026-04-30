@@ -1,7 +1,7 @@
 import UIKit
 
 @MainActor
-internal final class FKTabDropdownContentContainerViewController: UIViewController {
+internal final class FKAnchoredDropdownContentContainerViewController: UIViewController {
   enum Transition {
     case none
     case crossfade(duration: TimeInterval)

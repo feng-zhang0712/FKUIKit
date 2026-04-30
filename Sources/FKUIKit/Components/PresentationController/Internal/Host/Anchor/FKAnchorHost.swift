@@ -106,8 +106,8 @@ final class FKAnchorHost: NSObject, FKPresentationHost {
     }
     animator.startAnimation()
   }
-
-  func updateLayout() {
+  
+  func updateLayout(animated: Bool, duration: TimeInterval, options: UIView.AnimationOptions) {
     guard let hostView, let hostVC = anchorHostViewController else { return }
 
     let resolved = resolveLayout(in: hostView)
@@ -159,7 +159,16 @@ final class FKAnchorHost: NSObject, FKPresentationHost {
       parentViewController = host.fk_firstViewController ?? fallbackParent
     case let .inProvidedContainer(box):
       hostView = box.object
-      directAnchorChild = nil
+      if case let .view(anchorBox) = anchorConfiguration.anchor.source {
+        sourceView = anchorBox.object
+      } else {
+        sourceView = nil
+      }
+      if let hostView, let sourceView {
+        directAnchorChild = findDirectChild(of: hostView, containing: sourceView)
+      } else {
+        directAnchorChild = nil
+      }
       if hostView?.fk_firstViewController == nil {
         assertionFailure("FKAnchorHost: Provided host container does not have a parent view controller in responder chain. Falling back to the presenting view controller as containment parent.")
       }
@@ -478,7 +487,7 @@ final class FKAnchorHost: NSObject, FKPresentationHost {
     guard sourceView.window != nil else { return }
 
     let activeHost: UIView
-    switch embeddedConfiguration.hostStrategy {
+    switch anchorConfiguration.hostStrategy {
     case .inSameSuperviewBelowAnchor:
       let newHost = findHostView(for: sourceView)
       if newHost !== hostView {

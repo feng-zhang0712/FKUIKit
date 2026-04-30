@@ -161,14 +161,9 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKBaseExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "Filter",
-          subtitle: "Tab + anchored presentation filter component: list/grid/chips/sort demos",
-          make: { FKFilterExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "TabDropdown",
+          title: "Anchored Dropdown",
           subtitle: "TabBar + anchorEmbedded dropdown: toggle/switch, replace-in-place, keyboard, dynamic height",
-          make: { FKTabDropdownExampleViewController() }
+          make: { FKAnchoredDropdownExampleViewController() }
         ),
         ExampleMenuItem(
           title: "ListKit",

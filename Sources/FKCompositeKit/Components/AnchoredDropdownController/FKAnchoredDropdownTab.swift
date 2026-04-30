@@ -1,8 +1,8 @@
 import UIKit
 import FKUIKit
 
-/// A tab descriptor for `FKTabDropdownController`.
-public struct FKTabDropdownTab<TabID: Hashable> {
+/// A tab descriptor for `FKAnchoredDropdownController`.
+public struct FKAnchoredDropdownTab<TabID: Hashable> {
   /// Snapshot used when building tab UI and content.
   public struct StateSnapshot: Equatable {
     /// Currently expanded tab (if any).
@@ -46,7 +46,7 @@ public struct FKTabDropdownTab<TabID: Hashable> {
   }
 }
 
-public extension FKTabDropdownTab {
+public extension FKAnchoredDropdownTab {
   /// A lightweight default tab builder using a title + chevron that flips up/down based on expanded state.
   ///
   /// This is a convenience for teams that don't need fully custom item views.
@@ -66,7 +66,7 @@ public extension FKTabDropdownTab {
     titleSubtitleSpacing: CGFloat = 2,
     content: Content
   ) -> Self {
-    FKTabDropdownTab(
+    FKAnchoredDropdownTab(
       id: id,
       makeTabBarItem: { snapshot in
         let isExpanded = snapshot.expandedTab == id

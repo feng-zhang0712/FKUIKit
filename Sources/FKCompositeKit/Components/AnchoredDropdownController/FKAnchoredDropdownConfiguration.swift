@@ -1,8 +1,8 @@
 import UIKit
 import FKUIKit
 
-/// Configuration for `FKTabDropdownController`.
-public struct FKTabDropdownConfiguration {
+/// Configuration for `FKAnchoredDropdownController`.
+public struct FKAnchoredDropdownConfiguration {
   /// How the component switches between two different tabs while the dropdown is visible.
   public enum SwitchAnimationStyle: Equatable, Sendable {
     /// Dismiss the current dropdown then present the new dropdown.
@@ -40,23 +40,23 @@ public struct FKTabDropdownConfiguration {
   /// Hooks for state changes.
   public struct Callbacks<TabID: Hashable> {
     /// Called whenever the internal state changes.
-    public var stateDidChange: (@MainActor (_ state: FKTabDropdownController<TabID>.State) -> Void)?
+    public var stateDidChange: (@MainActor (_ state: FKAnchoredDropdownController<TabID>.State) -> Void)?
     /// Called whenever the expanded tab id changes.
     public var expandedTabDidChange: (@MainActor (_ expandedTab: TabID?) -> Void)?
     public var willOpen: (@MainActor (_ tab: TabID) -> Void)?
     public var didOpen: (@MainActor (_ tab: TabID) -> Void)?
-    public var willClose: (@MainActor (_ tab: TabID?, _ reason: FKTabDropdownController<TabID>.CloseReason) -> Void)?
-    public var didClose: (@MainActor (_ tab: TabID?, _ reason: FKTabDropdownController<TabID>.CloseReason) -> Void)?
+    public var willClose: (@MainActor (_ tab: TabID?, _ reason: FKAnchoredDropdownController<TabID>.CloseReason) -> Void)?
+    public var didClose: (@MainActor (_ tab: TabID?, _ reason: FKAnchoredDropdownController<TabID>.CloseReason) -> Void)?
     public var willSwitch: (@MainActor (_ from: TabID, _ to: TabID) -> Void)?
     public var didSwitch: (@MainActor (_ from: TabID, _ to: TabID) -> Void)?
 
     public init(
-      stateDidChange: (@MainActor (_ state: FKTabDropdownController<TabID>.State) -> Void)? = nil,
+      stateDidChange: (@MainActor (_ state: FKAnchoredDropdownController<TabID>.State) -> Void)? = nil,
       expandedTabDidChange: (@MainActor (_ expandedTab: TabID?) -> Void)? = nil,
       willOpen: (@MainActor (_ tab: TabID) -> Void)? = nil,
       didOpen: (@MainActor (_ tab: TabID) -> Void)? = nil,
-      willClose: (@MainActor (_ tab: TabID?, _ reason: FKTabDropdownController<TabID>.CloseReason) -> Void)? = nil,
-      didClose: (@MainActor (_ tab: TabID?, _ reason: FKTabDropdownController<TabID>.CloseReason) -> Void)? = nil,
+      willClose: (@MainActor (_ tab: TabID?, _ reason: FKAnchoredDropdownController<TabID>.CloseReason) -> Void)? = nil,
+      didClose: (@MainActor (_ tab: TabID?, _ reason: FKAnchoredDropdownController<TabID>.CloseReason) -> Void)? = nil,
       willSwitch: (@MainActor (_ from: TabID, _ to: TabID) -> Void)? = nil,
       didSwitch: (@MainActor (_ from: TabID, _ to: TabID) -> Void)? = nil
     ) {
@@ -95,8 +95,8 @@ public struct FKTabDropdownConfiguration {
   public var allowsTapOutsideToDismiss: Bool
 
   public init(
-    tabBarConfiguration: FKTabBarConfiguration = FKTabDropdownConfiguration.default.tabBarConfiguration,
-    presentationConfiguration: FKPresentationConfiguration = FKTabDropdownConfiguration.default.presentationConfiguration,
+    tabBarConfiguration: FKTabBarConfiguration = FKAnchoredDropdownConfiguration.default.tabBarConfiguration,
+    presentationConfiguration: FKPresentationConfiguration = FKAnchoredDropdownConfiguration.default.presentationConfiguration,
     switchAnimationStyle: SwitchAnimationStyle = .dismissThenPresent(dismissAnimated: false, presentAnimated: true),
     contentCachingPolicy: ContentCachingPolicy = .cachePerTab,
     allowsBackdropTapToDismiss: Bool = true,
@@ -113,7 +113,7 @@ public struct FKTabDropdownConfiguration {
   }
 
   /// Default configuration tuned for an anchored dropdown below a top tab bar.
-  public static var `default`: FKTabDropdownConfiguration {
+  public static var `default`: FKAnchoredDropdownConfiguration {
     var tab = FKTabBarConfiguration()
     tab.layout.isScrollable = true
     tab.layout.widthMode = .intrinsic
@@ -131,7 +131,7 @@ public struct FKTabDropdownConfiguration {
     presentation.keyboardAvoidance = .init(isEnabled: true, strategy: .interactive, additionalBottomInset: 8, targetScrollView: nil)
     presentation.safeAreaPolicy = .contentRespectsSafeArea
     presentation.rotationHandling = .relayoutAnimated
-    return FKTabDropdownConfiguration(
+    return FKAnchoredDropdownConfiguration(
       tabBarConfiguration: tab,
       presentationConfiguration: presentation,
       switchAnimationStyle: .replaceInPlace(animation: .crossfade(duration: 0.18))
