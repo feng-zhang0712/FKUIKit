@@ -49,11 +49,6 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKCornerShadowExamplesHubViewController() }
         ),
         ExampleMenuItem(
-          title: "Carousel",
-          subtitle: "Hub: infinite loop, auto-play, custom content, callbacks, and list adaptation",
-          make: { FKCarouselExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
           title: "Divider",
           subtitle: "Horizontal/vertical, dashed/gradient, auto pin, IB and SwiftUI divider examples",
           make: { FKDividerExamplesHubViewController() }
@@ -67,11 +62,6 @@ final class ExampleMenuViewController: UITableViewController {
           title: "ExpandableText",
           subtitle: "Hub: basic, table and collection expandable text examples",
           make: { FKExpandableTextExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "LoadingAnimator",
-          subtitle: "Hub: fullscreen/embedded loading, progress ring, style switching, list reuse",
-          make: { FKLoadingAnimatorExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "MultiPicker",
@@ -92,21 +82,6 @@ final class ExampleMenuViewController: UITableViewController {
           title: "Skeleton",
           subtitle: "Overlay, presets, standalone blocks, table/collection skeleton cells, unified shimmer",
           make: { FKSkeletonExampleViewController() }
-        ),
-        ExampleMenuItem(
-          title: "StarRating",
-          subtitle: "5-star, half-star, precise decimal, image/color styles, callbacks, and table reuse examples",
-          make: { FKStarRatingExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "StickyView",
-          subtitle: "Hub: multi-target sticky, table/collection headers, callbacks, offsets, and runtime control",
-          make: { FKStickyExamplesHubViewController() }
-        ),
-        ExampleMenuItem(
-          title: "SwipeAction",
-          subtitle: "Native left/right multi-button swipe actions for table and collection lists",
-          make: { FKSwipeActionExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "TabBar",
