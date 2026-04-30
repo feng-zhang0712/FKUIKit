@@ -2,7 +2,7 @@ import ObjectiveC
 import UIKit
 
 @MainActor
-final class FKModalPresentationHost: NSObject, FKPresentationHosting {
+final class FKModalPresentationHost: NSObject, FKPresentationHost {
   private static var associationKey: UInt8 = 0
 
   private unowned let owner: FKPresentationController

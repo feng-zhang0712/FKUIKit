@@ -28,7 +28,7 @@ final class LiquidGlassBackdropExampleViewController: FKPresentationExamplePageV
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(300), .full]
       configuration.backdropStyle = self.resolvedBackdropStyle()
       _ = FKPresentationExampleHelpers.present(from: self, title: "Backdrop style", configuration: configuration)

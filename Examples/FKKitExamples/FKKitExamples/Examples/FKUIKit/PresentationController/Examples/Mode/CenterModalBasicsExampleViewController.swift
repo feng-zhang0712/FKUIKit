@@ -32,7 +32,7 @@ final class CenterModalBasicsExampleViewController: FKPresentationExamplePageVie
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .center
+      configuration.layout = .center(configuration.center)
       configuration.center.size = {
         switch self.sizeChoice {
         case .fixed:

@@ -194,7 +194,7 @@ class AnchorSingleExampleBaseViewController: UIViewController {
     )
 
     var configuration = FKPresentationConfiguration()
-    configuration.mode = .anchor(anchorConfig)
+    configuration.layout = .anchor(anchorConfig)
     configuration.dismissBehavior = .init(allowsTapOutside: true, allowsSwipe: true, allowsBackdropTap: true)
     configuration.backdropStyle = .dim(color: .black, alpha: CGFloat(maskAlpha))
     configuration.cornerRadius = CGFloat(cornerRadius)
@@ -216,7 +216,7 @@ class AnchorSingleExampleBaseViewController: UIViewController {
       from: self,
       configuration: configuration,
       delegate: nil,
-      callbacks: .init(didDismiss: { [weak self] in
+      handlers: .init(didDismiss: { [weak self] in
         self?.activePresentation = nil
       }),
       animated: animated,

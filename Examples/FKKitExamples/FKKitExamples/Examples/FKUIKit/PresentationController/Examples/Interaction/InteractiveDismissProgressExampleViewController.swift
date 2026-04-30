@@ -4,7 +4,7 @@ import FKUIKit
 /// Uses interactive progress callbacks to drive UI updates.
 ///
 /// Key highlights:
-/// - `FKPresentationControllerLifecycleCallbacks.progress` updates a label in real time.
+/// - `FKPresentationLifecycleHandlers.progress` updates a label in real time.
 /// - A common use case is to synchronize backdrop or chrome with dismiss progress.
 final class InteractiveDismissProgressExampleViewController: FKPresentationExamplePageViewController {
   private let progressLabel = UILabel()
@@ -27,7 +27,7 @@ final class InteractiveDismissProgressExampleViewController: FKPresentationExamp
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
 
-      let callbacks = FKPresentationControllerLifecycleCallbacks(
+      let callbacks = FKPresentationLifecycleHandlers(
         willDismiss: { [weak self] in
           // Capture weakly: callbacks are retained by the presentation controller during transitions.
           self?.progressLabel.text = "Progress: 0.00"
@@ -41,7 +41,7 @@ final class InteractiveDismissProgressExampleViewController: FKPresentationExamp
       )
 
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(320), .full]
       configuration.backdropStyle = .dim(alpha: 0.4)
 
@@ -49,7 +49,7 @@ final class InteractiveDismissProgressExampleViewController: FKPresentationExamp
         from: self,
         title: "Drag to dismiss",
         configuration: configuration,
-        callbacks: callbacks
+        handlers: callbacks
       )
     }
   }

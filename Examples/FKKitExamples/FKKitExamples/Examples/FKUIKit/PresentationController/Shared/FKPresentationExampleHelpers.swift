@@ -7,7 +7,7 @@ enum FKPresentationExampleHelpers {
     from presentingViewController: UIViewController,
     title: String,
     configuration: FKPresentationConfiguration,
-    callbacks: FKPresentationControllerLifecycleCallbacks = .init()
+    handlers: FKPresentationLifecycleHandlers = .init()
   ) -> FKPresentationController {
     let content = FKExampleLabelContentViewController(text: title)
     content.title = title
@@ -16,7 +16,7 @@ enum FKPresentationExampleHelpers {
       from: presentingViewController,
       configuration: configuration,
       delegate: nil,
-      callbacks: callbacks,
+      handlers: handlers,
       animated: true,
       completion: nil
     )

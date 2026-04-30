@@ -47,7 +47,7 @@ final class RotationResilienceExampleViewController: FKPresentationExamplePageVi
         maskCoveragePolicy: .fullScreen
       )
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .anchor(anchorConfig)
+      configuration.layout = .anchor(anchorConfig)
       configuration.sheet.detents = [.fixed(240), .fraction(0.6)]
       configuration.rotationHandling = .relayoutAnimated
       _ = FKPresentationExampleHelpers.present(from: self, title: "Rotate the device", configuration: configuration)

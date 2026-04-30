@@ -1,7 +1,7 @@
 import UIKit
 
 @MainActor
-final class FKAnchorHost: NSObject, FKPresentationHosting {
+final class FKAnchorHost: NSObject, FKPresentationHost {
   /*
    Anchor-host behavior notes
    --------------------------
@@ -132,19 +132,19 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
       let host = findHostView(for: sourceView)
       hostView = host
       directAnchorChild = findDirectChild(of: host, containing: sourceView)
-      if host.firstViewController == nil {
+      if host.fk_firstViewController == nil {
         // We still allow presentation in Release by falling back to the caller-provided parent.
         // This keeps the anchor-host path safe and avoids crashes even in unusual view hierarchies.
         assertionFailure("FKAnchorHost: Failed to resolve parentViewController from hostView responder chain. Falling back to the presenting view controller as containment parent.")
       }
-      parentViewController = host.firstViewController ?? fallbackParent
+      parentViewController = host.fk_firstViewController ?? fallbackParent
     case let .inProvidedContainer(box):
       hostView = box.object
       directAnchorChild = nil
-      if hostView?.firstViewController == nil {
+      if hostView?.fk_firstViewController == nil {
         assertionFailure("FKAnchorHost: Provided host container does not have a parent view controller in responder chain. Falling back to the presenting view controller as containment parent.")
       }
-      parentViewController = hostView?.firstViewController ?? fallbackParent
+      parentViewController = hostView?.fk_firstViewController ?? fallbackParent
     case .inWindowLevel:
       let win = presentingViewController?.view.window ?? UIApplication.shared.connectedScenes
         .compactMap { ($0 as? UIWindowScene)?.keyWindow }
@@ -163,7 +163,7 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
     if let window = sourceView.window {
       return window
     }
-    if let vc = sourceView.firstViewController {
+    if let vc = sourceView.fk_firstViewController {
       return vc.view
     }
     return sourceView
@@ -330,7 +330,7 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
       return UIViewPropertyAnimator(duration: 0, curve: .linear) {}
     }
     let style = FKAnimationStyleResolver.resolveTransitionStyle(
-      mode: .anchor(anchorConfiguration),
+      layout: .anchor(anchorConfiguration),
       animationConfiguration: configuration.animation,
       isPresentation: isPresentation,
       reduceMotionEnabled: reduceMotion,
@@ -585,121 +585,6 @@ final class FKAnchorHost: NSObject, FKPresentationHosting {
       if let found = findPrimaryScrollView(in: sub) { return found }
     }
     return nil
-  }
-}
-
-private extension UIView {
-  var firstViewController: UIViewController? {
-    var responder: UIResponder? = self
-    while let r = responder {
-      if let vc = r as? UIViewController { return vc }
-      responder = r.next
-    }
-    return nil
-  }
-}
-
-@MainActor
-private final class FKAnchorRepositionCoordinator {
-  private weak var probeView: FKAnchorRepositionProbeView?
-  private var isScheduled = false
-  private var onReposition: (() -> Void)?
-  private var debounceInterval: TimeInterval = 0
-  private var pendingWorkItem: DispatchWorkItem?
-
-  func startObserving(
-    in host: UIView,
-    listenLayoutChanges: Bool,
-    listenTraitChanges: Bool,
-    debounceInterval: TimeInterval,
-    onRepositionRequested: @escaping () -> Void
-  ) {
-    self.onReposition = onRepositionRequested
-    self.debounceInterval = max(0, debounceInterval)
-
-    let probe: FKAnchorRepositionProbeView
-    if let existing = probeView, existing.superview === host {
-      probe = existing
-    } else {
-      probeView?.removeFromSuperview()
-      let newProbe = FKAnchorRepositionProbeView(frame: host.bounds)
-      newProbe.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      newProbe.isUserInteractionEnabled = false
-      host.addSubview(newProbe)
-      host.sendSubviewToBack(newProbe)
-      probeView = newProbe
-      probe = newProbe
-    }
-
-    probe.onHostChange = { [weak self] didLayoutChange, didTraitChange in
-      guard let self else { return }
-      if didLayoutChange, !listenLayoutChanges { return }
-      if didTraitChange, !listenTraitChanges { return }
-      self.schedule()
-    }
-  }
-
-  func stopObserving() {
-    pendingWorkItem?.cancel()
-    pendingWorkItem = nil
-    probeView?.removeFromSuperview()
-    probeView = nil
-    isScheduled = false
-    onReposition = nil
-  }
-
-  private func schedule() {
-    if debounceInterval > 0 {
-      pendingWorkItem?.cancel()
-      let item = DispatchWorkItem { [weak self] in
-        self?.onReposition?()
-      }
-      pendingWorkItem = item
-      DispatchQueue.main.asyncAfter(deadline: .now() + debounceInterval, execute: item)
-      return
-    }
-
-    guard !isScheduled else { return }
-    isScheduled = true
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      self.isScheduled = false
-      self.onReposition?()
-    }
-  }
-}
-
-private final class FKAnchorRepositionProbeView: UIView {
-  var onHostChange: ((_ didLayoutChange: Bool, _ didTraitChange: Bool) -> Void)?
-  private var lastBoundsSize: CGSize = .zero
-
-  override init(frame: CGRect) {
-    super.init(frame: frame)
-    isHidden = true
-    lastBoundsSize = bounds.size
-  }
-
-  @available(*, unavailable)
-  required init?(coder: NSCoder) { nil }
-
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    let didLayoutChange = bounds.size != lastBoundsSize
-    lastBoundsSize = bounds.size
-    guard didLayoutChange else { return }
-    onHostChange?(true, false)
-  }
-
-  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-    super.traitCollectionDidChange(previousTraitCollection)
-    guard let previousTraitCollection else { return }
-    let didTraitChange =
-      previousTraitCollection.horizontalSizeClass != traitCollection.horizontalSizeClass ||
-      previousTraitCollection.verticalSizeClass != traitCollection.verticalSizeClass ||
-      previousTraitCollection.userInterfaceStyle != traitCollection.userInterfaceStyle ||
-      previousTraitCollection.displayScale != traitCollection.displayScale
-    guard didTraitChange else { return }
-    onHostChange?(false, true)
   }
 }
 

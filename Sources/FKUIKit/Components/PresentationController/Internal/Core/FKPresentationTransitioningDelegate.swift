@@ -36,7 +36,7 @@ final class FKPresentationTransitioningDelegate: NSObject, UIViewControllerTrans
     }
     return FKPresentationAnimator(
       isPresentation: true,
-      mode: configuration.mode,
+      layout: configuration.layout,
       animationConfiguration: configuration.animation
     )
   }
@@ -47,7 +47,7 @@ final class FKPresentationTransitioningDelegate: NSObject, UIViewControllerTrans
     }
     return FKPresentationAnimator(
       isPresentation: false,
-      mode: configuration.mode,
+      layout: configuration.layout,
       animationConfiguration: configuration.animation
     )
   }

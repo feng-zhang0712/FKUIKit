@@ -40,7 +40,7 @@ final class BackgroundInteractionPolicyExampleViewController: FKPresentationExam
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .center
+      configuration.layout = .center(configuration.center)
       configuration.center.dismissEnabled = true
       // Use a stable center size to avoid over-compression when text wraps on narrow devices.
       configuration.center.size = .fixed(.init(width: 300, height: 240))

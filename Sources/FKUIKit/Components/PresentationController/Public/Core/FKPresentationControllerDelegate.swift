@@ -26,8 +26,8 @@ public extension FKPresentationControllerDelegate {
   func presentationController(_ controller: FKPresentationController, didChangeDetent detent: FKPresentationDetent, index: Int) {}
 }
 
-/// Closure-based lifecycle callbacks for teams that prefer lightweight integration.
-public struct FKPresentationControllerLifecycleCallbacks {
+/// Closure-based lifecycle handlers for teams that prefer lightweight integration.
+public struct FKPresentationLifecycleHandlers {
   /// Called before the presentation animation starts.
   public var willPresent: (@MainActor () -> Void)?
   /// Called after the presentation animation finishes.

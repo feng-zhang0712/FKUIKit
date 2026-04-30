@@ -1,6 +1,6 @@
 import UIKit
 
-/// Configuration for `FKPresentationMode.anchor(_:)`.
+/// Configuration for `FKPresentationConfiguration.Layout.anchor(_:)`.
 ///
 /// Anchor-hosted presentations are hosted inside the existing view hierarchy (instead of a modal
 /// `UIPresentationController` container). This enables "menu-like" overlays that appear attached

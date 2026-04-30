@@ -40,7 +40,7 @@ final class SheetScrollTrackingExampleViewController: FKPresentationExamplePageV
       tableVC.title = "Scrollable content"
 
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fraction(0.35), .full]
 
       switch self.trackingIndex {
@@ -57,7 +57,7 @@ final class SheetScrollTrackingExampleViewController: FKPresentationExamplePageV
         from: self,
         configuration: configuration,
         delegate: nil,
-        callbacks: .init(),
+        handlers: .init(),
         animated: true,
         completion: nil
       )

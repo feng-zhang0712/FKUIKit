@@ -4,8 +4,8 @@ import UIKit
 public struct FKAnimationContext {
   /// Whether this transition is a presentation.
   public let isPresentation: Bool
-  /// Presentation mode being animated.
-  public let mode: FKPresentationMode
+  /// Presentation layout being animated.
+  public let layout: FKPresentationConfiguration.Layout
   /// View being animated.
   public let animatingView: UIView
   /// Start frame prepared by FK.

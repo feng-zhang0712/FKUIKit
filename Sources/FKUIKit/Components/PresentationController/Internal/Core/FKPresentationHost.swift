@@ -1,7 +1,7 @@
 import UIKit
 
 @MainActor
-protocol FKPresentationHosting: AnyObject {
+protocol FKPresentationHost: AnyObject {
   /// Indicates whether this host currently owns a visible presentation.
   var isPresented: Bool { get }
   /// Presents content from the supplied presenter using host-specific mechanics.

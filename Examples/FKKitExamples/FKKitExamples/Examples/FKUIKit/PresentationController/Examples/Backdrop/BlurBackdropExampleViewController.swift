@@ -51,7 +51,7 @@ final class BlurBackdropExampleViewController: FKPresentationExamplePageViewCont
       }()
 
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(300), .full]
       configuration.backdropStyle = .blur(effect: style, alpha: CGFloat(self.alpha), vibrancy: nil)
       _ = FKPresentationExampleHelpers.present(from: self, title: "Blur backdrop", configuration: configuration)

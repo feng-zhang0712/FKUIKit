@@ -1,6 +1,6 @@
 # FKPresentationController
 
-`FKPresentationController` is a UIKit-first presentation infrastructure for FKKit. It unifies bottom/top sheets, center modals, and anchor dropdowns under one API, with production-focused configuration for animation, safe area, keyboard, backdrop, interaction, and lifecycle callbacks.
+`FKPresentationController` is a UIKit-first presentation infrastructure for FKKit. It unifies bottom/top sheets, center modals, and anchor dropdowns under one API, with production-focused configuration for animation, safe area, keyboard, backdrop, interaction, and lifecycle handlers.
 
 ## Table of Contents
 
@@ -21,13 +21,14 @@
   - [Safe Area Policy](#safe-area-policy)
   - [Keyboard Avoidance](#keyboard-avoidance)
   - [Animation Control](#animation-control)
-  - [Lifecycle Callbacks / Delegate](#lifecycle-callbacks--delegate)
+  - [Lifecycle Handlers / Delegate](#lifecycle-handlers--delegate)
   - [Background Interaction Policy](#background-interaction-policy)
 - [API Reference](#api-reference)
   - [Core Types](#core-types)
   - [Main APIs](#main-apis)
   - [Configuration Highlights](#configuration-highlights)
 - [Best Practices](#best-practices)
+- [Internal Architecture](#internal-architecture)
 - [Notes](#notes)
 - [License](#license)
 
@@ -39,7 +40,7 @@ This component is designed for large UIKit codebases:
 - Modal host path for sheet/center/anchor/edge
 - Anchor host path for in-hierarchy anchor dropdowns
 - Strongly-typed configuration model
-- Main-actor friendly lifecycle and callbacks
+- Main-actor friendly lifecycle and handlers
 - Interactive dismissal and detent change hooks
 
 ## Features
@@ -105,7 +106,7 @@ content.view.backgroundColor = .systemBackground
 content.preferredContentSize = CGSize(width: 0, height: 320)
 
 var configuration = FKPresentationConfiguration()
-configuration.mode = .bottomSheet
+configuration.layout = .bottomSheet(configuration.sheet)
 
 let presentation = FKPresentationController.present(
   contentController: content,
@@ -119,7 +120,7 @@ let presentation = FKPresentationController.present(
 
 ```swift
 var configuration = FKPresentationConfiguration()
-configuration.mode = .topSheet
+configuration.layout = .topSheet(configuration.sheet)
 
 FKPresentationController.present(
   contentController: contentVC,
@@ -132,7 +133,7 @@ FKPresentationController.present(
 
 ```swift
 var configuration = FKPresentationConfiguration()
-configuration.mode = .center
+configuration.layout = .center(configuration.center)
 configuration.center.size = .fitted(maxSize: CGSize(width: 460, height: 640))
 configuration.cornerRadius = 16
 
@@ -162,7 +163,7 @@ let anchorConfig = FKAnchorConfiguration(
   zOrderPolicy: .keepAnchorAbovePresentation,
   maskCoveragePolicy: .fullScreen
 )
-configuration.mode = .anchor(anchorConfig)
+configuration.layout = .anchor(anchorConfig)
 
 FKPresentationController.present(
   contentController: popupVC,
@@ -177,7 +178,7 @@ FKPresentationController.present(
 
 ```swift
 var configuration = FKPresentationConfiguration()
-configuration.mode = .bottomSheet
+configuration.layout = .bottomSheet(configuration.sheet)
 configuration.sheet.detents = [.fitContent, .fraction(0.5), .full]
 configuration.sheet.initialDetentIndex = 0
 
@@ -235,10 +236,10 @@ configuration.animation.dampingRatio = 0.9
 // configuration.animation.duration = 0
 ```
 
-### Lifecycle Callbacks / Delegate
+### Lifecycle Handlers / Delegate
 
 ```swift
-let callbacks = FKPresentationControllerLifecycleCallbacks(
+let handlers = FKPresentationLifecycleHandlers(
   willPresent: { print("willPresent") },
   didPresent: { print("didPresent") },
   willDismiss: { print("willDismiss") },
@@ -253,7 +254,7 @@ let controller = FKPresentationController(
   contentController: contentVC,
   configuration: configuration,
   delegate: nil,
-  callbacks: callbacks
+  handlers: handlers
 )
 controller.present(from: self, animated: true)
 ```
@@ -272,27 +273,27 @@ configuration.backgroundInteraction.showsBackdropWhenEnabled = true
 
 - `FKPresentationController`
 - `FKPresentationConfiguration`
-- `FKPresentationMode`
+- `FKPresentationConfiguration.Layout`
 - `FKPresentationDetent`
 - `FKAnchorConfiguration`
 - `FKBackdropStyle`
 - `FKSafeAreaPolicy`
 - `FKKeyboardAvoidanceStrategy`
 - `FKPresentationControllerDelegate`
-- `FKPresentationControllerLifecycleCallbacks`
+- `FKPresentationLifecycleHandlers`
 
 ### Main APIs
 
-- `FKPresentationController.init(contentController:configuration:delegate:callbacks:)`
+- `FKPresentationController.init(contentController:configuration:delegate:handlers:)`
 - `FKPresentationController.present(from:animated:completion:)`
 - `FKPresentationController.dismiss(animated:completion:)`
 - `FKPresentationController.setDetent(_:animated:)`
 - `FKPresentationController.setDetent(index:animated:)`
-- `FKPresentationController.present(contentController:from:configuration:delegate:callbacks:animated:completion:)`
+- `FKPresentationController.present(contentController:from:configuration:delegate:handlers:animated:completion:)`
 
 ### Configuration Highlights
 
-- Placement: `mode`
+- Placement: `layout`
 - Sheet behavior: `sheet.detents`, `sheet.initialDetentIndex`, thresholds, magnetic snapping
 - Center behavior: `center.size`, margins, interactive dismiss settings
 - Interaction: `dismissBehavior`, `backgroundInteraction`
@@ -309,12 +310,20 @@ configuration.backgroundInteraction.showsBackdropWhenEnabled = true
 - Use callback/delegate hooks to sync business state with transition state.
 - For deterministic no-motion UX, set `configuration.animation.preset = .none`.
 
+## Internal Architecture
+
+- `Public/`: stable API surface (`Core`, `Configuration`, `Animation`, `Anchor`, `Model`, `Support`)
+- `Internal/Host/Container`: modal `UIPresentationController` pipeline split by concern (`+Layout`, `+Gesture`, `+Keyboard`, `+Backdrop`, `+Scroll`, `+Callbacks`)
+- `Internal/Host/Anchor`: in-hierarchy anchor hosting (`FKAnchorHost`, host view controller, reposition coordinator)
+- `Internal/Core`: routing contracts and shared resolvers (`FKPresentationHost`, transitioning delegate, anchor layout resolver)
+- `Internal/Support`: shared internal utilities (for example responder-chain lookup)
+
 ## Notes
 
-- `anchor` mode uses anchor hosting and does not go through the modal `UIPresentationController` path.
+- `anchor` layout uses anchor hosting and does not go through the modal `UIPresentationController` path.
 - Detent APIs are meaningful for sheet modes; non-sheet modes ignore detent switching.
 - `backgroundInteraction.isEnabled` is an advanced setting; enable only when passthrough behavior is intentional.
-- In anchor-hosted mode, choose `maskCoveragePolicy` carefully (`fullScreen` vs `belowAnchorOnly`) based on expected touch interception.
+- In anchor-hosted layout, choose `maskCoveragePolicy` carefully (`fullScreen` vs `belowAnchorOnly`) based on expected touch interception.
 
 ## License
 

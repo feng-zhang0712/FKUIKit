@@ -43,7 +43,7 @@ final class SheetDetentsFractionExampleViewController: FKPresentationExamplePage
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fraction(CGFloat(self.smallFraction)), .fraction(CGFloat(self.largeFraction))]
       configuration.sheet.initialDetentIndex = 0
       _ = FKPresentationExampleHelpers.present(from: self, title: "Fraction detents", configuration: configuration)

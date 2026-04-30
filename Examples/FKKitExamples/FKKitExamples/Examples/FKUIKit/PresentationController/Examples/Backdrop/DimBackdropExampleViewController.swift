@@ -31,7 +31,7 @@ final class DimBackdropExampleViewController: FKPresentationExamplePageViewContr
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(300), .full]
       configuration.backdropStyle = .dim(alpha: CGFloat(self.alpha))
       _ = FKPresentationExampleHelpers.present(from: self, title: "Dim backdrop", configuration: configuration)

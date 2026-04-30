@@ -27,7 +27,7 @@ final class ReduceMotionCompatibleAnimationExampleViewController: FKPresentation
     addPrimaryButton(title: "Present (auto choose)") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(300), .full]
 
       if UIAccessibility.isReduceMotionEnabled {

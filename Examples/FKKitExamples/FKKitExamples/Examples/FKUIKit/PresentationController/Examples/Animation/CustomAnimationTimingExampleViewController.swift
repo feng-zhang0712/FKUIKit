@@ -40,7 +40,7 @@ final class CustomAnimationTimingExampleViewController: FKPresentationExamplePag
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(320), .full]
 
       configuration.animation.preset = .spring

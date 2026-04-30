@@ -53,7 +53,7 @@ final class SheetGrabberExampleViewController: FKPresentationExamplePageViewCont
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.sheet.detents = [.fixed(260), .full]
       configuration.sheet.showsGrabber = self.showsGrabber
       configuration.sheet.grabberSize = .init(width: CGFloat(self.grabberWidth), height: 5)

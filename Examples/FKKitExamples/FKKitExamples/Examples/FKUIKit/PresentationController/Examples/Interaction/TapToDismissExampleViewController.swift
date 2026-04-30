@@ -27,7 +27,7 @@ final class TapToDismissExampleViewController: FKPresentationExamplePageViewCont
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.dismissBehavior.allowsTapOutside = self.tapToDismiss
       configuration.sheet.detents = [.fixed(260), .full]
       _ = FKPresentationExampleHelpers.present(from: self, title: "Tap outside backdrop", configuration: configuration)

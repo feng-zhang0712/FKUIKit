@@ -20,7 +20,7 @@ final class SafeAreaContentRespectsSafeAreaExampleViewController: FKPresentation
     addPrimaryButton(title: "Present (bottom sheet)") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.safeAreaPolicy = .contentRespectsSafeArea
       configuration.sheet.detents = [.fraction(0.35), .full]
       _ = FKPresentationExampleHelpers.present(from: self, title: "contentRespectsSafeArea", configuration: configuration)

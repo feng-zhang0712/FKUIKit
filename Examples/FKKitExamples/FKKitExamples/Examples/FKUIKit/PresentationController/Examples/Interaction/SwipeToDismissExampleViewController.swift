@@ -52,7 +52,7 @@ final class SwipeToDismissExampleViewController: FKPresentationExamplePageViewCo
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .bottomSheet
+      configuration.layout = .bottomSheet(configuration.sheet)
       configuration.dismissBehavior.allowsSwipe = self.swipeToDismiss
       configuration.sheet.dismissThreshold = CGFloat(self.dismissThreshold)
       configuration.sheet.dismissVelocityThreshold = CGFloat(self.velocityThreshold)

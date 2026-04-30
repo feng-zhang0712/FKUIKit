@@ -18,7 +18,7 @@ final class SafeAreaContainerRespectsSafeAreaExampleViewController: FKPresentati
     addPrimaryButton(title: "Present (center)") { [weak self] in
       guard let self else { return }
       var configuration = FKPresentationConfiguration.default
-      configuration.mode = .center
+      configuration.layout = .center(configuration.center)
       configuration.safeAreaPolicy = .containerRespectsSafeArea
       configuration.center.dismissEnabled = true
       _ = FKPresentationExampleHelpers.present(from: self, title: "containerRespectsSafeArea", configuration: configuration)
