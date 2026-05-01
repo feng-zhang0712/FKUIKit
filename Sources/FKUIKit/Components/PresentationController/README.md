@@ -49,6 +49,7 @@ This component is designed for large UIKit codebases:
 - Detent-based sheet sizing (`fitContent`, `fixed`, `fraction`, `full`)
 - Programmatic detent switching through controller API
 - Backdrop styles: `none`, `dim`
+- Optional container blur material (applied on presented popup, not backdrop)
 - Safe area strategies for container/content separation
 - Keyboard avoidance strategies (`adjustContainer`, `adjustContentInsets`, `interactive`)
 - Configurable animation preset/timing/custom animator
@@ -201,6 +202,19 @@ var configuration = FKPresentationConfiguration()
 configuration.backdropStyle = .dim(color: .black, alpha: 0.35)
 // Alternatives:
 // configuration.backdropStyle = .none
+```
+
+### Container Blur (Sheet-Like Material)
+
+```swift
+var configuration = FKPresentationConfiguration()
+configuration.containerBlur = .init(
+  isEnabled: true,
+  configuration: FKBlurConfiguration(
+    backend: .system(style: .systemMaterial),
+    opacity: 0.95
+  )
+)
 ```
 
 ### Safe Area Policy

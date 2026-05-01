@@ -1,6 +1,26 @@
 import UIKit
 
 public extension FKPresentationConfiguration {
+  /// Interaction policy when dim alpha is effectively zero.
+  ///
+  /// Background interaction and dismissal are normally controlled by:
+  /// - `dismissBehavior` (tap outside / swipe / backdrop tap)
+  /// - `backgroundInteraction` (passthrough)
+  ///
+  /// However, when a dim style is configured with `alpha == 0`, driving intensity through `view.alpha`
+  /// can break hit-testing, and the resulting UX often feels "blocked but invisible".
+  /// This policy makes the behavior explicit and stable for long-term usage.
+  enum ZeroDimBackdropBehavior: Sendable, Equatable {
+    /// Default: keep the backdrop hit-testable so tap-to-dismiss continues to work (background remains blocked).
+    case dismissable
+    /// Treat zero-dim as a signal to allow passthrough background interaction.
+    ///
+    /// - Note: This maps to the existing `backgroundInteraction` pipeline (backdrop becomes non-interactive).
+    case passthrough
+    /// Disable backdrop interaction at zero-dim (no tap-to-dismiss via backdrop).
+    case disabled
+  }
+
   /// Unified dismissal behavior used across modal and anchor-hosted presentations.
   struct DismissBehavior {
     /// Whether tapping outside content can dismiss.

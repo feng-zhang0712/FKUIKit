@@ -31,6 +31,8 @@ final class FKAnchorHostViewController: UIViewController {
   private let shadowContainerView = UIView()
   /// Inner card that clips content to rounded corners.
   private let cardView = UIView()
+  /// Optional blur material rendered behind anchor content.
+  private let containerBlurView = FKBlurView()
   /// Public handle for layout/animation; maps to `shadowContainerView`.
   let wrapperView = UIView()
 
@@ -92,6 +94,7 @@ final class FKAnchorHostViewController: UIViewController {
     chromeView.backgroundColor = .clear
     chromeView.isUserInteractionEnabled = false
 
+    cardView.addSubview(containerBlurView)
     cardView.addSubview(contentContainerView)
     cardView.addSubview(chromeView)
     shadowContainerView.addSubview(cardView)
@@ -112,6 +115,8 @@ final class FKAnchorHostViewController: UIViewController {
       panToDismiss.maximumNumberOfTouches = 1
       wrapperView.addGestureRecognizer(panToDismiss)
     }
+
+    configureContainerBlurIfNeeded()
   }
 
   var currentPresentationFrame: CGRect { wrapperView.frame }
@@ -124,6 +129,7 @@ final class FKAnchorHostViewController: UIViewController {
     wrapperView.frame = layout.presentationFrame
     shadowContainerView.frame = wrapperView.bounds
     cardView.frame = shadowContainerView.bounds
+    containerBlurView.frame = cardView.bounds
     chromeView.frame = cardView.bounds
     contentContainerView.frame = cardView.bounds.inset(by: UIEdgeInsets(configuration.contentInsets))
 
@@ -145,6 +151,7 @@ final class FKAnchorHostViewController: UIViewController {
         .layerMaxXMaxYCorner,
       ]
     }
+    updateBlurMask(for: layout.direction)
 
     // Shadow strategy: follow the free edge (bottom for below, top for above).
     updateShadowPath(for: layout.direction)
@@ -189,6 +196,47 @@ final class FKAnchorHostViewController: UIViewController {
       }
     }()
     shadowContainerView.layer.shadowPath = UIBezierPath(rect: rect).cgPath
+  }
+
+  private func configureContainerBlurIfNeeded() {
+    let blur = configuration.containerBlur
+    guard blur.isEnabled else {
+      containerBlurView.isHidden = true
+      containerBlurView.blurSourceView = nil
+      containerBlurView.maskPath = nil
+      cardView.backgroundColor = .systemBackground
+      return
+    }
+
+    containerBlurView.isHidden = false
+    containerBlurView.configuration = blur.configuration
+    containerBlurView.blurSourceView = presentingViewController?.view
+    cardView.backgroundColor = .clear
+  }
+
+  private func updateBlurMask(for direction: FKAnchor.Direction) {
+    guard !containerBlurView.isHidden else { return }
+    let radius = max(0, configuration.cornerRadius)
+    guard radius > 0 else {
+      containerBlurView.maskPath = nil
+      return
+    }
+    let roundedCorners: UIRectCorner = {
+      switch direction {
+      case .down:
+        // Cancel top-left / top-right corners (attached edge is straight).
+        return [.bottomLeft, .bottomRight]
+      case .up:
+        return [.topLeft, .topRight]
+      case .auto:
+        return [.bottomLeft, .bottomRight]
+      }
+    }()
+    containerBlurView.maskPath = UIBezierPath(
+      roundedRect: containerBlurView.bounds,
+      byRoundingCorners: roundedCorners,
+      cornerRadii: .init(width: radius, height: radius)
+    )
   }
 
   @objc private func handleTapMask(_ recognizer: UITapGestureRecognizer) {

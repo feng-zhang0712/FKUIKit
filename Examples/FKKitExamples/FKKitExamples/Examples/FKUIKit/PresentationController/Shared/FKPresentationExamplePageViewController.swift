@@ -10,6 +10,12 @@ class FKPresentationExamplePageViewController: UIViewController {
   let stack = UIStackView()
 
   private let headerView = FKExampleHeaderView()
+  private var pinnedTopViewBottomConstraint: NSLayoutConstraint?
+
+  /// Optional view pinned to the top (below safe area) above the scroll content.
+  ///
+  /// Subclasses can override to provide a top-attached control such as an anchor bar.
+  var pinnedTopView: UIView? { nil }
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -61,13 +67,27 @@ class FKPresentationExamplePageViewController: UIViewController {
     stack.axis = .vertical
     stack.spacing = 12
 
+    let topAnchorTarget: NSLayoutYAxisAnchor
+    if let pinned = pinnedTopView {
+      pinned.translatesAutoresizingMaskIntoConstraints = false
+      view.addSubview(pinned)
+      NSLayoutConstraint.activate([
+        pinned.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        pinned.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        pinned.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      ])
+      topAnchorTarget = pinned.bottomAnchor
+    } else {
+      topAnchorTarget = view.safeAreaLayoutGuide.topAnchor
+    }
+
     view.addSubview(scrollView)
     scrollView.addSubview(stack)
 
     NSLayoutConstraint.activate([
       scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-      scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      scrollView.topAnchor.constraint(equalTo: topAnchorTarget),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
       stack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 16),

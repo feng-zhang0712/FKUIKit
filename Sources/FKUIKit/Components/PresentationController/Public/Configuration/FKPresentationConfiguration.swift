@@ -16,8 +16,12 @@ public struct FKPresentationConfiguration {
   public var backdropStyle: FKBackdropStyle
   /// Background interaction policy.
   public var backgroundInteraction: BackgroundInteractionConfiguration
+  /// Behavior when `.dim(alpha: 0)` is configured.
+  public var zeroDimBackdropBehavior: ZeroDimBackdropBehavior
   /// Optional effects applied to the presenting view.
   public var presentingViewEffect: PresentingViewEffectConfiguration
+  /// Optional blur material applied to the presented container itself.
+  public var containerBlur: ContainerBlurConfiguration
   /// Dismiss behavior toggles for taps and gestures.
   public var dismissBehavior: DismissBehavior
   /// Keyboard avoidance strategy.
@@ -81,7 +85,9 @@ public struct FKPresentationConfiguration {
     border: BorderConfiguration = .init(),
     backdropStyle: FKBackdropStyle = .dim(alpha: 0.35),
     backgroundInteraction: BackgroundInteractionConfiguration = .init(),
+    zeroDimBackdropBehavior: ZeroDimBackdropBehavior = .dismissable,
     presentingViewEffect: PresentingViewEffectConfiguration = .init(),
+    containerBlur: ContainerBlurConfiguration = .init(),
     dismissBehavior: DismissBehavior = .init(),
     keyboardAvoidance: KeyboardAvoidanceConfiguration = .init(),
     rotationHandling: RotationHandling = .relayoutAnimated,
@@ -98,7 +104,9 @@ public struct FKPresentationConfiguration {
     self.border = border
     self.backdropStyle = backdropStyle
     self.backgroundInteraction = backgroundInteraction
+    self.zeroDimBackdropBehavior = zeroDimBackdropBehavior
     self.presentingViewEffect = presentingViewEffect
+    self.containerBlur = containerBlur
     self.dismissBehavior = dismissBehavior
     self.keyboardAvoidance = keyboardAvoidance
     self.rotationHandling = rotationHandling

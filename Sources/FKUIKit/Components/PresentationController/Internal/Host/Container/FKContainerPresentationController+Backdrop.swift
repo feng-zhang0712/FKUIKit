@@ -10,14 +10,14 @@ extension FKContainerPresentationController {
       // Respect configured backdrop intensity when multi-stage interpolation is disabled.
       switch configuration.backdropStyle {
       case let .dim(_, alpha):
-        backdropView.alpha = alpha
+        backdropView.setDimAlpha(alpha)
       default:
         backdropView.alpha = 1
       }
       return
     }
     guard let minHeight = resolvedDetentHeights.min(), let maxHeight = resolvedDetentHeights.max(), maxHeight > minHeight else {
-      backdropView.alpha = configuration.sheet.multiStageBackdrop.maximumAlpha
+      backdropView.setDimAlpha(configuration.sheet.multiStageBackdrop.maximumAlpha)
       return
     }
 
@@ -38,7 +38,7 @@ extension FKContainerPresentationController {
     let progress = min(max(rawProgress, 0), 1)
     let low = configuration.sheet.multiStageBackdrop.minimumAlpha
     let high = configuration.sheet.multiStageBackdrop.maximumAlpha
-    backdropView.alpha = low + (high - low) * progress
+    backdropView.setDimAlpha(low + (high - low) * progress)
   }
 
   // MARK: - Presenting View Effects

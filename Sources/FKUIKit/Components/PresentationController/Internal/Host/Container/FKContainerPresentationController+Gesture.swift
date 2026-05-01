@@ -6,7 +6,13 @@ extension FKContainerPresentationController {
 
   /// Installs/removes outside-tap and pan gestures according to interaction policy.
   func installGesturesIfNeeded() {
-    let allowsPassthrough = configuration.backgroundInteraction.isEnabled
+    let allowsPassthrough: Bool = {
+      if configuration.backgroundInteraction.isEnabled { return true }
+      if case let .dim(_, alpha) = configuration.backdropStyle, alpha <= 0 {
+        return configuration.zeroDimBackdropBehavior == .passthrough
+      }
+      return false
+    }()
     backdropView.isUserInteractionEnabled = !allowsPassthrough
     if allowsPassthrough, !configuration.backgroundInteraction.showsBackdropWhenEnabled {
       backdropView.isHidden = true
@@ -14,7 +20,15 @@ extension FKContainerPresentationController {
       backdropView.isHidden = false
     }
 
-    if !allowsPassthrough, configuration.dismissBehavior.allowsTapOutside, configuration.dismissBehavior.allowsBackdropTap {
+    let allowsBackdropTapDismiss: Bool = {
+      guard configuration.dismissBehavior.allowsTapOutside, configuration.dismissBehavior.allowsBackdropTap else { return false }
+      if case let .dim(_, alpha) = configuration.backdropStyle, alpha <= 0 {
+        return configuration.zeroDimBackdropBehavior == .dismissable
+      }
+      return true
+    }()
+
+    if !allowsPassthrough, allowsBackdropTapDismiss {
       backdropView.addGestureRecognizer(tapToDismissGesture)
     } else {
       backdropView.removeGestureRecognizer(tapToDismissGesture)
