@@ -43,10 +43,8 @@ public extension FKPresentationConfiguration {
     public var grabberTopInset: CGFloat
     /// Dismiss threshold in points beyond the min/max detent.
     public var dismissThreshold: CGFloat
-    /// Velocity threshold for deciding finish/cancel in interactive transitions.
+    /// Velocity threshold for deciding whether a swipe should dismiss.
     public var dismissVelocityThreshold: CGFloat
-    /// Interactive dismissal completion threshold for finish/cancel decision.
-    public var interactiveDismissProgressThreshold: CGFloat
     /// Scroll handoff strategy between content and sheet pan gestures.
     public var scrollTrackingStrategy: FKSheetScrollTrackingStrategy
     /// Enables magnetic snapping near detents.
@@ -72,7 +70,6 @@ public extension FKPresentationConfiguration {
       grabberTopInset: CGFloat = 8,
       dismissThreshold: CGFloat = 44,
       dismissVelocityThreshold: CGFloat = 1200,
-      interactiveDismissProgressThreshold: CGFloat = 0.38,
       scrollTrackingStrategy: FKSheetScrollTrackingStrategy = .automatic,
       enablesMagneticSnapping: Bool = true,
       magneticSnapThreshold: CGFloat = 28,
@@ -89,7 +86,6 @@ public extension FKPresentationConfiguration {
       self.grabberTopInset = max(0, grabberTopInset)
       self.dismissThreshold = max(0, dismissThreshold)
       self.dismissVelocityThreshold = max(0, dismissVelocityThreshold)
-      self.interactiveDismissProgressThreshold = min(max(interactiveDismissProgressThreshold, 0.05), 0.95)
       self.scrollTrackingStrategy = scrollTrackingStrategy
       self.enablesMagneticSnapping = enablesMagneticSnapping
       self.magneticSnapThreshold = max(0, magneticSnapThreshold)

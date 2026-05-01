@@ -23,7 +23,8 @@ final class BottomSheetBasicsExampleViewController: FKPresentationExamplePageVie
 
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
-      let configuration = FKPresentationConfiguration.default
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
+      configuration.sheet.detents = [.fitContent, .fraction(0.5), .full]
       _ = FKPresentationExampleHelpers.present(from: self, title: "Bottom sheet", configuration: configuration)
     }
   }

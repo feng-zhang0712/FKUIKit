@@ -46,8 +46,7 @@ final class SheetFitToContentExampleViewController: FKPresentationExamplePageVie
       guard let self else { return }
       let content = DynamicBlocksContentViewController(includesExtraBlocks: self.includesExtraBlocks)
 
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .bottomSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
       configuration.sheet.detents = [.fitContent, .full]
       configuration.sheet.maximumFitContentHeightFraction = CGFloat(self.maxFitFraction)
 

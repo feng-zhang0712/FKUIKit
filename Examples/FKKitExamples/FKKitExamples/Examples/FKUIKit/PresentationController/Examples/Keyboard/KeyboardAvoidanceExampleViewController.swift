@@ -46,8 +46,7 @@ final class KeyboardAvoidanceExampleViewController: FKPresentationExamplePageVie
       guard let self else { return }
       let content = FKExampleFormContentViewController(usesScrollView: self.usesScrollView)
 
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .bottomSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
       configuration.sheet.detents = [.fraction(0.55), .full]
       configuration.keyboardAvoidance.isEnabled = true
       configuration.keyboardAvoidance.strategy = (self.strategyIndex == 0) ? .adjustContainer : .adjustContentInsets

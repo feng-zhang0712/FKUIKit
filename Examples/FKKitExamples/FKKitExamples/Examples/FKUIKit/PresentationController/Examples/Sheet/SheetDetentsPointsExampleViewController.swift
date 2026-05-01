@@ -19,8 +19,7 @@ final class SheetDetentsPointsExampleViewController: FKPresentationExamplePageVi
 
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .bottomSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
       configuration.sheet.detents = [.fixed(240), .fixed(520)]
       configuration.sheet.initialDetentIndex = 0
       self.currentController = FKPresentationExampleHelpers.present(from: self, title: "Points detents", configuration: configuration)

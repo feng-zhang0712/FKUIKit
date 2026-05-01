@@ -40,8 +40,7 @@ final class InteractiveDismissProgressExampleViewController: FKPresentationExamp
         }
       )
 
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .bottomSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
       configuration.sheet.detents = [.fixed(320), .full]
       configuration.backdropStyle = .dim(alpha: 0.4)
 

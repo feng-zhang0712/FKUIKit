@@ -19,8 +19,8 @@ final class TopSheetBasicsExampleViewController: FKPresentationExamplePageViewCo
 
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .topSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.topSheetConfiguration()
+      configuration.sheet.detents = [.fitContent, .fraction(0.5), .full]
       _ = FKPresentationExampleHelpers.present(from: self, title: "Top sheet", configuration: configuration)
     }
   }

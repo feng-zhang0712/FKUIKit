@@ -206,13 +206,32 @@ final class FKPresentationAnimator: NSObject, UIViewControllerAnimatedTransition
 
     switch style.timing {
     case let .spring(dampingRatio):
-      let params = UISpringTimingParameters(dampingRatio: dampingRatio, initialVelocity: .zero)
+      let params = UISpringTimingParameters(
+        dampingRatio: dampingRatio,
+        initialVelocity: springInitialVelocity(for: context)
+      )
       return UIViewPropertyAnimator(duration: style.duration, timingParameters: params).addingAnimations(animations)
     case let .curve(curve):
       if animationConfiguration.preset == .easeInOut, let timingCurve = animationConfiguration.timingCurve {
         return UIViewPropertyAnimator(duration: style.duration, timingParameters: timingCurve).addingAnimations(animations)
       }
       return UIViewPropertyAnimator(duration: style.duration, curve: curve, animations: animations)
+    }
+  }
+
+  private func springInitialVelocity(for context: FKAnimationContext) -> CGVector {
+    switch layout {
+    case .bottomSheet(_):
+      let travel = max(1, abs(context.endFrame.minY - context.startFrame.minY))
+      let normalized = min(1.0, travel / 520.0)
+      if isPresentation {
+        return CGVector(dx: 0, dy: -(0.28 + normalized * 0.16))
+      }
+      return CGVector(dx: 0, dy: 0.5 + normalized * 0.2)
+    case .topSheet(_):
+      return CGVector(dx: 0, dy: isPresentation ? -0.3 : 0.55)
+    default:
+      return .zero
     }
   }
 }
@@ -372,8 +391,9 @@ enum FKAnimationStyleResolver {
 
     switch animationConfiguration.preset {
     case .systemLike:
-      duration = isPresentation ? 0.36 : 0.28
-      timing = anchorLikeLayout(layout) ? .curve(.easeInOut) : .spring(dampingRatio: 0.9)
+      // Keep both directions soft and rounded.
+      duration = isPresentation ? 0.42 : 0.32
+      timing = anchorLikeLayout(layout) ? .curve(.easeInOut) : .spring(dampingRatio: isPresentation ? 0.84 : 0.86)
     case .spring:
       let clamped = max(0.3, min(0.42, animationConfiguration.duration))
       duration = isPresentation ? clamped : max(0.22, clamped * 0.82)
@@ -394,7 +414,7 @@ enum FKAnimationStyleResolver {
       timing = .curve(.linear)
     }
 
-    let adjustedDuration = interactionState == .interactive && !isPresentation ? min(duration, 0.26) : duration
+    let adjustedDuration = interactionState == .interactive && !isPresentation ? min(duration, 0.3) : duration
     return .init(
       family: .sheetLike,
       duration: adjustedDuration,

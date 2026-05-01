@@ -30,8 +30,7 @@ final class AnimationPresetGalleryExampleViewController: FKPresentationExamplePa
 
     addPrimaryButton(title: "Present") { [weak self] in
       guard let self else { return }
-      var configuration = FKPresentationConfiguration.default
-      configuration.layout = .bottomSheet(configuration.sheet)
+      var configuration = FKPresentationExampleHelpers.bottomSheetConfiguration()
       configuration.sheet.detents = [.fixed(300), .full]
 
       configuration.animation.preset = {

@@ -6,7 +6,6 @@ final class FKPresentationTransitioningDelegate: NSObject, UIViewControllerTrans
   weak var activeContainerController: FKContainerPresentationController?
 
   private let configuration: FKPresentationConfiguration
-  private let dismissInteractionController = FKPresentationDismissInteractionController()
 
   init(configuration: FKPresentationConfiguration) {
     self.configuration = configuration
@@ -22,8 +21,7 @@ final class FKPresentationTransitioningDelegate: NSObject, UIViewControllerTrans
       presentedViewController: presented,
       presenting: presenting,
       owner: owner,
-      configuration: configuration,
-      interactionController: dismissInteractionController
+      configuration: configuration
     )
     activeContainerController = controller
     return controller
@@ -50,10 +48,5 @@ final class FKPresentationTransitioningDelegate: NSObject, UIViewControllerTrans
       layout: configuration.layout,
       animationConfiguration: configuration.animation
     )
-  }
-
-  func interactionControllerForDismissal(using animator: any UIViewControllerAnimatedTransitioning)
-    -> (any UIViewControllerInteractiveTransitioning)? {
-    dismissInteractionController.isInteracting ? dismissInteractionController : nil
   }
 }

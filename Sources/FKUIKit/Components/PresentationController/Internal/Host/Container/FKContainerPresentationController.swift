@@ -2,13 +2,11 @@ import UIKit
 
 /// Container presentation controller responsible for frame calculation and backdrop wiring.
 @MainActor
-final class FKContainerPresentationController: UIPresentationController {
+final class FKContainerPresentationController: UIPresentationController, UIGestureRecognizerDelegate {
   /// Bridges interactive/detent events back to the public controller.
   weak var owner: FKPresentationController?
   /// Immutable runtime configuration snapshot for this presentation session.
   let configuration: FKPresentationConfiguration
-  /// Drives percent-based interactive dismissal for sheet gestures.
-  let interactionController: FKPresentationDismissInteractionController
   /// Backdrop renderer shared by dim/blur/liquid-glass styles.
   let backdropView = FKPresentationBackdropView()
   /// Non-interactive chrome host for grabber and related affordances.
@@ -29,8 +27,9 @@ final class FKContainerPresentationController: UIPresentationController {
   var currentDetentIndex: Int = 0
   var panStartFrame: CGRect = .zero
   var isPanningSheet: Bool = false
-  var isInteractiveDismissing = false
-  var dismissPanStartTranslationY: CGFloat = 0
+  var sheetPanVelocityY: CGFloat = 0
+  var keepsInteractiveFrameForDismissal = false
+  var dismissalStartingFrame: CGRect = .zero
 
   var keyboardBottomInset: CGFloat = 0
   var keyboardObservers: [NSObjectProtocol] = []
@@ -43,12 +42,10 @@ final class FKContainerPresentationController: UIPresentationController {
     presentedViewController: UIViewController,
     presenting presentingViewController: UIViewController?,
     owner: FKPresentationController?,
-    configuration: FKPresentationConfiguration,
-    interactionController: FKPresentationDismissInteractionController
+    configuration: FKPresentationConfiguration
   ) {
     self.owner = owner
     self.configuration = configuration
-    self.interactionController = interactionController
     super.init(presentedViewController: presentedViewController, presenting: presentingViewController)
   }
 
@@ -58,6 +55,9 @@ final class FKContainerPresentationController: UIPresentationController {
   }
 
   public override var frameOfPresentedViewInContainerView: CGRect {
+    if keepsInteractiveFrameForDismissal {
+      return dismissalStartingFrame
+    }
     guard let containerView else { return .zero }
     let bounds = containerView.bounds
     let safeInsets = containerSafeInsets(in: containerView)
@@ -131,6 +131,12 @@ final class FKContainerPresentationController: UIPresentationController {
 
   public override func dismissalTransitionWillBegin() {
     super.dismissalTransitionWillBegin()
+    if keepsInteractiveFrameForDismissal {
+      wrapperView.frame = dismissalStartingFrame
+      chromeView.frame = wrapperView.bounds
+      layoutContentContainer()
+      hostedPresentedView?.frame = contentContainerView.bounds
+    }
     applyPresentingViewEffectIfNeeded(isPresenting: false)
     if let coordinator = presentedViewController.transitionCoordinator {
       coordinator.animate { _ in
@@ -145,7 +151,10 @@ final class FKContainerPresentationController: UIPresentationController {
     super.containerViewDidLayoutSubviews()
     backdropView.frame = containerView?.bounds ?? .zero
 
-    wrapperView.frame = frameOfPresentedViewInContainerView
+    // During sheet dragging, keep the live interactive frame instead of snapping back to detent.
+    if !isPanningSheet && !keepsInteractiveFrameForDismissal {
+      wrapperView.frame = frameOfPresentedViewInContainerView
+    }
     chromeView.frame = wrapperView.bounds
     layoutContentContainer()
     hostedPresentedView?.frame = contentContainerView.bounds
@@ -162,11 +171,13 @@ final class FKContainerPresentationController: UIPresentationController {
       backdropView.removeFromSuperview()
       stopKeyboardTracking()
       cleanupPresentingViewEffect()
+      resetDismissalFrameLock()
     } else {
       // Interactive dismiss can cancel after intermediate visual changes; restore backdrop/effect state
       // so the re-presented sheet remains visually consistent and does not look half-dismissed.
       applyPresentingViewEffectIfNeeded(isPresenting: true)
       updateBackdropForCurrentState()
+      resetDismissalFrameLock()
     }
   }
 
@@ -194,5 +205,9 @@ final class FKContainerPresentationController: UIPresentationController {
     }
   }
 
+  private func resetDismissalFrameLock() {
+    keepsInteractiveFrameForDismissal = false
+    dismissalStartingFrame = .zero
+  }
 }
 
