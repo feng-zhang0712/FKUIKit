@@ -6,6 +6,8 @@ extension FKContainerPresentationController {
 
   /// Applies corner radius, border and shadow on the wrapper shell.
   func applyContainerAppearance() {
+    containerBlurView.frame = wrapperView.bounds
+    containerBlurView.maskedCornerRadius = configuration.cornerRadius
     wrapperView.layer.cornerRadius = configuration.cornerRadius
     wrapperView.layer.masksToBounds = true
     wrapperView.layer.shadowColor = configuration.shadow.color.cgColor

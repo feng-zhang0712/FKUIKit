@@ -2,9 +2,11 @@ import UIKit
 
 final class FKExampleLabelContentViewController: UIViewController {
   private let text: String
+  private let usesTransparentBackground: Bool
 
-  init(text: String) {
+  init(text: String, usesTransparentBackground: Bool = false) {
     self.text = text
+    self.usesTransparentBackground = usesTransparentBackground
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -13,7 +15,7 @@ final class FKExampleLabelContentViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    view.backgroundColor = .systemBackground
+    view.backgroundColor = usesTransparentBackground ? .clear : .systemBackground
 
     let label = UILabel()
     label.text = text

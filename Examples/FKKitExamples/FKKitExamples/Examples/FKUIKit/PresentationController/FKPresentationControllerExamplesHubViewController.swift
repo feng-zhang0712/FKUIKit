@@ -38,41 +38,6 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
       ]
     ),
     Section(
-      title: "Anchor",
-      rows: [
-        Row(
-          title: "Top anchor popup",
-          subtitle: "Single anchor view at the top; tap it to present and tap again/mask to dismiss.",
-          make: { AnchorTopSingleExampleViewController() }
-        ),
-        Row(
-          title: "Bottom anchor popup",
-          subtitle: "Single anchor view at the bottom; popup expands upward from the anchor.",
-          make: { AnchorBottomSingleExampleViewController() }
-        ),
-        Row(
-          title: "Auto direction anchor popup",
-          subtitle: "Uses `.auto` direction to choose upward/downward expansion based on available space.",
-          make: { AnchorAutoDirectionExampleViewController() }
-        ),
-      ]
-    ),
-    Section(
-      title: "Safe Area",
-      rows: [
-        Row(
-          title: "contentRespectsSafeArea",
-          subtitle: "Container can touch screen edges; content insets handle safe area.",
-          make: { SafeAreaContentRespectsSafeAreaExampleViewController() }
-        ),
-        Row(
-          title: "containerRespectsSafeArea",
-          subtitle: "Container itself stays away from safe area for card-like overlays.",
-          make: { SafeAreaContainerRespectsSafeAreaExampleViewController() }
-        ),
-      ]
-    ),
-    Section(
       title: "Sheet",
       rows: [
         Row(
@@ -116,9 +81,94 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
           make: { SwipeToDismissExampleViewController() }
         ),
         Row(
+          title: "Background interaction policy",
+          subtitle: "Allow or block touches to the presenting UI (powerful but risky).",
+          make: { BackgroundInteractionPolicyExampleViewController() }
+        ),
+        Row(
+          title: "Zero-dim backdrop behavior",
+          subtitle: "When dim alpha is 0, choose dismissable/passthrough/disabled behavior.",
+          make: { ZeroDimBackdropBehaviorExampleViewController() }
+        ),
+        Row(
           title: "Interactive progress callback",
           subtitle: "Use progress updates to drive UI (e.g. a progress label).",
           make: { InteractiveDismissProgressExampleViewController() }
+        ),
+      ]
+    ),
+    Section(
+      title: "Appearance",
+      rows: [
+        Row(
+          title: "Corner radius / shadow / border",
+          subtitle: "Tune visuals with sliders and see results immediately.",
+          make: { ContainerAppearanceTuningExampleViewController() }
+        ),
+        Row(
+          title: "Bottom sheet blur",
+          subtitle: "Apply blur on sheet container and tune dim/material/custom blur parameters.",
+          make: { BottomSheetBlurExampleViewController() }
+        ),
+        Row(
+          title: "Top sheet blur",
+          subtitle: "Top sheet container blur with dim/material/backend/mode controls.",
+          make: { TopSheetBlurExampleViewController() }
+        ),
+        Row(
+          title: "Center blur",
+          subtitle: "Center modal container blur with dim/material/backend/mode controls.",
+          make: { CenterBlurExampleViewController() }
+        ),
+        Row(
+          title: "Anchor popup blur",
+          subtitle: "Anchor popup blur with dim/material/backend/mode and custom blur controls.",
+          make: { AnchorBlurExampleViewController() }
+        ),
+      ]
+    ),
+    Section(
+      title: "Anchor",
+      rows: [
+        Row(
+          title: "Top anchor popup",
+          subtitle: "Single anchor view at the top; tap it to present and tap again/mask to dismiss.",
+          make: { AnchorTopSingleExampleViewController() }
+        ),
+        Row(
+          title: "Bottom anchor popup",
+          subtitle: "Single anchor view at the bottom; popup expands upward from the anchor.",
+          make: { AnchorBottomSingleExampleViewController() }
+        ),
+        Row(
+          title: "Auto direction anchor popup",
+          subtitle: "Uses `.auto` direction to choose upward/downward expansion based on available space.",
+          make: { AnchorAutoDirectionExampleViewController() }
+        ),
+      ]
+    ),
+    Section(
+      title: "Safe Area",
+      rows: [
+        Row(
+          title: "contentRespectsSafeArea",
+          subtitle: "Container can touch screen edges; content insets handle safe area.",
+          make: { SafeAreaContentRespectsSafeAreaExampleViewController() }
+        ),
+        Row(
+          title: "containerRespectsSafeArea",
+          subtitle: "Container itself stays away from safe area for card-like overlays.",
+          make: { SafeAreaContainerRespectsSafeAreaExampleViewController() }
+        ),
+      ]
+    ),
+    Section(
+      title: "Backdrop",
+      rows: [
+        Row(
+          title: "Dim backdrop",
+          subtitle: "Adjust alpha with a slider and understand readability trade-offs.",
+          make: { DimBackdropExampleViewController() }
         ),
       ]
     ),
@@ -143,16 +193,6 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
       ]
     ),
     Section(
-      title: "Backdrop",
-      rows: [
-        Row(
-          title: "Dim backdrop",
-          subtitle: "Adjust alpha with a slider and understand readability trade-offs.",
-          make: { DimBackdropExampleViewController() }
-        ),
-      ]
-    ),
-    Section(
       title: "Keyboard",
       rows: [
         Row(
@@ -169,21 +209,6 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
           title: "Rotation resilience",
           subtitle: "Rotate the device: frames stay stable (especially important for anchors).",
           make: { RotationResilienceExampleViewController() }
-        ),
-      ]
-    ),
-    Section(
-      title: "Appearance",
-      rows: [
-        Row(
-          title: "Corner radius / shadow / border",
-          subtitle: "Tune visuals with sliders and see results immediately.",
-          make: { ContainerAppearanceTuningExampleViewController() }
-        ),
-        Row(
-          title: "Background interaction policy",
-          subtitle: "Allow or block touches to the presenting UI (powerful but risky).",
-          make: { BackgroundInteractionPolicyExampleViewController() }
         ),
       ]
     ),

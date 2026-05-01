@@ -51,6 +51,8 @@ public final class FKPresentationController: NSObject {
     // - `.anchor` stays inside the existing hierarchy because it must preserve local z-order,
     //   touch passthrough boundaries, and anchor attachment semantics that `UIPresentationController`
     //   cannot guarantee.
+    // - Passthrough background interaction uses an in-hierarchy overlay host so touches outside the popup
+    //   can reach the presenting UI.
     // - All other modes use UIKit custom modal presentation for system-like transitions and lifecycle.
     if case let .anchor(anchorConfig) = configuration.layout {
       self.host = FKAnchorHost(
@@ -60,7 +62,18 @@ public final class FKPresentationController: NSObject {
         anchorConfiguration: anchorConfig
       )
     } else {
-      self.host = FKModalPresentationHost(owner: self, contentController: contentController, configuration: configuration)
+      let wantsPassthrough: Bool = {
+        if configuration.backgroundInteraction.isEnabled { return true }
+        if case let .dim(_, alpha) = configuration.backdropStyle, alpha <= 0 {
+          return configuration.zeroDimBackdropBehavior == .passthrough
+        }
+        return false
+      }()
+      if wantsPassthrough {
+        self.host = FKOverlayPresentationHost(owner: self, contentController: contentController, configuration: configuration)
+      } else {
+        self.host = FKModalPresentationHost(owner: self, contentController: contentController, configuration: configuration)
+      }
     }
   }
 
@@ -132,12 +145,15 @@ public final class FKPresentationController: NSObject {
   /// Programmatically switches to a detent index when sheet modes are active.
   public func setDetent(index: Int, animated: Bool = true) {
     guard assertMainThread("setDetent(index:)") else { return }
-    guard host is FKModalPresentationHost else { return }
     let clamped = max(0, min(index, max(0, configuration.sheet.detents.count - 1)))
     guard configuration.sheet.detents.indices.contains(clamped) else { return }
-    (contentController.transitioningDelegate as? FKPresentationTransitioningDelegate)?
-      .activeContainerController?
-      .setDetent(configuration.sheet.detents[clamped], animated: animated)
+    if host is FKModalPresentationHost {
+      (contentController.transitioningDelegate as? FKPresentationTransitioningDelegate)?
+        .activeContainerController?
+        .setDetent(configuration.sheet.detents[clamped], animated: animated)
+    }
+    // Overlay host currently performs nearest-detent snapping based on drag.
+    // Keep API no-op for overlay until explicit programmatic detent API is introduced there.
   }
 
   /// Convenience API for one-line presentation.
