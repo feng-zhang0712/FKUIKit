@@ -43,7 +43,7 @@ extension FKContainerPresentationController {
 
   // MARK: - Presenting View Effects
 
-  /// Applies optional scale/blur effects to the presenting view during transitions.
+  /// Applies optional presenting-view scale effect during transitions.
   func applyPresentingViewEffectIfNeeded(isPresenting: Bool) {
     let effect = configuration.presentingViewEffect
     guard effect.isEnabled, let host = presentingViewController.view else { return }
@@ -54,18 +54,8 @@ extension FKContainerPresentationController {
     }
     presentingEffectHostView = host
 
-    if let style = effect.blurStyle, presentingBlurView == nil {
-      let blurView = UIVisualEffectView(effect: UIBlurEffect(style: style))
-      blurView.frame = host.bounds
-      blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      blurView.alpha = 0
-      host.addSubview(blurView)
-      presentingBlurView = blurView
-    }
-
     let updates = {
       host.transform = isPresenting ? CGAffineTransform(scaleX: effect.scale, y: effect.scale) : .identity
-      self.presentingBlurView?.alpha = isPresenting ? effect.blurAlpha : 0
     }
     if let coordinator = presentedViewController.transitionCoordinator {
       coordinator.animate { _ in updates() }
@@ -74,11 +64,9 @@ extension FKContainerPresentationController {
     }
   }
 
-  /// Resets presenting-view transforms and temporary blur views.
+  /// Resets presenting-view transforms.
   func cleanupPresentingViewEffect() {
     presentingEffectHostView?.transform = .identity
-    presentingBlurView?.removeFromSuperview()
-    presentingBlurView = nil
     presentingEffectHostView = nil
   }
 }

@@ -181,16 +181,6 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
           make: { ContainerAppearanceTuningExampleViewController() }
         ),
         Row(
-          title: "Popup surface blur",
-          subtitle: "Apply blur material to the popup panel itself (not the backdrop).",
-          make: { PopupBlurSurfaceExampleViewController() }
-        ),
-        Row(
-          title: "Popup surface liquid glass",
-          subtitle: "Apply liquid-glass-like rendering to the popup panel itself.",
-          make: { PopupLiquidGlassSurfaceExampleViewController() }
-        ),
-        Row(
           title: "Background interaction policy",
           subtitle: "Allow or block touches to the presenting UI (powerful but risky).",
           make: { BackgroundInteractionPolicyExampleViewController() }

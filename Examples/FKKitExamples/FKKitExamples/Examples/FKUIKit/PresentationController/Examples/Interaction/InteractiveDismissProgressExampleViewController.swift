@@ -15,7 +15,7 @@ final class InteractiveDismissProgressExampleViewController: FKPresentationExamp
     setHeader(
       title: "Interactive dismiss progress callback",
       subtitle: "Drive your own UI from interactive dismiss progress.",
-      notes: "This example updates a label, but you can also map progress to blur/dim intensity or scale effects."
+      notes: "This example updates a label, but you can also map progress to dim intensity or scale effects."
     )
 
     progressLabel.font = .preferredFont(forTextStyle: .title3)

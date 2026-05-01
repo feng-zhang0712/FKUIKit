@@ -7,7 +7,7 @@ final class FKContainerPresentationController: UIPresentationController, UIGestu
   weak var owner: FKPresentationController?
   /// Immutable runtime configuration snapshot for this presentation session.
   let configuration: FKPresentationConfiguration
-  /// Backdrop renderer shared by dim/blur/liquid-glass styles.
+  /// Backdrop renderer shared by supported backdrop styles.
   let backdropView = FKPresentationBackdropView()
   /// Non-interactive chrome host for grabber and related affordances.
   let chromeView = UIView()
@@ -35,7 +35,6 @@ final class FKContainerPresentationController: UIPresentationController, UIGestu
   var keyboardObservers: [NSObjectProtocol] = []
   var originalScrollInsets: (content: UIEdgeInsets, indicator: UIEdgeInsets)?
   weak var presentingEffectHostView: UIView?
-  var presentingBlurView: UIVisualEffectView?
 
   /// Creates a container presentation controller with configuration and interaction dependencies.
   init(
