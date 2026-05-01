@@ -7,9 +7,9 @@ import FKUIKit
 /// - Switch between fixed size and fitted size (with max constraints).
 /// - Shows why max constraints matter on iPad / large screens.
 final class CenterModalBasicsExampleViewController: FKPresentationExamplePageViewController {
-  private enum SizeChoice: Int { case fixed, fitted }
+  private enum SizeChoice: Int { case fixedCompact, fixedLarge }
 
-  private var sizeChoice: SizeChoice = .fitted
+  private var sizeChoice: SizeChoice = .fixedLarge
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -22,10 +22,10 @@ final class CenterModalBasicsExampleViewController: FKPresentationExamplePageVie
     addView(
       FKExampleControls.segmented(
         title: "Size strategy",
-        items: ["Fixed 320×420", "Fitted (max 460×640)"],
+        items: ["Fixed 320×420", "Fixed 460×640"],
         selectedIndex: sizeChoice.rawValue
       ) { [weak self] idx in
-        self?.sizeChoice = SizeChoice(rawValue: idx) ?? .fitted
+        self?.sizeChoice = SizeChoice(rawValue: idx) ?? .fixedLarge
       }
     )
 
@@ -35,10 +35,10 @@ final class CenterModalBasicsExampleViewController: FKPresentationExamplePageVie
       configuration.layout = .center(configuration.center)
       configuration.center.size = {
         switch self.sizeChoice {
-        case .fixed:
+        case .fixedCompact:
           return .fixed(.init(width: 320, height: 420))
-        case .fitted:
-          return .fitted(maxSize: .init(width: 460, height: 640))
+        case .fixedLarge:
+          return .fixed(.init(width: 460, height: 640))
         }
       }()
       _ = FKPresentationExampleHelpers.present(from: self, title: "Center modal", configuration: configuration)

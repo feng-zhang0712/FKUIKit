@@ -7,8 +7,7 @@ extension FKContainerPresentationController {
   /// Recomputes backdrop alpha using static style or detent-progress interpolation.
   func updateBackdropForCurrentState() {
     guard configuration.sheet.multiStageBackdrop.isEnabled else {
-      // Respect the configured backdrop intensity. `FKPresentationBackdropView` also uses internal alpha
-      // for blur effects, so we keep the container-level alpha as the primary dimming channel only.
+      // Respect configured backdrop intensity when multi-stage interpolation is disabled.
       switch configuration.backdropStyle {
       case let .dim(_, alpha):
         backdropView.alpha = alpha

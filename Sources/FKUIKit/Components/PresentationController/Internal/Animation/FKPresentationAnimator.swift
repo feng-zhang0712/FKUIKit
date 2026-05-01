@@ -338,8 +338,10 @@ enum FKAnimationStyleResolver {
     interactionState: InteractionState
   ) -> TransitionStyle {
     // Target feel: UIAlertController(.alert)-like.
-    let initialScale: CGFloat = isPresentation ? 0.95 : 1
-    let finalScale: CGFloat = isPresentation ? 1 : 0.97
+    // System alert appears with a subtle zoom-down + fade in, then dismisses with a short
+    // fade out + slight shrink.
+    let initialScale: CGFloat = isPresentation ? 1.08 : 1
+    let finalScale: CGFloat = isPresentation ? 1 : 0.92
     let initialAlpha: CGFloat = isPresentation ? 0 : 1
     let finalAlpha: CGFloat = isPresentation ? 1 : 0
 
@@ -348,15 +350,19 @@ enum FKAnimationStyleResolver {
 
     switch animationConfiguration.preset {
     case .systemLike:
-      duration = isPresentation ? 0.26 : 0.22
-      // System alert tends to ease out on present and ease in on dismiss.
-      timing = .curve(isPresentation ? .easeOut : .easeIn)
+      if isPresentation {
+        duration = 0.30
+        timing = .spring(dampingRatio: 0.82)
+      } else {
+        duration = 0
+        timing = .curve(.linear)
+      }
     case .spring:
-      duration = max(0.22, min(0.3, animationConfiguration.duration))
-      timing = .spring(dampingRatio: min(max(animationConfiguration.dampingRatio, 0.84), 0.95))
+      duration = max(0.24, min(0.34, animationConfiguration.duration))
+      timing = .spring(dampingRatio: min(max(animationConfiguration.dampingRatio, 0.78), 0.92))
     case .easeInOut:
-      duration = max(0.2, min(0.3, animationConfiguration.duration))
-      timing = .curve(isPresentation ? .easeOut : .easeIn)
+      duration = max(0.2, min(0.32, animationConfiguration.duration))
+      timing = .curve(.easeInOut)
     case .fade:
       duration = isPresentation ? 0.22 : 0.18
       timing = .curve(.linear)

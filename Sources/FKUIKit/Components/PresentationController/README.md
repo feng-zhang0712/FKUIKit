@@ -48,7 +48,7 @@ This component is designed for large UIKit codebases:
 - Supports `bottomSheet`, `topSheet`, `center`, `anchor`, and `edge`
 - Detent-based sheet sizing (`fitContent`, `fixed`, `fraction`, `full`)
 - Programmatic detent switching through controller API
-- Backdrop styles: `none`, `dim`, `blur`, `liquidGlass`
+- Backdrop styles: `none`, `dim`
 - Safe area strategies for container/content separation
 - Keyboard avoidance strategies (`adjustContainer`, `adjustContentInsets`, `interactive`)
 - Configurable animation preset/timing/custom animator
@@ -200,8 +200,6 @@ controller.setDetent(index: 1, animated: true)
 var configuration = FKPresentationConfiguration()
 configuration.backdropStyle = .dim(color: .black, alpha: 0.35)
 // Alternatives:
-// configuration.backdropStyle = .blur(effect: .systemMaterial, alpha: 1, vibrancy: nil)
-// configuration.backdropStyle = .liquidGlass(configuration: .init(intensity: 1))
 // configuration.backdropStyle = .none
 ```
 

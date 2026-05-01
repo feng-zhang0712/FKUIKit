@@ -150,16 +150,6 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
           subtitle: "Adjust alpha with a slider and understand readability trade-offs.",
           make: { DimBackdropExampleViewController() }
         ),
-        Row(
-          title: "Blur backdrop",
-          subtitle: "Compare blur styles and note performance considerations.",
-          make: { BlurBackdropExampleViewController() }
-        ),
-        Row(
-          title: "Liquid Glass (iOS 26+)",
-          subtitle: "Use liquid glass when available, otherwise fall back to blur and show it in UI.",
-          make: { LiquidGlassBackdropExampleViewController() }
-        ),
       ]
     ),
     Section(
@@ -189,6 +179,16 @@ final class FKPresentationControllerExamplesHubViewController: UITableViewContro
           title: "Corner radius / shadow / border",
           subtitle: "Tune visuals with sliders and see results immediately.",
           make: { ContainerAppearanceTuningExampleViewController() }
+        ),
+        Row(
+          title: "Popup surface blur",
+          subtitle: "Apply blur material to the popup panel itself (not the backdrop).",
+          make: { PopupBlurSurfaceExampleViewController() }
+        ),
+        Row(
+          title: "Popup surface liquid glass",
+          subtitle: "Apply liquid-glass-like rendering to the popup panel itself.",
+          make: { PopupLiquidGlassSurfaceExampleViewController() }
         ),
         Row(
           title: "Background interaction policy",
