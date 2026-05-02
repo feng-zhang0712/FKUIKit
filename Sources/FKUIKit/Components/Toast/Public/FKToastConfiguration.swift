@@ -1,6 +1,8 @@
 import UIKit
 
-/// Text provider for localization-friendly default strings.
+// MARK: - Localization & actions
+
+/// Strings used for default action titles and HUD loading fallbacks; override via `FKToast.defaultConfiguration.localizedText`.
 public struct FKToastLocalizedText: Sendable, Equatable {
   /// Default title for a dismiss action.
   public var dismissAction: String
@@ -33,6 +35,8 @@ public struct FKToastAction: Sendable, Equatable {
   }
 }
 
+// MARK: - Lifecycle
+
 /// Lifecycle callbacks for one request.
 public struct FKToastLifecycleHooks: Sendable {
   /// Called right before entering animation.
@@ -57,6 +61,8 @@ public struct FKToastLifecycleHooks: Sendable {
   }
 }
 
+// MARK: - Queue
+
 /// Queue behavior and deduplication tuning.
 public struct FKToastQueueConfiguration: Sendable, Equatable {
   /// Maximum number of overlays shown at once.
@@ -80,6 +86,8 @@ public struct FKToastQueueConfiguration: Sendable, Equatable {
     self.allowPriorityPreemption = allowPriorityPreemption
   }
 }
+
+// MARK: - Request configuration
 
 /// Per-request configuration for Toast/HUD/Snackbar.
 public struct FKToastConfiguration: Sendable, Equatable {
@@ -157,6 +165,8 @@ public struct FKToastConfiguration: Sendable, Equatable {
   public var queue: FKToastQueueConfiguration
   /// Whether to post VoiceOver announcements automatically.
   public var accessibilityAnnouncementEnabled: Bool
+  /// When set, this string is announced instead of deriving text from message/title/subtitle (e.g. for `customView` content).
+  public var accessibilityAnnouncementOverride: String?
   /// Background visual effect policy.
   public var backgroundVisualEffect: FKToastBackgroundVisualEffect
   /// Opacity applied to visual-effect view.
@@ -212,6 +222,7 @@ public struct FKToastConfiguration: Sendable, Equatable {
     secondaryAction: FKToastAction? = nil,
     queue: FKToastQueueConfiguration = .init(),
     accessibilityAnnouncementEnabled: Bool = true,
+    accessibilityAnnouncementOverride: String? = nil,
     backgroundVisualEffect: FKToastBackgroundVisualEffect = .none,
     visualEffectOpacity: CGFloat = 1,
     fallbackToSolidColorWhenReduceTransparencyEnabled: Bool = true,
@@ -256,6 +267,7 @@ public struct FKToastConfiguration: Sendable, Equatable {
     self.secondaryAction = secondaryAction
     self.queue = queue
     self.accessibilityAnnouncementEnabled = accessibilityAnnouncementEnabled
+    self.accessibilityAnnouncementOverride = accessibilityAnnouncementOverride
     self.backgroundVisualEffect = backgroundVisualEffect
     self.visualEffectOpacity = min(max(visualEffectOpacity, 0), 1)
     self.fallbackToSolidColorWhenReduceTransparencyEnabled = fallbackToSolidColorWhenReduceTransparencyEnabled

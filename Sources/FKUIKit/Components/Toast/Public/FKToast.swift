@@ -4,61 +4,49 @@ import UIKit
 import SwiftUI
 #endif
 
-/// Handle for one specific Toast/HUD/Snackbar request.
+/// Strongly typed reference to one enqueued overlay; safe to pass across concurrency domains (`Sendable`).
 public final class FKToastHandle: @unchecked Sendable {
-  /// Request identifier associated with this handle.
+  /// Stable identifier shared with `FKToast.dismiss(_:)` and lifecycle hooks.
   public let id: UUID
 
   init(id: UUID) {
     self.id = id
   }
 
-  /// Dismisses this request if it is currently visible or queued.
+  /// Dismisses this request if it is visible or still queued. Marshals to the main actor internally.
   public func dismiss(reason: FKToastDismissReason = .manual, animated: Bool = true) {
     FKToast.dismiss(id, reason: reason, animated: animated)
   }
 
-  /// Updates visible content in-place for this request.
-  ///
-  /// - Parameters:
-  ///   - content: Updated content payload.
-  ///   - configuration: Optional updated configuration.
-  /// - Returns: `true` when the request is currently visible and updated.
+  /// Replaces visible content (and optionally configuration) without re-queuing.
   public func update(content: FKToastContent, configuration: FKToastConfiguration? = nil) async -> Bool {
     await FKToast.update(id, content: content, configuration: configuration)
   }
 
-  /// Updates progress text (0%...100%) for this request.
-  ///
-  /// - Parameters:
-  ///   - progress: Progress value in range `0...1`.
-  ///   - title: Optional title override.
-  /// - Returns: `true` when updated successfully.
+  /// Updates a visible HUD-style title + percentage subtitle derived from `0...1` progress.
   public func updateProgress(_ progress: Double, title: String? = nil) async -> Bool {
     await FKToast.updateProgress(id, progress: progress, title: title)
   }
 }
 
-/// Unified entry point for Toast, HUD, and Snackbar overlays.
+// MARK: - Toast
+
+/// Global entry for transient banners (`toast`), centered HUDs (`hud`), and bottom snackbars (`snackbar`).
 public enum FKToast {
-  /// Global baseline used by convenience APIs.
-  ///
-  /// Set this during app startup to define default typography, spacing, interaction,
-  /// queue policy, and accessibility behavior for all subsequent requests.
+  /// Baseline merged into each request unless overridden per `FKToastConfiguration`.
   @MainActor
   public static var defaultConfiguration: FKToastConfiguration {
     get { FKToastCenter.shared.defaultConfiguration }
     set { FKToastCenter.shared.defaultConfiguration = newValue }
   }
 
-  /// Shows a lightweight message using one-line defaults.
-  ///
-  /// - Parameters:
-  ///   - message: Visible text announced to users and VoiceOver.
-  ///   - style: Semantic style used for icon and color presets.
-  ///   - kind: Overlay category (`toast`, `hud`, or `snackbar`).
-  ///
-  /// This API is thread-safe. Internal rendering always happens on the main actor.
+  /// `true` if at least one overlay is attached to a window (queued-only items do not count).
+  @MainActor
+  public static var isPresenting: Bool {
+    FKToastCenter.shared.isPresenting
+  }
+
+  /// Presents a string using `FKToastConfiguration` defaults for the given `kind` and semantic `style`.
   public static func show(
     _ message: String,
     style: FKToastStyle = .normal,
@@ -72,17 +60,7 @@ public enum FKToast {
     )
   }
 
-  /// Shows a message with full request configuration.
-  ///
-  /// - Parameters:
-  ///   - message: Main textual payload.
-  ///   - icon: Optional explicit icon. If `nil`, style defaults are used.
-  ///   - configuration: Request-level display and interaction options.
-  ///   - hooks: Lifecycle callbacks for show and dismiss phases.
-  ///   - actionHandler: Closure executed when the primary action is tapped.
-  ///
-  /// Use this API when you need queue policy tuning, touch interception, lifecycle telemetry,
-  /// or custom timeout behavior.
+  /// Full control: icon override, configuration, lifecycle hooks, and primary action handler.
   public static func show(
     _ message: String,
     icon: UIImage? = nil,
@@ -101,16 +79,7 @@ public enum FKToast {
     )
   }
 
-  /// Shows a custom UIKit view inside the overlay container.
-  ///
-  /// - Parameters:
-  ///   - customView: Caller-owned content view.
-  ///   - configuration: Request-level display and interaction options.
-  ///   - hooks: Lifecycle callbacks for show and dismiss phases.
-  ///   - actionHandler: Closure executed when the primary action is tapped.
-  ///
-  /// The custom view is embedded without additional text layout, making this suitable for
-  /// fully branded or compositional content blocks.
+  /// Embeds a caller-built `UIView` (no built-in text stack).
   public static func show(
     customView: UIView,
     configuration: FKToastConfiguration = FKToastConfiguration(),
@@ -128,16 +97,7 @@ public enum FKToast {
   }
 
 #if canImport(SwiftUI)
-  /// Shows a SwiftUI view by bridging into UIKit hosting.
-  ///
-  /// - Parameters:
-  ///   - content: SwiftUI content rendered inside a `UIHostingController`.
-  ///   - configuration: Request-level display and interaction options.
-  ///   - hooks: Lifecycle callbacks for show and dismiss phases.
-  ///   - actionHandler: Closure executed when the primary action is tapped.
-  ///
-  /// This overload is `@MainActor` because SwiftUI view values are not guaranteed to be sendable
-  /// across concurrency domains.
+  /// Hosts SwiftUI content in a `UIHostingController` (must run on the main actor).
   @MainActor
   public static func show<Content: View>(
     swiftUIView content: Content,
@@ -155,28 +115,15 @@ public enum FKToast {
   }
 #endif
 
-  /// Enqueues one advanced request.
-  ///
-  /// - Parameters:
-  ///   - builder: Content and behavior descriptor.
-  /// - Note: This API is thread-safe and internally marshals work to the main actor.
-  /// Enqueues one advanced request built via `FKToastBuilder`.
-  ///
-  /// - Parameter builder: Builder containing content, style, queue policy, and callbacks.
+  /// Advanced enqueue; thread-safe — UI work is isolated to the main actor.
   public static func show(builder: FKToastBuilder) {
     Task { @MainActor in
       _ = FKToastCenter.shared.enqueue(builder: builder)
     }
   }
 
-  /// Asynchronously shows one request and returns its identifier.
-  ///
-  /// - Returns: Stable request identifier for manual dismissal.
-  /// Enqueues and returns a request identifier for future explicit dismissal.
-  ///
-  /// - Parameter builder: Builder containing content, style, queue policy, and callbacks.
-  /// - Returns: The request identifier.
-  public static func showAndReturnID(builder: FKToastBuilder) async -> UUID {
+  /// Enqueues using a caller-supplied `id` (for correlating with your own models) and awaits that id.
+  public static func showReturningID(builder: FKToastBuilder) async -> UUID {
     let id = UUID()
     await MainActor.run {
       _ = FKToastCenter.shared.enqueue(builder: builder, id: id)
@@ -184,51 +131,27 @@ public enum FKToast {
     return id
   }
 
-  /// Enqueues one request and returns a handle for later updates or dismissal.
-  ///
-  /// - Parameter builder: Builder containing content and behavior.
-  /// - Returns: A handle bound to the enqueued request.
-  public static func showAndReturnHandle(builder: FKToastBuilder) async -> FKToastHandle {
-    let id = await showAndReturnID(builder: builder)
+  /// Convenience around `showReturningID` returning a `FKToastHandle`.
+  public static func showReturningHandle(builder: FKToastBuilder) async -> FKToastHandle {
+    let id = await showReturningID(builder: builder)
     return FKToastHandle(id: id)
   }
 
-  /// Removes current and pending overlays.
-  ///
-  /// - Parameter animated: Whether to animate active dismissals.
+  /// Dismisses every visible overlay and clears the wait queue.
   public static func clearAll(animated: Bool = true) {
     Task { @MainActor in
       FKToastCenter.shared.clearAll(animated: animated)
     }
   }
 
-  /// Dismisses one request by identifier.
-  ///
-  /// - Parameters:
-  ///   - id: Identifier returned by async APIs.
-  ///   - reason: Reason emitted to lifecycle hooks.
-  ///   - animated: Whether dismissal should be animated.
-  /// Dismisses a specific overlay request.
-  ///
-  /// - Parameters:
-  ///   - id: Target request identifier.
-  ///   - reason: Dismiss reason propagated to lifecycle hooks.
-  ///   - animated: Whether to animate removal.
+  /// Dismisses one overlay by id (no-op if unknown).
   public static func dismiss(_ id: UUID, reason: FKToastDismissReason = .manual, animated: Bool = true) {
     Task { @MainActor in
       FKToastCenter.shared.dismiss(id: id, reason: reason, animated: animated)
     }
   }
 
-  /// Updates the content of an already visible overlay instance.
-  ///
-  /// - Parameters:
-  ///   - id: Identifier returned by `showAndReturnID(builder:)`.
-  ///   - content: Updated content payload rendered in the existing instance.
-  ///   - configuration: Optional configuration override. If `nil`, the original configuration is kept.
-  /// - Returns: `true` if the instance exists and was updated; otherwise `false`.
-  ///
-  /// This API does not re-enqueue a new request and does not change queue order.
+  /// In-place content refresh for a visible instance.
   public static func update(
     _ id: UUID,
     content: FKToastContent,
@@ -239,13 +162,7 @@ public enum FKToast {
     }
   }
 
-  /// Updates progress text (0%...100%) for one visible request.
-  ///
-  /// - Parameters:
-  ///   - id: Identifier returned by `showAndReturnID(builder:)`.
-  ///   - progress: Progress value in range `0...1`.
-  ///   - title: Optional title override.
-  /// - Returns: `true` if updated; otherwise `false`.
+  /// Progress helper built on `titleSubtitle` content.
   public static func updateProgress(
     _ id: UUID,
     progress: Double,
@@ -256,22 +173,17 @@ public enum FKToast {
     }
   }
 }
+
+// MARK: - HUD
+
+/// Opinionated HUD shortcuts on top of `FKToast` (blocking spinners, status, short success/failure).
 public enum FKHUD {
-  /// Shows an indeterminate loading HUD.
-  ///
-  /// - Parameters:
-  ///   - text: Optional loading message.
-  ///   - interceptTouches: Whether the HUD blocks interactions behind it.
-  ///   - timeout: Safety timeout to prevent hanging overlays.
-  ///
-  /// HUD operations are routed through the unified queue, so they stay deterministic under
-  /// concurrent calls from multiple features.
   public static func showLoading(
     _ text: String? = nil,
     interceptTouches: Bool = true,
     timeout: TimeInterval? = 25
   ) {
-    let message = text ?? "Loading…"
+    let message = text ?? FKToastLocalizedText().loadingText
     FKToast.show(
       builder: .init(
         content: .message(message),
@@ -280,23 +192,11 @@ public enum FKHUD {
     )
   }
 
-  /// Shows status feedback as a HUD card.
-  ///
-  /// - Parameters:
-  ///   - title: Primary status text.
-  ///   - subtitle: Optional detail line.
-  ///   - style: Semantic style (`success`, `error`, `warning`, etc.).
   public static func showStatus(_ title: String, subtitle: String? = nil, style: FKToastStyle = .info) {
     let content: FKToastContent = subtitle.map { .titleSubtitle(title: title, subtitle: $0) } ?? .message(title)
     FKToast.show(builder: .init(content: content, configuration: .init(kind: .hud, style: style, duration: 0, timeout: 20, interceptTouches: true)))
   }
 
-  /// Shows a determinate progress HUD using textual percentage.
-  ///
-  /// - Parameters:
-  ///   - title: Primary progress title.
-  ///   - progress: Progress value in range `0...1`.
-  ///   - interceptTouches: Whether the HUD blocks touches.
   public static func showProgress(_ title: String, progress: Double, interceptTouches: Bool = true) {
     let clamped = min(max(progress, 0), 1)
     let percent = Int((clamped * 100).rounded())
@@ -308,37 +208,19 @@ public enum FKHUD {
     )
   }
 
-  /// Shows a success HUD that dismisses automatically.
-  ///
-  /// - Parameters:
-  ///   - text: Message text.
-  ///   - duration: Auto-dismiss duration.
   public static func showSuccess(_ text: String, duration: TimeInterval = 1.8) {
     FKToast.show(builder: .init(content: .message(text), configuration: .init(kind: .hud, style: .success, duration: duration, timeout: duration, interceptTouches: false)))
   }
 
-  /// Shows a failure HUD that dismisses automatically.
-  ///
-  /// - Parameters:
-  ///   - text: Message text.
-  ///   - duration: Auto-dismiss duration.
   public static func showFailure(_ text: String, duration: TimeInterval = 1.8) {
     FKToast.show(builder: .init(content: .message(text), configuration: .init(kind: .hud, style: .error, duration: duration, timeout: duration, interceptTouches: false)))
   }
 }
 
+// MARK: - Snackbar
+
+/// Bottom snackbar preset: `.snackbar`, bottom placement, default duration, optional actions.
 public enum FKSnackbar {
-  /// Shows a snackbar with optional primary and secondary actions.
-  ///
-  /// - Parameters:
-  ///   - text: Visible message.
-  ///   - action: Optional primary action.
-  ///   - secondaryAction: Optional secondary action (e.g. dismiss).
-  ///   - style: Semantic visual style.
-  ///   - actionHandler: Closure for primary action.
-  ///   - secondaryActionHandler: Closure for secondary action.
-  ///
-  /// Snackbar defaults to bottom placement and swipe dismissal for expected platform behavior.
   public static func show(
     _ text: String,
     action: FKToastAction? = nil,

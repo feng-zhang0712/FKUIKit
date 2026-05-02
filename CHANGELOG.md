@@ -9,6 +9,36 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.43.13] - 2026-05-02
+
+### Changed (FKUIKit FKToast)
+
+**Breaking**
+
+- Reorganized the Toast module into `Sources/FKUIKit/Components/Toast/Public/` (surface API and shared types) and `Internal/` (runtime implementation); removed the former `Core/`, `Models/`, and `UI/` directories.
+- Split public definitions across `FKToast.swift`, `FKToastConfiguration.swift`, `FKToastContent.swift`, and `FKToastTypes.swift` for clearer boundaries.
+- Async enqueue helpers are `showReturningID(builder:)` and `showReturningHandle(builder:)` only; older `showAndReturnID` / `showAndReturnHandle` symbols are removed.
+- Added `FKToastDismissReason.userLongPress`; exhaustive `switch` handling over `FKToastDismissReason` must include this case.
+
+**Non-breaking**
+
+- Added `@MainActor` `FKToast.isPresenting` to detect whether at least one overlay is currently on-screen (excluding queue-only requests).
+- Added `FKToastConfiguration.accessibilityAnnouncementOverride` so hosted/custom content can drive VoiceOver announcements when auto-derived text is unavailable.
+- `FKHUD.showLoading(_:interceptTouches:timeout:)` substitutes `FKToastLocalizedText().loadingText` when the title argument is `nil`.
+
+### Fixed (FKUIKit FKToast)
+
+- `FKToast.update(...)` reapplies layout chrome, tap/long-press recognizers, and swipe-to-dismiss pan configuration when content or `FKToastConfiguration` changes, matching live updates to initial presentation behavior.
+
+### Changed (Documentation)
+
+- Rewrote `Sources/FKUIKit/Components/Toast/README.md` (directory map, threading model, API overview).
+- Updated the Toast summary line in the root `README.md`.
+
+### Changed (Examples)
+
+- Grouped Toast examples under `Examples/.../FKUIKit/Toast/Support/`, `Playbook/`, and `Pages/` with one view controller per topic file.
+
 ## [0.43.12] - 2026-05-02
 
 ### Changed (FKUIKit FKMultiPicker)

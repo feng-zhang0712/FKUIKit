@@ -1,6 +1,7 @@
 import AudioToolbox
 import UIKit
 
+/// Main-actor singleton that attaches overlays to the key window, drives the queue actor, and owns timers.
 @MainActor
 final class FKToastCenter {
   static let shared = FKToastCenter()
@@ -12,6 +13,8 @@ final class FKToastCenter {
   private var dismissTasks: [UUID: Task<Void, Never>] = [:]
   private var blockers: [UUID: FKToastBlockingView] = [:]
   private var keyboardHeight: CGFloat = 0
+
+  var isPresenting: Bool { !current.isEmpty }
 
   private init() {
     NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChange(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
@@ -103,6 +106,7 @@ final class FKToastCenter {
     )
     presentation.request = updatedRequest
     presentation.view.updateDisplayedRequest(updatedRequest)
+    syncSwipeGestureRecognizer(on: presentation.view, swipeToDismiss: updatedRequest.configuration.swipeToDismiss)
     Task { await queueActor.updateDisplayed(updatedRequest) }
     return true
   }
@@ -162,7 +166,7 @@ final class FKToastCenter {
     }
     toastView.onLongPress = { [weak self] in
       guard let self else { return }
-      self.dismiss(id: request.id, reason: .userTap)
+      self.dismiss(id: request.id, reason: .userLongPress)
     }
     toastView.onPrimaryActionTap = { [weak self] in
       guard let self else { return }
@@ -175,10 +179,7 @@ final class FKToastCenter {
       self.dismiss(id: request.id, reason: .actionTriggered)
     }
 
-    if request.configuration.swipeToDismiss {
-      let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-      toastView.addGestureRecognizer(pan)
-    }
+    syncSwipeGestureRecognizer(on: toastView, swipeToDismiss: request.configuration.swipeToDismiss)
 
     let hostView = blockers[request.id] ?? window
     hostView.addSubview(toastView)
@@ -240,8 +241,22 @@ final class FKToastCenter {
     }
   }
 
+  private func syncSwipeGestureRecognizer(on toastView: FKToastView, swipeToDismiss: Bool) {
+    for recognizer in toastView.gestureRecognizers ?? [] where recognizer is UIPanGestureRecognizer {
+      toastView.removeGestureRecognizer(recognizer)
+    }
+    if swipeToDismiss {
+      let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+      toastView.addGestureRecognizer(pan)
+    }
+  }
+
   private func announceIfNeeded(_ request: FKToastRequest) {
     guard request.configuration.accessibilityAnnouncementEnabled else { return }
+    if let override = request.configuration.accessibilityAnnouncementOverride, !override.isEmpty {
+      UIAccessibility.post(notification: .announcement, argument: override)
+      return
+    }
     let text: String
     switch request.content {
     case let .message(message):
@@ -334,7 +349,6 @@ final class FKToastCenter {
       let window = topWindow()
     else { return }
     let localFrame = window.convert(frameValue.cgRectValue, from: nil)
-    // Keep full overlap from the window bottom so the snackbar sits entirely above the keyboard.
     keyboardHeight = max(0, window.bounds.maxY - localFrame.minY)
     let duration = note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
     let curveRaw = note.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt ?? 7
@@ -431,27 +445,5 @@ final class FKToastCenter {
       if let normal = scene.windows.first(where: { !$0.isHidden && $0.windowLevel == .normal }) { return normal }
     }
     return UIApplication.shared.windows.first(where: \.isKeyWindow) ?? UIApplication.shared.windows.first
-  }
-}
-
-private final class FKToastPresentation {
-  var request: FKToastRequest
-  let view: FKToastView
-  let resolvedPosition: FKToastPosition
-  let positionConstraint: NSLayoutConstraint
-  weak var hostWindow: UIWindow?
-
-  init(
-    request: FKToastRequest,
-    view: FKToastView,
-    resolvedPosition: FKToastPosition,
-    positionConstraint: NSLayoutConstraint,
-    hostWindow: UIWindow?
-  ) {
-    self.request = request
-    self.view = view
-    self.resolvedPosition = resolvedPosition
-    self.positionConstraint = positionConstraint
-    self.hostWindow = hostWindow
   }
 }

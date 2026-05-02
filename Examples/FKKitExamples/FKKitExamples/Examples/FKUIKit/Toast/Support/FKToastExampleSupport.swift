@@ -1,6 +1,6 @@
 import UIKit
 
-/// Shared UI helpers used by every UIKit example page.
+/// Small layout helpers for toast sample view controllers.
 enum FKToastExampleUI {
   static func makeScrollContent(in viewController: UIViewController) -> UIStackView {
     let scroll = UIScrollView()
@@ -73,7 +73,7 @@ enum FKToastExampleUI {
   }
 }
 
-/// Base controller that provides a consistent scrollable surface.
+/// Scrollable grouped background used by all `Pages/` examples.
 class FKToastExampleBaseViewController: UIViewController {
   var contentStack: UIStackView!
 

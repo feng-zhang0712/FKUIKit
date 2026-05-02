@@ -1,6 +1,6 @@
 import UIKit
 
-/// Full-screen hit-test filter for optional touch interception.
+/// Transparent full-screen receiver when `interceptTouches` is on; honors `passthroughRects`.
 final class FKToastBlockingView: UIView {
   var passthroughRects: [CGRect] = []
 

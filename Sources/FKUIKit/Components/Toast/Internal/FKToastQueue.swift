@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 
-/// Clock abstraction for deterministic tests.
 protocol FKToastClock: Sendable {
   func now() -> Date
 }
@@ -10,7 +9,7 @@ struct FKSystemToastClock: FKToastClock {
   func now() -> Date { Date() }
 }
 
-/// Internal request model owned by the queue actor.
+/// Snapshot passed from the public builder into the queue actor.
 struct FKToastRequest: @unchecked Sendable {
   let id: UUID
   let content: FKToastContent
@@ -33,7 +32,7 @@ struct FKToastRequest: @unchecked Sendable {
   }
 }
 
-/// Pure queue policy actor that can be tested without UIKit.
+/// Serializes wait/display sets and applies arrival policy without touching UIKit.
 actor FKToastQueueActor {
   private var waiting: [FKToastRequest] = []
   private var displaying: [UUID: FKToastRequest] = [:]

@@ -114,7 +114,7 @@ FKKit/
 - `Skeleton`: skeleton loading system for views/lists/containers with animation options.
 - `TabBar`: high-performance UIKit tab header (UICollectionView-based) with indicator, badges, data source, and paging progress linkage (UI-only).
 - `TextField`: one-stop formatted input components (`FKTextField`, `FKCodeTextField`, `FKCountTextView`) with validation, counters, OTP slots, and shake feedback.
-- `Toast`: unified Toast / HUD / Snackbar presenter with queueing, priority, keyboard-aware placement, accessibility, optional material blur, custom content, per-instance progress updates, presentation sound policy, and SwiftUI hosting support.
+- `Toast`: unified Toast / HUD / Snackbar presenter (`Public/` + `Internal/`) with queueing, priority, keyboard-aware placement, accessibility, optional material blur, custom content, per-instance progress updates, presentation sound policy, and SwiftUI hosting support (see `Sources/FKUIKit/Components/Toast/README.md`).
 
 ### FKCompositeKit
 `FKCompositeKit` builds business-facing composite components on top of `FKCoreKit` + `FKUIKit`:

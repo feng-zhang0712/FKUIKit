@@ -1,5 +1,6 @@
 import UIKit
 
+/// Hosts icon/spinner, text stack, optional actions, blur chrome, and gesture recognizers for one request.
 final class FKToastView: UIView {
   private let blurEffectView = UIVisualEffectView(effect: nil)
   private let containerStack = UIStackView()
@@ -19,24 +20,47 @@ final class FKToastView: UIView {
   init(request: FKToastRequest) {
     super.init(frame: .zero)
     translatesAutoresizingMaskIntoConstraints = false
-    setupView(configuration: request.configuration)
+    buildHierarchy()
+    applyChrome(configuration: request.configuration)
     bindContent(request: request)
     installInteractions(configuration: request.configuration)
   }
 
   func updateDisplayedRequest(_ request: FKToastRequest) {
+    applyChrome(configuration: request.configuration)
     bindContent(request: request)
+    reinstallInteractions(configuration: request.configuration)
   }
 
   required init?(coder: NSCoder) {
     return nil
   }
 
-  private func setupView(configuration: FKToastConfiguration) {
+  private func buildHierarchy() {
+    containerStack.translatesAutoresizingMaskIntoConstraints = false
+    containerStack.axis = .horizontal
+    containerStack.alignment = .center
+    addSubview(containerStack)
+
+    textStack.axis = .vertical
+    textStack.spacing = 2
+    textStack.alignment = .fill
+
+    NSLayoutConstraint.activate([
+      containerStack.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
+      containerStack.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+      containerStack.topAnchor.constraint(equalTo: layoutMarginsGuide.topAnchor),
+      containerStack.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
+    ])
+  }
+
+  private func applyChrome(configuration: FKToastConfiguration) {
+    directionalLayoutMargins = configuration.contentInsets
+    containerStack.spacing = configuration.itemSpacing
+
     let resolvedBackground = configuration.backgroundColor ?? configuration.style.defaultBackgroundColor
     backgroundColor = resolvedBackground
     installVisualEffectIfNeeded(configuration: configuration)
-    directionalLayoutMargins = configuration.contentInsets
     preservesSuperviewLayoutMargins = false
 
     let radius = configuration.cornerRadius ?? (configuration.kind == .snackbar ? 12 : 14)
@@ -54,16 +78,6 @@ final class FKToastView: UIView {
       layer.shadowOpacity = 0
     }
 
-    containerStack.translatesAutoresizingMaskIntoConstraints = false
-    containerStack.axis = .horizontal
-    containerStack.spacing = configuration.itemSpacing
-    containerStack.alignment = .center
-    addSubview(containerStack)
-
-    textStack.axis = .vertical
-    textStack.spacing = 2
-    textStack.alignment = .fill
-
     titleLabel.font = configuration.titleFont
     titleLabel.adjustsFontForContentSizeCategory = true
     titleLabel.textColor = configuration.textColor
@@ -74,13 +88,6 @@ final class FKToastView: UIView {
     subtitleLabel.textColor = configuration.textColor
     subtitleLabel.numberOfLines = configuration.kind == .snackbar ? 2 : 0
     subtitleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-    NSLayoutConstraint.activate([
-      containerStack.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
-      containerStack.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-      containerStack.topAnchor.constraint(equalTo: layoutMarginsGuide.topAnchor),
-      containerStack.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
-    ])
   }
 
   private func bindContent(request: FKToastRequest) {
@@ -216,6 +223,8 @@ final class FKToastView: UIView {
     spinner.stopAnimating()
     titleLabel.text = nil
     subtitleLabel.text = nil
+    primaryActionButton.removeTarget(self, action: #selector(handlePrimaryActionTap), for: .touchUpInside)
+    secondaryActionButton.removeTarget(self, action: #selector(handleSecondaryActionTap), for: .touchUpInside)
   }
 
   private func installInteractions(configuration: FKToastConfiguration) {
@@ -227,6 +236,15 @@ final class FKToastView: UIView {
       let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
       addGestureRecognizer(longPress)
     }
+  }
+
+  private func reinstallInteractions(configuration: FKToastConfiguration) {
+    for recognizer in gestureRecognizers ?? [] {
+      if recognizer is UITapGestureRecognizer || recognizer is UILongPressGestureRecognizer {
+        removeGestureRecognizer(recognizer)
+      }
+    }
+    installInteractions(configuration: configuration)
   }
 
   @objc private func handleTap() {

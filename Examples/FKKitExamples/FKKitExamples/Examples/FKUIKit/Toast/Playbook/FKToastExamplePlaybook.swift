@@ -1,7 +1,7 @@
 import UIKit
 import FKUIKit
 
-/// Centralized example trigger methods shared by UIKit and SwiftUI.
+/// Shared demo triggers for UIKit pages and the SwiftUI host.
 enum FKToastExamplePlaybook {
   /// Demonstrates top/center/bottom placement and style variants.
   static func showBasicPlacementAndStyle() {
@@ -100,7 +100,7 @@ enum FKToastExamplePlaybook {
   static func showLiveHUDProgress() {
     Task { @MainActor in
       let totalDuration: TimeInterval = 5
-      let identifier = await FKToast.showAndReturnID(
+      let identifier = await FKToast.showReturningID(
         builder: .init(
           content: .titleSubtitle(title: "Uploading", subtitle: "0%"),
           configuration: .init(kind: .hud, style: .info, duration: totalDuration, timeout: totalDuration, interceptTouches: true)

@@ -1,7 +1,9 @@
 import Foundation
 import UIKit
 
-/// Visual semantics for Toast/HUD/Snackbar rendering.
+// MARK: - Style & placement
+
+/// Semantic appearance preset (icon, default background, and loading treatment).
 public enum FKToastStyle: Sendable, Equatable {
   /// Neutral visual style.
   case normal
@@ -47,6 +49,8 @@ public enum FKToastStyle: Sendable, Equatable {
   }
 }
 
+// MARK: - Role & placement
+
 /// Presentation category for the unified global presenter.
 public enum FKToastKind: Sendable, Equatable {
   /// Lightweight non-blocking hint.
@@ -66,6 +70,8 @@ public enum FKToastPosition: Sendable, Equatable {
   /// Bottom safe-area anchored.
   case bottom
 }
+
+// MARK: - Motion & priority
 
 /// Entrance and exit transition styles.
 public enum FKToastAnimationStyle: Sendable, Equatable {
@@ -93,12 +99,16 @@ public enum FKToastPriority: Int, Sendable, Comparable {
   }
 }
 
+// MARK: - Dismissal & queue policy
+
 /// The reason why an overlay was dismissed.
 public enum FKToastDismissReason: Sendable, Equatable {
   /// Timer or timeout reached.
   case timeout
   /// User tapped the content.
   case userTap
+  /// User long-pressed to dismiss when `longPressToDismiss` is enabled.
+  case userLongPress
   /// User swiped away the content.
   case userSwipe
   /// User triggered an action button.
@@ -126,6 +136,8 @@ public enum FKToastArrivalPolicy: Sendable, Equatable {
   /// Interrupt current and requeue it after new request.
   case interruptAndRequeueCurrent
 }
+
+// MARK: - Chrome
 
 /// Symbol mapping for semantic styles.
 public struct FKToastSymbolSet: Sendable, Equatable {
@@ -171,6 +183,8 @@ public struct FKToastSymbolSet: Sendable, Equatable {
     }
   }
 }
+
+// MARK: - Effects & feedback
 
 /// Visual effect strategy for the overlay background.
 public enum FKToastBackgroundVisualEffect: Sendable, Equatable {

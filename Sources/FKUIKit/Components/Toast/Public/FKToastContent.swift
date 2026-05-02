@@ -4,7 +4,9 @@ import UIKit
 import SwiftUI
 #endif
 
-/// Content payload for one overlay request.
+// MARK: - Content
+
+/// Text, title+subtitle, or a custom view provider evaluated on the main actor.
 public enum FKToastContent: @unchecked Sendable {
   /// A plain text message.
   case message(String)
@@ -14,7 +16,7 @@ public enum FKToastContent: @unchecked Sendable {
   case customView(@MainActor () -> UIView)
 }
 
-/// Builder used by advanced APIs for high readability.
+/// Bundles content, optional icon, configuration, hooks, and action handlers for `FKToast.show(builder:)`.
 public struct FKToastBuilder: Sendable {
   /// Overlay content.
   public var content: FKToastContent

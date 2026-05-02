@@ -1,5 +1,6 @@
 import UIKit
 
+/// Shared enter/exit animations keyed by `FKToastAnimationStyle` and resolved placement.
 @MainActor
 enum FKToastAnimator {
   static func animateIn(
