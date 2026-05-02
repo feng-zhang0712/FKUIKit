@@ -17,7 +17,7 @@ final class FKEmptyStatePermissionDeniedExampleViewController: UIViewController 
   }
 
   private func render() {
-    var model = FKEmptyStateModel.scenario(.noPermission)
+    var model = FKEmptyStateConfiguration.scenario(.noPermission)
     model.image = UIImage(systemName: "lock.shield")
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "request_access", title: "Request access", kind: .primary),

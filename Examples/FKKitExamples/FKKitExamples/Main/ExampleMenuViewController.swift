@@ -55,7 +55,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "EmptyState",
-          subtitle: "Hub: scenarios, phases, sandbox, retry→fail",
+          subtitle: "Hub: basics (empty/error/offline) and advanced (i18n, resolver, RTL)",
           make: { FKEmptyStateExamplesHubViewController() }
         ),
         ExampleMenuItem(

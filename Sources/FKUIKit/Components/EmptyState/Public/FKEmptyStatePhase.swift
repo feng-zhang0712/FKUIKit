@@ -4,7 +4,7 @@ import Foundation
 
 /// The presentation modes for `FKEmptyState` overlays.
 ///
-/// Map your view-model state to a phase, then build an `FKEmptyStateModel` with the same `phase`.
+/// Map your view-model state to a phase, then build an ``FKEmptyStateConfiguration`` with the same `phase`.
 ///
 /// - Note: Use `.content` with `UIView.fk_applyEmptyState` to hide the overlay without removing the view (avoids flicker).
 public enum FKEmptyStatePhase: Equatable, Sendable {

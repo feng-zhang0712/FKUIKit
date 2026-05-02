@@ -1,11 +1,10 @@
 import Foundation
 
+// MARK: - Locale & keys
+
 /// Supported locale identifiers for built-in EmptyState copy.
 ///
-/// The enum is intentionally conservative; callers can still provide any custom locale
-/// by injecting their own translator implementation.
-///
-/// - Note: Built-in messages include an Arabic sample (`ar`) to exercise RTL layout paths.
+/// Inject your own ``FKEmptyStateTranslating`` for production; this enum scopes built-in tables.
 public enum FKEmptyStateLocale: String, CaseIterable, Equatable, Sendable {
   case en
   case zhCN = "zh-CN"
@@ -14,23 +13,17 @@ public enum FKEmptyStateLocale: String, CaseIterable, Equatable, Sendable {
   case ar
 }
 
-/// Lightweight key wrapper to prevent accidental free-form string misuse.
+/// Typed i18n key (avoids accidental free-form string drift in large codebases).
 ///
-/// Key conventions used by the built-in dictionary:
-/// - Titles: `empty.<segment>.title`
-/// - Descriptions: `empty.<segment>.description`
-/// - Action labels: `empty.action.<name>`
-///
-/// Where `<segment>` is produced by `FKEmptyStateFactory.keySegment(for:)`.
+/// Built-in keys follow `empty.<segment>.title|description` and `empty.action.<name>`.
 public struct FKEmptyStateI18nKey: Hashable, Sendable {
   public var rawValue: String
   public init(_ rawValue: String) { self.rawValue = rawValue }
 }
 
-/// Minimal translation protocol used by the factory and core module.
-///
-/// Keeping it small makes it easy to bridge existing localization stacks
-/// (e.g. JSON bundles, remote dictionaries, or feature-flagged copy services).
+// MARK: - Translation
+
+/// Pluggable translation backend (dictionary, remote CMS, feature-flag copy, etc.).
 public protocol FKEmptyStateTranslating: Sendable {
   func translate(
     _ key: FKEmptyStateI18nKey,
@@ -55,11 +48,6 @@ public struct FKEmptyStateDictionaryTranslator: FKEmptyStateTranslating {
     locale: FKEmptyStateLocale,
     variables: [String: String]
   ) -> String {
-    // Fallback chain favors explicit locale first, then fallback locale, then key echo.
-    // Echoing the key makes missing translations visible in QA instead of silently blank text.
-    //
-    // Trade-off: key echo is noisy but intentional; open-source users typically prefer
-    // visibility over silent failure during integration.
     let template =
       dictionary[locale]?[key]
       ?? dictionary[fallbackLocale]?[key]
@@ -68,14 +56,12 @@ public struct FKEmptyStateDictionaryTranslator: FKEmptyStateTranslating {
   }
 }
 
+// MARK: - Placeholders
+
 public enum FKEmptyStateMessageFormat {
-  /// Replaces `{token}` placeholders with values from `variables`.
+  /// Replaces `{token}` placeholders with `variables` values. Unknown `{tokens}` are left unchanged.
   ///
-  /// Unknown placeholders are intentionally preserved to surface integration mistakes.
-  ///
-  /// - Design choice: This intentionally does not implement pluralization or ICU formatting to
-  ///   keep the module lightweight. If your product needs advanced formatting, wrap it behind
-  ///   `FKEmptyStateTranslating`.
+  /// No ICU plural rules—wrap advanced formatting behind ``FKEmptyStateTranslating``.
   public static func interpolate(template: String, variables: [String: String]) -> String {
     guard template.contains("{"), !variables.isEmpty else { return template }
     var result = template
@@ -85,6 +71,8 @@ public enum FKEmptyStateMessageFormat {
     return result
   }
 }
+
+// MARK: - Built-in dictionary
 
 public enum FKEmptyStateBuiltInMessages {
   public static let `default` = FKEmptyStateDictionaryTranslator(

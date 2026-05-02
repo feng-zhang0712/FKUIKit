@@ -3,7 +3,7 @@
 // FKUIKit — List state
 //
 // Shared types for ``FKListStateManager``: presentation state, content snapshots,
-// portable error descriptions, and default mapping into ``FKEmptyStateModel``.
+// portable error descriptions, and default mapping into ``FKEmptyStateConfiguration``.
 //
 
 import UIKit
@@ -50,7 +50,7 @@ public struct FKListDisplayedError: Equatable {
   public var profile: FKListErrorProfile
   public var title: String?
   public var message: String?
-  /// Optional illustration mapped into ``FKEmptyStateModel/image``.
+  /// Optional illustration mapped into ``FKEmptyStateConfiguration/image``.
   public var image: UIImage?
 
   public init(profile: FKListErrorProfile, title: String? = nil, message: String? = nil, image: UIImage? = nil) {
@@ -122,16 +122,16 @@ public struct FKListDisplayedError: Equatable {
 
 // MARK: - Default empty-state mapping
 
-public enum FKListEmptyStateModelFactory {
+public enum FKListEmptyStateConfigurationFactory {
   /// Builds the standard empty overlay (no rows).
-  public static func modelForEmptyList(
-    base: FKEmptyStateModel = FKEmptyStateModel(
+  public static func configurationForEmptyList(
+    base: FKEmptyStateConfiguration = FKEmptyStateConfiguration(
       phase: .empty,
       title: "Nothing here yet",
       description: "When there’s something to show, it will appear in this list.",
       isButtonHidden: true
     )
-  ) -> FKEmptyStateModel {
+  ) -> FKEmptyStateConfiguration {
     var model = base
     model.phase = .empty
     model.keepScrollEnabled = false
@@ -139,10 +139,10 @@ public enum FKListEmptyStateModelFactory {
   }
 
   /// Builds an error overlay with mandatory retry styling (``FKEmptyStatePhase/error``).
-  public static func modelForDisplayedError(
+  public static func configurationForDisplayedError(
     _ error: FKListDisplayedError,
-    base: FKEmptyStateModel = FKEmptyStateModel.scenario(.loadFailed)
-  ) -> FKEmptyStateModel {
+    base: FKEmptyStateConfiguration = FKEmptyStateConfiguration.scenario(.loadFailed)
+  ) -> FKEmptyStateConfiguration {
     var model = base
     model.phase = .error
     model.keepScrollEnabled = false
@@ -175,7 +175,7 @@ public enum FKListEmptyStateModelFactory {
       model.description = error.message ?? "Something unexpected happened. Try again."
     }
     if model.buttonStyle.title == nil {
-      model.buttonStyle.title = FKEmptyStateModel.defaultRetryButtonTitle
+      model.buttonStyle.title = FKEmptyStateConfiguration.defaultRetryButtonTitle
     }
     model.isButtonHidden = false
     if let image = error.image {

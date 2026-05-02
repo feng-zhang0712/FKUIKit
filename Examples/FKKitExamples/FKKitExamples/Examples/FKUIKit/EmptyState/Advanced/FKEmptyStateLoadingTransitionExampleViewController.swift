@@ -35,7 +35,7 @@ final class FKEmptyStateLoadingTransitionExampleViewController: UIViewController
 
   @objc private func showLoading() {
     let skeleton = makeSkeletonAccessory()
-    var model = FKEmptyStateModel(phase: .loading, type: .loading, title: "Loading products...")
+    var model = FKEmptyStateConfiguration(phase: .loading, type: .loading, title: "Loading products...")
     model.customAccessoryView = skeleton
     model.customAccessoryPlacement = .belowDescription
     model.hidesDescriptionForLoadingPhase = true

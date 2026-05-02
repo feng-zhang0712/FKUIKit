@@ -56,7 +56,7 @@ final class FKEmptyStateSearchNoResultsExampleViewController: UIViewController {
     let query = queryField.text?.isEmpty == false ? (queryField.text ?? "") : "camera"
     filtersLabel.text = "Active filters: \(activeFilters)"
 
-    var model = FKEmptyStateModel.scenario(.noSearchResult)
+    var model = FKEmptyStateConfiguration.scenario(.noSearchResult)
     model.image = UIImage(systemName: "magnifyingglass")
     model.title = "No results for \"\(query)\""
     model.description = "Try broader keywords, or clear filters to widen your results."

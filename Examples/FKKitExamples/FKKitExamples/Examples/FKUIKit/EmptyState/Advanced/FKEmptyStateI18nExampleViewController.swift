@@ -54,7 +54,7 @@ final class FKEmptyStateI18nExampleViewController: UIViewController {
     // Interpolation keeps runtime user input localized in-place (e.g. query text).
     let copy = factory.copy(for: .noResults, variables: ["query": query])
 
-    var model = FKEmptyStateModel(phase: .empty, type: .noResults)
+    var model = FKEmptyStateConfiguration(phase: .empty, type: .noResults)
     model.image = UIImage(systemName: "magnifyingglass.circle")
     model.title = copy.title
     model.description = copy.description

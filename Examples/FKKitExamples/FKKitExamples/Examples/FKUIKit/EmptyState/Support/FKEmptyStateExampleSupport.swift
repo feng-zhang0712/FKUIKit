@@ -1,18 +1,17 @@
 import FKUIKit
-import ObjectiveC.runtime
 import UIKit
 
 enum FKEmptyStateExampleFactory {
   static func configureGlobalStyleIfNeeded() {
-    FKEmptyStateManager.shared.configureTemplate { model in
-      model.backgroundColor = .systemBackground
-      model.titleColor = .label
-      model.descriptionColor = .secondaryLabel
-      model.titleFont = .systemFont(ofSize: 20, weight: .semibold)
-      model.descriptionFont = .systemFont(ofSize: 15, weight: .regular)
-      model.verticalSpacing = 12
-      model.contentInsets = UIEdgeInsets(top: 24, left: 20, bottom: 24, right: 20)
-      model.buttonStyle = FKEmptyStateButtonStyle(
+    FKEmptyState.configureDefault { config in
+      config.backgroundColor = .systemBackground
+      config.titleColor = .label
+      config.descriptionColor = .secondaryLabel
+      config.titleFont = .systemFont(ofSize: 20, weight: .semibold)
+      config.descriptionFont = .systemFont(ofSize: 15, weight: .regular)
+      config.verticalSpacing = 12
+      config.contentInsets = UIEdgeInsets(top: 24, left: 20, bottom: 24, right: 20)
+      config.buttonStyle = FKEmptyStateButtonStyle(
         title: nil,
         titleColor: .white,
         font: .systemFont(ofSize: 15, weight: .semibold),
@@ -23,8 +22,8 @@ enum FKEmptyStateExampleFactory {
     }
   }
 
-  static func makeBasicModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel.scenario(.noFavorites)
+  static func makeBasicModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration.scenario(.noFavorites)
     model.image = UIImage(systemName: "tray")
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "create", title: "Create item", kind: .primary)
@@ -33,8 +32,8 @@ enum FKEmptyStateExampleFactory {
     return model
   }
 
-  static func makeNoNetworkModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel.scenario(.noNetwork)
+  static func makeNoNetworkModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration.scenario(.noNetwork)
     model.image = UIImage(systemName: "wifi.exclamationmark")
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "check_network", title: "Check network", kind: .primary),
@@ -44,8 +43,8 @@ enum FKEmptyStateExampleFactory {
     return model
   }
 
-  static func makeLoadFailedModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel.scenario(.loadFailed)
+  static func makeLoadFailedModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration.scenario(.loadFailed)
     model.image = UIImage(systemName: "exclamationmark.arrow.trianglehead.clockwise")
     model.actions = FKEmptyStateActionSet(
       primary: FKEmptyStateAction(id: "retry", title: "Retry", kind: .primary)
@@ -54,8 +53,8 @@ enum FKEmptyStateExampleFactory {
     return model
   }
 
-  static func makeCustomEmptyModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel(
+  static func makeCustomEmptyModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration(
       phase: .empty,
       image: UIImage(systemName: "shippingbox"),
       title: "No Items Yet",
@@ -69,8 +68,8 @@ enum FKEmptyStateExampleFactory {
     return model
   }
 
-  static func makeMaintenanceModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel.customState(
+  static func makeMaintenanceModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration.customState(
       identifier: "maintenance",
       title: "Service Under Maintenance",
       description: "We are upgrading the service. Please try again later.",
@@ -83,15 +82,15 @@ enum FKEmptyStateExampleFactory {
     return model
   }
 
-  static func makeLongTextModel() -> FKEmptyStateModel {
+  static func makeLongTextModel() -> FKEmptyStateConfiguration {
     var model = makeBasicModel()
     model.title = "No content found in the selected workspace and organization scope"
     model.description = "This state demonstrates long text wrapping behavior on compact widths. It should remain readable in portrait mode, split view mode, and with larger Dynamic Type settings."
     return model
   }
 
-  static func makeIconOnlyModel() -> FKEmptyStateModel {
-    var model = FKEmptyStateModel()
+  static func makeIconOnlyModel() -> FKEmptyStateConfiguration {
+    var model = FKEmptyStateConfiguration()
     model.phase = .empty
     model.type = .empty
     model.image = UIImage(systemName: "sparkles")
@@ -127,36 +126,4 @@ extension UIViewController {
     container.translatesAutoresizingMaskIntoConstraints = false
     return container
   }
-
-  func fk_bindEmptyStateActions(
-    from hostView: UIView,
-    handler: @escaping (FKEmptyStateAction) -> Void
-  ) {
-    // Always remove the previous observer first.
-    // Example screens frequently re-apply models, and stacking observers would duplicate callbacks.
-    fk_clearEmptyStateActionObservers()
-    guard let source = hostView.fk_emptyStateView else { return }
-    let token = NotificationCenter.default.addObserver(
-      forName: .fkEmptyStateActionInvoked,
-      object: source,
-      queue: .main
-    ) { note in
-      guard let id = note.userInfo?[FKEmptyStateNotificationKeys.id] as? String else { return }
-      let kindRaw = (note.userInfo?[FKEmptyStateNotificationKeys.kind] as? String) ?? FKEmptyStateActionKind.primary.rawValue
-      let kind = FKEmptyStateActionKind(rawValue: kindRaw) ?? .primary
-      let payload = (note.userInfo?[FKEmptyStateNotificationKeys.payload] as? [String: String]) ?? [:]
-      handler(FKEmptyStateAction(id: id, title: "", kind: kind, payload: payload))
-    }
-    objc_setAssociatedObject(self, &FKEmptyStateObserverKeys.token, token, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-  }
-
-  func fk_clearEmptyStateActionObservers() {
-    guard let token = objc_getAssociatedObject(self, &FKEmptyStateObserverKeys.token) else { return }
-    NotificationCenter.default.removeObserver(token)
-    objc_setAssociatedObject(self, &FKEmptyStateObserverKeys.token, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-  }
-}
-
-private enum FKEmptyStateObserverKeys {
-  static var token: UInt8 = 0
 }

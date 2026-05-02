@@ -1,20 +1,6 @@
 import ObjectiveC.runtime
 import UIKit
 
-// MARK: - Associated objects
-
-/// Keys for objc associated objects backing the overlay and last model.
-enum FKEmptyStateHostKeys {
-  nonisolated(unsafe) static var view: UInt8 = 0
-  nonisolated(unsafe) static var model: UInt8 = 0
-}
-
-/// Box type so the last-applied `FKEmptyStateModel` can be stored in associated objects.
-final class FKEmptyStateModelBox {
-  let model: FKEmptyStateModel
-  init(_ model: FKEmptyStateModel) { self.model = model }
-}
-
 // MARK: - UIView
 
 public extension UIView {
@@ -23,39 +9,50 @@ public extension UIView {
     objc_getAssociatedObject(self, &FKEmptyStateHostKeys.view) as? FKEmptyStateView
   }
 
-  /// Last model stored for helpers such as `fk_refreshEmptyStateAutomatically` (`UIScrollView`); `nil` if never applied.
-  var fk_emptyStateModel: FKEmptyStateModel? {
-    (objc_getAssociatedObject(self, &FKEmptyStateHostKeys.model) as? FKEmptyStateModelBox)?.model
+  /// Last configuration stored for helpers such as `fk_refreshEmptyStateAutomatically` (`UIScrollView`); `nil` if never applied.
+  var fk_emptyStateConfiguration: FKEmptyStateConfiguration? {
+    (objc_getAssociatedObject(self, &FKEmptyStateHostKeys.configuration) as? FKEmptyStateConfigurationBox)?.configuration
   }
 
-  /// Applies or hides the empty-state overlay from `model`.
+  /// `true` when an overlay was created and is currently presented (not hidden and not fully transparent).
+  var fk_isEmptyStateOverlayVisible: Bool {
+    guard let view = fk_emptyStateView else { return false }
+    return !view.isHidden && view.alpha > 0.01
+  }
+
+  /// Applies or hides the empty-state overlay from `configuration`.
   ///
-  /// - When `model.phase == .content`, hides the overlay (same as `fk_hideEmptyState`).
+  /// - When `configuration.phase == .content`, hides the overlay (same as `fk_hideEmptyState`).
   /// - On `UIScrollView`, if `phase == .loading` and `skipsLoadingWhileRefreshing` is `true` while `refreshControl?.isRefreshing`, skips showing the loading overlay.
   /// - Creates the `FKEmptyStateView` once; subsequent calls update `isHidden` / `alpha` only.
   ///
   /// - Parameters:
-  ///   - model: Visual and behavioral configuration.
+  ///   - configuration: Visual and behavioral configuration.
   ///   - animated: Fade-in when showing; fade-out is handled by `fk_hideEmptyState`.
   ///   - actionHandler: Invoked when an action button is tapped (primary/secondary/tertiary).
   ///     Use `action.id` to route multi-action flows and capture `[weak self]` to avoid retain cycles.
   ///   - viewTapHandler: Invoked when users tap the background area (outside any `UIControl`).
   @_disfavoredOverload
   func fk_applyEmptyState(
-    _ model: FKEmptyStateModel,
+    _ configuration: FKEmptyStateConfiguration,
     animated: Bool = true,
     actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
     fk_emptyStateAssertMainThread()
-    objc_setAssociatedObject(self, &FKEmptyStateHostKeys.model, FKEmptyStateModelBox(model), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    objc_setAssociatedObject(
+      self,
+      &FKEmptyStateHostKeys.configuration,
+      FKEmptyStateConfigurationBox(configuration),
+      .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+    )
 
-    if model.phase == .content {
+    if configuration.phase == .content {
       fk_hideEmptyState(animated: animated)
       return
     }
 
-    if fk_emptyStateShouldSkipLoadingBecauseOfRefresh(host: self, model: model) {
+    if fk_emptyStateShouldSkipLoadingBecauseOfRefresh(host: self, configuration: configuration) {
       if fk_emptyStateView != nil {
         fk_hideEmptyState(animated: animated)
       }
@@ -65,7 +62,7 @@ public extension UIView {
     let view = fk_ensureEmptyStateView()
     view.actionHandler = actionHandler
     view.viewTapHandler = viewTapHandler
-    view.apply(model, animated: false)
+    view.apply(configuration, animated: false)
 
     let display = {
       view.isHidden = false
@@ -75,77 +72,76 @@ public extension UIView {
     if shouldAnimate {
       view.alpha = 0
       view.isHidden = false
-      UIView.animate(withDuration: model.fadeDuration, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: display)
+      UIView.animate(withDuration: configuration.fadeDuration, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: display)
     } else {
       display()
     }
 
-    fk_emptyStateApplyScrollInteraction(host: self, model: model)
+    fk_emptyStateApplyScrollInteraction(host: self, configuration: configuration)
     bringSubviewToFront(view)
   }
 
-  /// Applies or hides the empty-state overlay from `model` with `actionHandler` as the only trailing-closure parameter.
+  /// Applies or hides the empty-state overlay with `actionHandler` as the only trailing-closure parameter.
   ///
   /// This overload avoids Swift's deprecated "backward matching" when the caller uses
-  /// `fk_applyEmptyState(model) { ... }`.
+  /// `fk_applyEmptyState(config) { ... }`.
   ///
   /// - Important: Prefer this overload when you only care about action taps, as it avoids
   ///   ambiguity when there are multiple closure parameters.
   ///
   /// Minimal example:
   /// ```swift
-  /// view.fk_applyEmptyState(model) { action in
+  /// view.fk_applyEmptyState(config) { action in
   ///   if action.id == "retry" { reload() }
   /// }
   /// ```
   func fk_applyEmptyState(
-    _ model: FKEmptyStateModel,
+    _ configuration: FKEmptyStateConfiguration,
     animated: Bool = true,
     actionHandler: @escaping (FKEmptyStateAction) -> Void
   ) {
     fk_applyEmptyState(
-      model,
+      configuration,
       animated: animated,
       actionHandler: actionHandler,
       viewTapHandler: nil
     )
   }
 
-  /// Applies the global template with a specific phase in one line.
+  /// Applies ``FKEmptyState/defaultConfiguration`` with a specific `phase` in one line.
   ///
-  /// Use this API when you only need to toggle `loading/empty/error/content` quickly.
+  /// Use when you only need to toggle `loading` / `empty` / `error` / `content` quickly.
   ///
-  /// - Note: `templateModel` is copied before mutation so per-call changes do not leak globally.
+  /// - Note: A **copy** of ``FKEmptyState/defaultConfiguration`` is used so per-call changes do not mutate global defaults.
   func fk_setEmptyState(
     phase: FKEmptyStatePhase,
     animated: Bool = true,
     actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil
   ) {
-    var model = FKEmptyStateManager.shared.templateModel
-    model.phase = phase
+    var config = FKEmptyState.defaultConfiguration
+    config.phase = phase
     fk_applyEmptyState(
-      model,
+      config,
       animated: animated,
       actionHandler: actionHandler,
       viewTapHandler: viewTapHandler
     )
   }
 
-  /// Applies the global template and lets the caller mutate a screen-local model copy.
+  /// Copies ``FKEmptyState/defaultConfiguration`` and lets you mutate a screen-local instance before applying.
   ///
-  /// This is the preferred entry point when you want a shared look-and-feel while customizing
-  /// copy/actions per screen.
+  /// Preferred when you want shared chrome while customizing copy or actions per screen.
   func fk_setEmptyState(
     animated: Bool = true,
     actionHandler: ((FKEmptyStateAction) -> Void)? = nil,
     viewTapHandler: FKVoidHandler? = nil,
-    configure: (inout FKEmptyStateModel) -> Void
+    configure: (inout FKEmptyStateConfiguration) -> Void
   ) {
-    var model = FKEmptyStateManager.shared.templateModel
-    configure(&model)
+    var config = FKEmptyState.defaultConfiguration
+    configure(&config)
     fk_applyEmptyState(
-      model,
+      config,
       animated: animated,
       actionHandler: actionHandler,
       viewTapHandler: viewTapHandler
@@ -156,7 +152,7 @@ public extension UIView {
   func fk_hideEmptyState(animated: Bool = true) {
     fk_emptyStateAssertMainThread()
     guard let view = fk_emptyStateView else { return }
-    let duration = fk_emptyStateModel?.fadeDuration ?? 0.25
+    let duration = fk_emptyStateConfiguration?.fadeDuration ?? 0.25
     let hideBlock = { view.alpha = 0 }
     let completion: (Bool) -> Void = { _ in
       view.isHidden = true
@@ -201,19 +197,4 @@ public extension UIView {
     objc_setAssociatedObject(self, &FKEmptyStateHostKeys.view, view, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     return view
   }
-}
-
-// MARK: - Shared helpers
-
-/// Returns `true` when a loading overlay should be suppressed because pull-to-refresh is active.
-func fk_emptyStateShouldSkipLoadingBecauseOfRefresh(host: UIView, model: FKEmptyStateModel) -> Bool {
-  guard let scroll = host as? UIScrollView else { return false }
-  guard model.phase == .loading, model.skipsLoadingWhileRefreshing else { return false }
-  return scroll.refreshControl?.isRefreshing == true
-}
-
-/// Applies `keepScrollEnabled` to `host` when it is a `UIScrollView`.
-func fk_emptyStateApplyScrollInteraction(host: UIView, model: FKEmptyStateModel) {
-  guard let scroll = host as? UIScrollView else { return }
-  scroll.isScrollEnabled = model.keepScrollEnabled
 }

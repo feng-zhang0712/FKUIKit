@@ -17,6 +17,7 @@ let package = Package(
   targets: [
     .target(
       name: "FKUIKit",
+      dependencies: ["FKEmptyStateCoreLite"],
       path: "Sources/FKUIKit",
       exclude: [
         "Components/EmptyState/CoreLite",

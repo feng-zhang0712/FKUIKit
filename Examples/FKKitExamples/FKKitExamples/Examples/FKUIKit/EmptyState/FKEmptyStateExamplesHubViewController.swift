@@ -1,5 +1,6 @@
 import UIKit
 
+/// Index of EmptyState demos. Sources live under `Basics/`, `Advanced/`, and `Support/`.
 final class FKEmptyStateExamplesHubViewController: UITableViewController {
   private struct Row {
     let title: String
@@ -65,7 +66,7 @@ final class FKEmptyStateExamplesHubViewController: UITableViewController {
     ),
     Row(
       title: "State resolver example",
-      subtitle: "Resolve state from data/error/filter inputs",
+      subtitle: "Resolve semantic type from loading/offline/permission/data/query/error",
       make: { FKEmptyStateResolverExampleViewController() }
     ),
   ]
@@ -73,7 +74,7 @@ final class FKEmptyStateExamplesHubViewController: UITableViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     FKEmptyStateExampleFactory.configureGlobalStyleIfNeeded()
-    title = "FKEmptyState Scenarios"
+    title = "FKEmptyState"
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.rowHeight = 72
   }

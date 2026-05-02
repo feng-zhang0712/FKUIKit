@@ -10,10 +10,10 @@ import FKUIKit
 
 // MARK: - Configuration
 
-/// Customisable empty/error visuals; defaults follow ``FKListEmptyStateModelFactory``.
+/// Customisable empty/error visuals; defaults follow ``FKListEmptyStateConfigurationFactory``.
 public struct FKListStateManagerConfiguration {
-  public var emptyListModel: () -> FKEmptyStateModel
-  public var errorModel: (FKListDisplayedError) -> FKEmptyStateModel
+  public var emptyListModel: () -> FKEmptyStateConfiguration
+  public var errorModel: (FKListDisplayedError) -> FKEmptyStateConfiguration
   /// When `true`, ``FKListState/empty`` keeps the primary list surface visible (e.g. overlays disabled).
   public var keepsListVisibleOnEmpty: Bool
   /// When `true`, ``FKListState/error`` keeps the primary list surface visible (toast-only error flows).
@@ -24,9 +24,9 @@ public struct FKListStateManagerConfiguration {
   public var presentsErrorOverlay: Bool
 
   public init(
-    emptyListModel: @escaping () -> FKEmptyStateModel = { FKListEmptyStateModelFactory.modelForEmptyList() },
-    errorModel: @escaping (FKListDisplayedError) -> FKEmptyStateModel = {
-      FKListEmptyStateModelFactory.modelForDisplayedError($0)
+    emptyListModel: @escaping () -> FKEmptyStateConfiguration = { FKListEmptyStateConfigurationFactory.configurationForEmptyList() },
+    errorModel: @escaping (FKListDisplayedError) -> FKEmptyStateConfiguration = {
+      FKListEmptyStateConfigurationFactory.configurationForDisplayedError($0)
     },
     keepsListVisibleOnEmpty: Bool = false,
     keepsListVisibleOnError: Bool = false,

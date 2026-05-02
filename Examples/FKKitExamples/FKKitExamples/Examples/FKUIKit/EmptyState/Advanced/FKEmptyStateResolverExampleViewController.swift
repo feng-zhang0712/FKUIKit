@@ -77,7 +77,6 @@ final class FKEmptyStateResolverExampleViewController: UIViewController {
       dataLength: Int(dataCountField.text ?? "0"),
       isLoading: loadingSwitch.isOn,
       errorDescription: errorField.text?.isEmpty == true ? nil : errorField.text,
-      filtersCount: nil,
       searchQuery: queryField.text,
       hasPermission: permissionSwitch.isOn,
       isOffline: offlineSwitch.isOn,
@@ -94,7 +93,7 @@ final class FKEmptyStateResolverExampleViewController: UIViewController {
   }
 
   private func render(type: FKEmptyStateType, input: FKEmptyStateInputs) {
-    var model = FKEmptyStateModel(phase: type == .loading ? .loading : .empty, type: type)
+    var model = FKEmptyStateConfiguration(phase: type == .loading ? .loading : .empty, type: type)
     model.image = UIImage(systemName: "rectangle.3.group")
     let factory = FKEmptyStateFactory(locale: .en)
     let copy = factory.copy(for: type, variables: ["query": input.searchQuery ?? ""])

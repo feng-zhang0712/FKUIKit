@@ -1,3 +1,4 @@
+import FKEmptyStateCoreLite
 import UIKit
 
 // MARK: - Custom accessory placement
@@ -26,7 +27,7 @@ public enum FKEmptyStateContentAlignment: Equatable, Sendable {
 
 // MARK: - Preset scenarios
 
-/// High-level product scenarios used by `FKEmptyStateModel.scenario(_:)` to pre-fill copy and `FKEmptyStatePhase`.
+/// High-level product scenarios used by `FKEmptyStateConfiguration.scenario(_:)` to pre-fill copy and `FKEmptyStatePhase`.
 ///
 /// Localize strings in your app before shipping.
 public enum FKEmptyStateScenario: CaseIterable, Sendable {
@@ -93,7 +94,7 @@ public struct FKEmptyStateButtonStyle {
 // MARK: - Model
 
 /// Immutable-friendly configuration struct for `FKEmptyStateView`; use fluent helpers (`withTitle`, etc.) to derive copies.
-public struct FKEmptyStateModel {
+public struct FKEmptyStateConfiguration {
   /// Controls which layout branch runs inside `FKEmptyStateView` (loading vs empty/error vs hidden).
   public var phase: FKEmptyStatePhase
 
@@ -320,15 +321,15 @@ public struct FKEmptyStateModel {
 
 // MARK: - Factory & fluent helpers
 
-public extension FKEmptyStateModel {
+public extension FKEmptyStateConfiguration {
   /// Default retry title when `phase == .error` and `buttonStyle.title` is empty.
   static let defaultRetryButtonTitle: String = "Retry"
 
-  /// Returns a model pre-filled for `scenario` (English copy in the library; replace in app).
-  static func scenario(_ scenario: FKEmptyStateScenario) -> FKEmptyStateModel {
+  /// Returns a configuration pre-filled for `scenario` (English copy in the library; replace in app).
+  static func scenario(_ scenario: FKEmptyStateScenario) -> FKEmptyStateConfiguration {
     switch scenario {
     case .noNetwork:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .offline,
         context: .section,
@@ -338,7 +339,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: false
       )
     case .noSearchResult:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .noResults,
         context: .search,
@@ -347,7 +348,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: true
       )
     case .noFavorites:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .empty,
         context: .list,
@@ -357,7 +358,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: false
       )
     case .noOrders:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .empty,
         context: .list,
@@ -367,7 +368,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: false
       )
     case .noMessages:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .empty,
         context: .list,
@@ -376,7 +377,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: true
       )
     case .loadFailed:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .error,
         type: .error,
         context: .section,
@@ -386,7 +387,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: false
       )
     case .noPermission:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .permissionDenied,
         context: .section,
@@ -396,7 +397,7 @@ public extension FKEmptyStateModel {
         isButtonHidden: false
       )
     case .notLoggedIn:
-      return FKEmptyStateModel(
+      return FKEmptyStateConfiguration(
         phase: .empty,
         type: .newUser,
         context: .fullPage,
@@ -408,7 +409,7 @@ public extension FKEmptyStateModel {
     }
   }
 
-  /// Returns a model for a custom business state identifier.
+  /// Returns a configuration for a custom business state identifier.
   ///
   /// - Parameters:
   ///   - identifier: Domain-specific key, such as `"maintenance"` or `"geo_restricted"`.
@@ -420,8 +421,8 @@ public extension FKEmptyStateModel {
     title: String?,
     description: String? = nil,
     buttonTitle: String? = nil
-  ) -> FKEmptyStateModel {
-    FKEmptyStateModel(
+  ) -> FKEmptyStateConfiguration {
+    FKEmptyStateConfiguration(
       phase: .custom(identifier),
       title: title,
       description: description,
@@ -472,5 +473,36 @@ public extension FKEmptyStateModel {
     copy.contentAlignment = alignment
     copy.verticalOffset = verticalOffset
     return copy
+  }
+}
+
+// MARK: - Global defaults (FKBadge-style)
+
+/// Namespace for app-wide EmptyState defaults and future batch helpers.
+///
+/// Mirrors ``FKBadge`` + ``FKBadge/defaultConfiguration``; use ``defaultConfiguration`` as the baseline
+/// for `UIView.fk_setEmptyState(…)` and copy-then-mutate flows at the screen level.
+@MainActor
+public enum FKEmptyState {
+  /// Baseline typography, colors, and button style; override per screen after copying.
+  public static var defaultConfiguration = FKEmptyStateConfiguration(
+    buttonStyle: FKEmptyStateButtonStyle(
+      title: nil,
+      titleColor: .white,
+      font: .systemFont(ofSize: 15, weight: .semibold),
+      backgroundColor: .systemBlue,
+      cornerRadius: 10
+    ),
+    titleColor: .label,
+    descriptionColor: .secondaryLabel,
+    backgroundColor: .systemBackground
+  )
+
+  /// Mutates a copy of ``defaultConfiguration`` and writes it back (typical app-launch branding setup).
+  public static func configureDefault(_ body: (inout FKEmptyStateConfiguration) -> Void) {
+    fk_emptyStateAssertMainThread()
+    var copy = defaultConfiguration
+    body(&copy)
+    defaultConfiguration = copy
   }
 }

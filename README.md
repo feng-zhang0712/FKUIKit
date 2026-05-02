@@ -32,8 +32,8 @@ The repository is organized into three product modules:
 
 Each module focuses on a different layer of app development, from infrastructure and utilities to UI components and composite business widgets.
 
-In addition, the package exposes a small Foundation-only product for EmptyState core logic:
-- `FKEmptyStateCoreLite` (resolver + i18n interpolation, no UIKit dependency)
+In addition, the package exposes a small Foundation-only product for EmptyState core logic (also linked by **`FKUIKit`** and re-exported for convenience):
+- `FKEmptyStateCoreLite` (resolver + i18n + `FKEmptyStateType` / factory; no UIKit dependency)
 
 ## Features
 - Pure Swift implementation (Swift 6 language mode in package settings).
@@ -66,7 +66,7 @@ FKKit/
 │  │     ├─ Button/
 │  │     ├─ CornerShadow/
 │  │     ├─ Divider/          (Public, Internal, Extension)
-│  │     ├─ EmptyState/
+│  │     ├─ EmptyState/        (Public, Internal, Extension, CoreLite SPM slice)
 │  │     ├─ ExpandableText/
 │  │     ├─ MultiPicker/
 │  │     ├─ PresentationController/
@@ -106,7 +106,7 @@ FKKit/
 - `Button`: configurable button system with style/content/loading behavior.
 - `CornerShadow`: rounded-rect masks, borders, gradient fill/stroke, and explicit-path shadows (`Public` / `Internal` / `Extension`); see `Sources/FKUIKit/Components/CornerShadow/README.md`.
 - `Divider`: hairline separator (`FKDivider` / `FKDividerView`); dashed & gradient strokes; `FKDivider.defaultConfiguration`; layout under `Public/`, `Internal/`, `Extension/` (see module README).
-- `EmptyState`: loading/empty/error state overlay system.
+- `EmptyState`: loading/empty/error overlay (`Public` / `Internal` / `Extension`) plus **`FKEmptyStateCoreLite`** (resolver + i18n); `import FKUIKit` re-exports CoreLite.
 - `ExpandableText`: configurable long-text expand/collapse component with reusable-list state cache and pre-measurement support.
 - `MultiPicker`: native multi-level cascading picker with built-in region data and custom data provider support.
 - `PresentationController`: modal/overlay presentation controller system (sheet/anchor modes, detents, keyboard/safe-area/interaction configuration).
