@@ -141,7 +141,12 @@ Assign to `fk_badge.configuration` (or pass into `FKBadgeController(target:confi
 
 ## Examples
 
-See `Examples/FKKitExamples/.../Examples/FKUIKit/Badge/` for split demo view controllers and `FKBadgeExampleSupport` helpers.
+See `Examples/FKKitExamples/.../Examples/FKUIKit/Badge/`:
+
+| Location | Contents |
+|----------|----------|
+| Root | `FKBadgeExamplesHubViewController.swift` (sample list), `FKBadgeExampleSupport.swift` (shared demo UI) |
+| `Scenarios/` | Basics, appearance, anchors, and integration screens (one Swift file per topic) |
 
 ## License
 
