@@ -104,7 +104,7 @@ FKKit/
 - `Badge`: flexible badge display for views, bar items, and tab items, with corner/center anchoring and customizable styles/animations.
 - `BlurView`: high-performance blur component with system/custom pipelines, UIKit/SwiftUI adapters, image/view snapshot blur APIs, and IB/global-configuration support.
 - `Button`: configurable button system with style/content/loading behavior.
-- `CornerShadow`: arbitrary-corner radius + high-performance shadow rendering with explicit path control.
+- `CornerShadow`: rounded-rect masks, borders, gradient fill/stroke, and explicit-path shadows (`Public` / `Internal` / `Extension`); see `Sources/FKUIKit/Components/CornerShadow/README.md`.
 - `Divider`: lightweight reusable divider for UIKit/SwiftUI with dashed, gradient, and edge-pinning support.
 - `EmptyState`: loading/empty/error state overlay system.
 - `ExpandableText`: configurable long-text expand/collapse component with reusable-list state cache and pre-measurement support.

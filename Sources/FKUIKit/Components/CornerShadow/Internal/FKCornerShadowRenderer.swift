@@ -1,23 +1,10 @@
 //
 // FKCornerShadowRenderer.swift
 //
-// Core rendering implementation for FKCornerShadow.
-//
 
 import UIKit
 
-/// Main renderer that updates corner, border, fill, and shadow layers.
-///
-/// The renderer is path-driven:
-/// - rounded corners are generated from `UIBezierPath`
-/// - shadows always rely on explicit `shadowPath`
-/// This design minimizes implicit Core Animation work and keeps scrolling smooth.
 enum FKCornerShadowRenderer {
-  /// Applies style immediately for the current view bounds.
-  ///
-  /// - Parameters:
-  ///   - style: Style descriptor containing corner, fill, border, and shadow.
-  ///   - view: Target host view.
   static func apply(style: FKCornerShadowStyle, to view: UIView) {
     fk_cornerShadowAssertMainThread()
     guard view.bounds.width > 0, view.bounds.height > 0 else { return }
@@ -25,9 +12,6 @@ enum FKCornerShadowRenderer {
     render(style: style, on: view)
   }
 
-  /// Re-renders the current associated style after layout updates.
-  ///
-  /// - Parameter view: Target host view that may have changed bounds.
   static func refreshIfNeeded(for view: UIView) {
     fk_cornerShadowAssertMainThread()
     guard let style = view.fk_cornerShadowStyle else { return }
@@ -36,9 +20,6 @@ enum FKCornerShadowRenderer {
     render(style: style, on: view)
   }
 
-  /// Clears all rendering effects from a view.
-  ///
-  /// - Parameter view: Target host view.
   static func reset(on view: UIView) {
     fk_cornerShadowAssertMainThread()
     let store = view.fk_cornerShadowLayerStore
@@ -56,14 +37,6 @@ enum FKCornerShadowRenderer {
     view.layer.shadowOffset = .zero
   }
 
-  // MARK: - Private
-
-  /// Installs and reuses base layers required by the renderer.
-  ///
-  /// - Parameter view: Target host view.
-  ///
-  /// - Performance: Layers are created once and reused across updates to avoid
-  ///   repeated layer allocation during frequent layout passes.
   private static func installBaseLayersIfNeeded(on view: UIView) {
     let store = view.fk_cornerShadowLayerStore
 
@@ -89,14 +62,8 @@ enum FKCornerShadowRenderer {
     }
   }
 
-  /// Renders all visual parts for the current style and bounds.
-  ///
-  /// - Parameters:
-  ///   - style: Full style descriptor.
-  ///   - view: Target host view.
   private static func render(style: FKCornerShadowStyle, on view: UIView) {
     let bounds = view.bounds
-    // Build a deterministic rounded path once, then reuse it for mask/fill/border/shadow.
     let path = UIBezierPath(
       roundedRect: bounds,
       byRoundingCorners: style.corners,
@@ -105,8 +72,6 @@ enum FKCornerShadowRenderer {
     let cgPath = path.cgPath
     let store = view.fk_cornerShadowLayerStore
 
-    // Clip content with shape-mask while shadow remains externally controlled by `shadowPath`.
-    // This avoids relying on `masksToBounds` for shadow rendering.
     store.maskLayer.frame = bounds
     store.maskLayer.path = cgPath
     view.layer.mask = store.maskLayer
@@ -116,20 +81,12 @@ enum FKCornerShadowRenderer {
     applyShadow(style: style, view: view, path: path, bounds: bounds)
   }
 
-  /// Applies solid/gradient fill following the rounded path.
-  ///
-  /// - Parameters:
-  ///   - style: Current style descriptor.
-  ///   - store: Layer store attached to host view.
-  ///   - path: Rounded path for current bounds.
-  ///   - bounds: Host view bounds.
   private static func applyFill(
     style: FKCornerShadowStyle,
     store: FKCornerShadowLayerStore,
     path: UIBezierPath,
     bounds: CGRect
   ) {
-    // Solid fill always follows the rounded path.
     store.fillLayer.frame = bounds
     store.fillLayer.path = path.cgPath
     store.fillLayer.fillColor = style.fillColor?.cgColor ?? UIColor.clear.cgColor
@@ -140,7 +97,6 @@ enum FKCornerShadowRenderer {
       return
     }
 
-    // Gradient fill is masked by the same rounded path for pixel-perfect edge alignment.
     store.fillGradientLayer.isHidden = false
     store.fillGradientLayer.frame = bounds
     store.fillGradientLayer.colors = gradient.colors.map(\.cgColor)
@@ -152,20 +108,12 @@ enum FKCornerShadowRenderer {
     store.fillGradientLayer.mask = store.fillGradientMaskLayer
   }
 
-  /// Applies solid or gradient border using the same rounded path.
-  ///
-  /// - Parameters:
-  ///   - style: Current style descriptor.
-  ///   - store: Layer store attached to host view.
-  ///   - path: Rounded path for current bounds.
-  ///   - bounds: Host view bounds.
   private static func applyBorder(
     style: FKCornerShadowStyle,
     store: FKCornerShadowLayerStore,
     path: UIBezierPath,
     bounds: CGRect
   ) {
-    // Border rendering shares the exact corner path to avoid mismatch between stroke and mask.
     switch style.border {
     case .none:
       store.borderLayer.isHidden = true
@@ -199,134 +147,117 @@ enum FKCornerShadowRenderer {
     }
   }
 
-  /// Applies full or side-specific shadow rendering.
-  ///
-  /// - Parameters:
-  ///   - style: Current style descriptor.
-  ///   - view: Target host view.
-  ///   - path: Rounded base path.
-  ///   - bounds: Host view bounds.
   private static func applyShadow(
     style: FKCornerShadowStyle,
     view: UIView,
     path: UIBezierPath,
     bounds: CGRect
   ) {
-    guard let shadow = style.shadow, shadow.opacity > 0 else {
+    guard let elevation = style.shadow, elevation.opacity > 0 else {
       view.layer.shadowOpacity = 0
       view.layer.shadowPath = nil
       view.fk_cornerShadowLayerStore.removeAllShadowLayers()
       return
     }
 
-    let spreadInset = -shadow.spread
+    let spreadInset = -elevation.spread
     let spreadBounds = bounds.insetBy(dx: spreadInset, dy: spreadInset)
-    // Spread is implemented by expanding/contracting the explicit shadow path.
     let spreadPath = UIBezierPath(
       roundedRect: spreadBounds,
       byRoundingCorners: style.corners,
-      cornerRadii: CGSize(width: style.cornerRadius + shadow.spread, height: style.cornerRadius + shadow.spread)
+      cornerRadii: CGSize(width: style.cornerRadius + elevation.spread, height: style.cornerRadius + elevation.spread)
     )
 
-    if shadow.sides == .all {
+    if elevation.edges == .all {
       view.fk_cornerShadowLayerStore.removeAllShadowLayers()
-      // Full-shadow mode uses host-layer `shadowPath` for best rendering performance.
-      // Explicit `shadowPath` avoids Core Animation's expensive dynamic shadow geometry inference.
-      view.layer.shadowColor = shadow.color.cgColor
-      view.layer.shadowOpacity = shadow.opacity
-      view.layer.shadowOffset = shadow.offset
-      view.layer.shadowRadius = shadow.blur
+      view.layer.shadowColor = elevation.color.cgColor
+      view.layer.shadowOpacity = elevation.opacity
+      view.layer.shadowOffset = elevation.offset
+      view.layer.shadowRadius = elevation.blur
       view.layer.shadowPath = spreadPath.cgPath
       return
     }
 
-    // Disable host layer shadow and render side-specific shadow carriers.
     view.layer.shadowOpacity = 0
     view.layer.shadowPath = nil
-    applySideShadows(style: style, shadow: shadow, view: view, spreadPath: spreadPath, bounds: bounds, basePath: path)
+    applyEdgeShadows(
+      elevation: elevation,
+      view: view,
+      spreadPath: spreadPath,
+      bounds: bounds,
+      basePath: path
+    )
   }
 
-  /// Applies side-specific shadow layers when `.all` is not selected.
-  ///
-  /// - Parameters:
-  ///   - style: Current style descriptor.
-  ///   - shadow: Shadow descriptor.
-  ///   - view: Target host view.
-  ///   - spreadPath: Spread-adjusted rounded path.
-  ///   - bounds: Host view bounds.
-  ///   - basePath: Original rounded base path.
-  private static func applySideShadows(
-    style: FKCornerShadowStyle,
-    shadow: FKCornerShadowShadow,
+  private static func applyEdgeShadows(
+    elevation: FKCornerShadowElevation,
     view: UIView,
     spreadPath: UIBezierPath,
     bounds: CGRect,
     basePath: UIBezierPath
   ) {
     let store = view.fk_cornerShadowLayerStore
-    // Build selected edge list once to reduce branching in the update loop.
-    let selected: [FKCornerShadowSide] = [.top, .left, .bottom, .right].filter { shadow.sides.contains($0) }
+    let selected: [FKCornerShadowEdge] = [.top, .left, .bottom, .right].filter { elevation.edges.contains($0) }
 
-    // Remove stale side layers.
-    let staleKeys = Set(store.sideShadowLayers.keys).subtracting(selected)
+    let staleKeys = Set(store.edgeShadowLayers.keys).subtracting(selected)
     for key in staleKeys {
-      store.sideShadowLayers[key]?.removeFromSuperlayer()
-      store.sideShadowLayers.removeValue(forKey: key)
+      store.edgeShadowLayers[key]?.removeFromSuperlayer()
+      store.edgeShadowLayers.removeValue(forKey: key)
     }
 
-    for side in selected {
-      let layer = store.sideShadowLayers[side] ?? {
+    for edge in selected {
+      let layer = store.edgeShadowLayers[edge] ?? {
         let l = CAShapeLayer()
         l.fillColor = UIColor.clear.cgColor
-        // Side layers are inserted below content/border layers.
         view.layer.insertSublayer(l, at: 0)
-        store.sideShadowLayers[side] = l
+        store.edgeShadowLayers[edge] = l
         return l
       }()
 
       layer.frame = bounds
       layer.path = basePath.cgPath
-      layer.shadowColor = shadow.color.cgColor
-      layer.shadowOpacity = shadow.opacity
-      layer.shadowOffset = shadow.offset
-      layer.shadowRadius = shadow.blur
+      layer.shadowColor = elevation.color.cgColor
+      layer.shadowOpacity = elevation.opacity
+      layer.shadowOffset = elevation.offset
+      layer.shadowRadius = elevation.blur
       layer.shadowPath = spreadPath.cgPath
-      // A side mask clips shadow visibility to specific edges while still using explicit path.
-      layer.mask = sideMaskLayer(for: side, bounds: bounds, blur: shadow.blur, spread: shadow.spread)
+      updateEdgeShadowMask(
+        on: layer,
+        edge: edge,
+        bounds: bounds,
+        blur: elevation.blur,
+        spread: elevation.spread,
+        offset: elevation.offset
+      )
     }
 
-    // Keep visual z-order for borders.
     if store.borderLayer.superlayer === view.layer {
       view.layer.addSublayer(store.borderLayer)
     }
     if store.borderGradientLayer.superlayer === view.layer {
       view.layer.addSublayer(store.borderGradientLayer)
     }
-
-    // Keep compiler happy and preserve compatibility with the current function contract.
-    _ = style
   }
 
-  /// Builds a rectangular mask used to clip a side-specific shadow carrier.
-  ///
-  /// - Parameters:
-  ///   - side: Target edge.
-  ///   - bounds: Host view bounds.
-  ///   - blur: Shadow blur radius.
-  ///   - spread: Shadow spread radius.
-  /// - Returns: A configured mask layer for the requested edge.
-  ///
-  /// - Performance: Mask geometry is lightweight rectangle math to keep updates cheap.
-  private static func sideMaskLayer(
-    for side: FKCornerShadowSide,
+  private static func updateEdgeShadowMask(
+    on layer: CAShapeLayer,
+    edge: FKCornerShadowEdge,
     bounds: CGRect,
     blur: CGFloat,
-    spread: CGFloat
-  ) -> CAShapeLayer {
-    let mask = CAShapeLayer()
-    let padding = max(blur * 2 + abs(spread), 8)
+    spread: CGFloat,
+    offset: CGSize
+  ) {
+    let mask: CAShapeLayer = {
+      if let existing = layer.mask as? CAShapeLayer {
+        return existing
+      }
+      let created = CAShapeLayer()
+      layer.mask = created
+      return created
+    }()
+    let padding = max(blur * 2 + abs(spread) + abs(offset.width) + abs(offset.height), 8)
     let rect: CGRect
-    switch side {
+    switch edge {
     case .top:
       rect = CGRect(x: -padding, y: -padding, width: bounds.width + padding * 2, height: bounds.height / 2 + padding)
     case .left:
@@ -339,6 +270,5 @@ enum FKCornerShadowRenderer {
       rect = bounds.insetBy(dx: -padding, dy: -padding)
     }
     mask.path = UIBezierPath(rect: rect).cgPath
-    return mask
   }
 }

@@ -1,37 +1,28 @@
-//
-// FKCornerShadowDemoSupport.swift
-//
-// Shared helpers for FKCornerShadow example screens.
-//
-
 import UIKit
 import FKUIKit
 
-/// Shared helper methods used by FKCornerShadow examples.
-enum FKCornerShadowDemoSupport {
-  private static var didConfigureGlobal = false
+enum FKCornerShadowExampleSupport {
+  private static var didConfigureDefaults = false
 
-  /// Configures a global style once for all example pages.
-  static func configureGlobalStyleIfNeeded() {
-    guard !didConfigureGlobal else { return }
-    didConfigureGlobal = true
+  static func configureDefaultsIfNeeded() {
+    guard !didConfigureDefaults else { return }
+    didConfigureDefaults = true
     FKCornerShadowManager.shared.configureDefaultStyle { style in
       style.corners = .allCorners
       style.cornerRadius = 14
       style.fillColor = .secondarySystemBackground
       style.border = .solid(color: .separator, width: 0.6)
-      style.shadow = FKCornerShadowShadow(
+      style.shadow = FKCornerShadowElevation(
         color: .black,
         opacity: 0.12,
         offset: CGSize(width: 0, height: 4),
         blur: 10,
         spread: 0,
-        sides: .all
+        edges: .all
       )
     }
   }
 
-  /// Creates a scroll + vertical stack container.
   static func makeRootScrollStack() -> (UIScrollView, UIStackView) {
     let scrollView = UIScrollView()
     scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -45,7 +36,6 @@ enum FKCornerShadowDemoSupport {
     return (scrollView, stack)
   }
 
-  /// Pins root scroll stack to screen edges.
   static func pinRootScrollStack(scrollView: UIScrollView, stack: UIStackView, in view: UIView) {
     view.addSubview(scrollView)
     NSLayoutConstraint.activate([
@@ -62,7 +52,6 @@ enum FKCornerShadowDemoSupport {
     ])
   }
 
-  /// Creates a section container with title and subtitle.
   static func makeSection(title: String, subtitle: String) -> UIStackView {
     let section = UIStackView()
     section.axis = .vertical
@@ -83,7 +72,6 @@ enum FKCornerShadowDemoSupport {
     return section
   }
 
-  /// Creates a simple demo card host.
   static func makeDemoCard(height: CGFloat = 88) -> UIView {
     let v = UIView()
     v.translatesAutoresizingMaskIntoConstraints = false
@@ -92,7 +80,6 @@ enum FKCornerShadowDemoSupport {
     return v
   }
 
-  /// Creates an action button used in demo pages.
   static func makeActionButton(title: String, action: @escaping () -> Void) -> UIButton {
     let b = UIButton(type: .system)
     b.translatesAutoresizingMaskIntoConstraints = false

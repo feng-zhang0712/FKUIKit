@@ -1,40 +1,34 @@
-//
-// FKCornerShadowExamplesHubViewController.swift
-//
-// Root menu for FKCornerShadow copy-ready examples.
-//
-
 import UIKit
 
-/// Entry list for FKCornerShadow examples.
 final class FKCornerShadowExamplesHubViewController: UITableViewController {
+
   private struct Row {
     let title: String
     let subtitle: String
-    let make: () -> UIViewController
+    let controllerType: UIViewController.Type
   }
 
   private let rows: [Row] = [
     Row(
-      title: "UIView Core Scenarios",
-      subtitle: "Any-corner radius, shadow path, gradients, auto frame update, and reset",
-      make: { FKCornerShadowUIViewExampleViewController() }
+      title: "Basics",
+      subtitle: "Corners, shadows, gradients, layout-driven updates, reset",
+      controllerType: FKCornerShadowExampleBasicsViewController.self
     ),
     Row(
-      title: "UIKit Controls",
-      subtitle: "UIButton/UILabel/UIImageView styling with one-line APIs",
-      make: { FKCornerShadowControlsExampleViewController() }
+      title: "UIKit controls",
+      subtitle: "Button, label, image view",
+      controllerType: FKCornerShadowExampleControlsViewController.self
     ),
     Row(
-      title: "Table & Collection Reuse",
-      subtitle: "UITableViewCell/UICollectionViewCell performance and reuse-safe reset",
-      make: { FKCornerShadowListExampleViewController() }
+      title: "Lists",
+      subtitle: "Table and collection cells with reuse-safe reset",
+      controllerType: FKCornerShadowExampleListViewController.self
     ),
   ]
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    FKCornerShadowDemoSupport.configureGlobalStyleIfNeeded()
+    FKCornerShadowExampleSupport.configureDefaultsIfNeeded()
     title = "FKCornerShadow"
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.cellLayoutMarginsFollowReadableWidth = true
@@ -58,6 +52,9 @@ final class FKCornerShadowExamplesHubViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
-    navigationController?.pushViewController(rows[indexPath.row].make(), animated: true)
+    let row = rows[indexPath.row]
+    let vc = row.controllerType.init(nibName: nil, bundle: nil)
+    vc.title = row.title
+    navigationController?.pushViewController(vc, animated: true)
   }
 }

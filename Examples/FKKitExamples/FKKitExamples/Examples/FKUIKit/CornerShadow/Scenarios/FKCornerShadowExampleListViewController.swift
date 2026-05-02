@@ -1,14 +1,7 @@
-//
-// FKCornerShadowListExampleViewController.swift
-//
-// UITableViewCell and UICollectionViewCell FKCornerShadow examples.
-//
-
 import UIKit
 import FKUIKit
 
-/// Demonstrates cell reuse safety and list performance patterns.
-final class FKCornerShadowListExampleViewController: UIViewController {
+final class FKCornerShadowExampleListViewController: UIViewController {
   private lazy var segmented: UISegmentedControl = {
     let control = UISegmentedControl(items: ["Table", "Collection"])
     control.selectedSegmentIndex = 0
@@ -23,7 +16,6 @@ final class FKCornerShadowListExampleViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "Table & Collection"
     view.backgroundColor = .systemGroupedBackground
     setupCollectionView()
     setupLayout()
@@ -32,12 +24,12 @@ final class FKCornerShadowListExampleViewController: UIViewController {
 
   private func setupLayout() {
     tableView.translatesAutoresizingMaskIntoConstraints = false
-    tableView.register(FKCornerShadowTableCell.self, forCellReuseIdentifier: "tableCell")
+    tableView.register(FKCornerShadowExampleTableCell.self, forCellReuseIdentifier: "tableCell")
     tableView.dataSource = self
     tableView.rowHeight = 92
 
     collectionView.translatesAutoresizingMaskIntoConstraints = false
-    collectionView.register(FKCornerShadowCollectionCell.self, forCellWithReuseIdentifier: "collectionCell")
+    collectionView.register(FKCornerShadowExampleCollectionCell.self, forCellWithReuseIdentifier: "collectionCell")
     collectionView.dataSource = self
 
     view.addSubview(segmented)
@@ -78,11 +70,11 @@ final class FKCornerShadowListExampleViewController: UIViewController {
   }
 }
 
-extension FKCornerShadowListExampleViewController: UITableViewDataSource {
+extension FKCornerShadowExampleListViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { items.count }
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    guard let cell = tableView.dequeueReusableCell(withIdentifier: "tableCell", for: indexPath) as? FKCornerShadowTableCell else {
+    guard let cell = tableView.dequeueReusableCell(withIdentifier: "tableCell", for: indexPath) as? FKCornerShadowExampleTableCell else {
       return UITableViewCell()
     }
     cell.configure(text: items[indexPath.row])
@@ -90,11 +82,11 @@ extension FKCornerShadowListExampleViewController: UITableViewDataSource {
   }
 }
 
-extension FKCornerShadowListExampleViewController: UICollectionViewDataSource {
+extension FKCornerShadowExampleListViewController: UICollectionViewDataSource {
   func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { items.count }
 
   func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-    guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "collectionCell", for: indexPath) as? FKCornerShadowCollectionCell else {
+    guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "collectionCell", for: indexPath) as? FKCornerShadowExampleCollectionCell else {
       return UICollectionViewCell()
     }
     cell.configure(text: items[indexPath.item])
@@ -102,8 +94,7 @@ extension FKCornerShadowListExampleViewController: UICollectionViewDataSource {
   }
 }
 
-/// Reuse-safe table cell demo.
-private final class FKCornerShadowTableCell: UITableViewCell {
+private final class FKCornerShadowExampleTableCell: UITableViewCell {
   private let card = UIView()
   private let titleLabel = UILabel()
 
@@ -138,23 +129,21 @@ private final class FKCornerShadowTableCell: UITableViewCell {
 
   override func prepareForReuse() {
     super.prepareForReuse()
-    // Always reset in reusable cells to avoid style accumulation.
     card.fk_resetCornerShadow()
   }
 
   func configure(text: String) {
-    titleLabel.text = "UITableViewCell - \(text)"
-    card.fk_applyCornerShadowFromGlobal { style in
+    titleLabel.text = "UITableViewCell — \(text)"
+    card.fk_applyCornerShadowFromDefaults { style in
       style.cornerRadius = 16
       style.corners = .allCorners
       style.fillColor = .systemBackground
-      style.shadow = FKCornerShadowShadow(opacity: 0.12, offset: CGSize(width: 0, height: 3), blur: 9, spread: 0, sides: [.bottom])
+      style.shadow = FKCornerShadowElevation(opacity: 0.12, offset: CGSize(width: 0, height: 3), blur: 9, spread: 0, edges: [.bottom])
     }
   }
 }
 
-/// Reuse-safe collection cell demo.
-private final class FKCornerShadowCollectionCell: UICollectionViewCell {
+private final class FKCornerShadowExampleCollectionCell: UICollectionViewCell {
   private let card = UIView()
   private let titleLabel = UILabel()
 
@@ -199,7 +188,7 @@ private final class FKCornerShadowCollectionCell: UICollectionViewCell {
       cornerRadius: 18,
       fillColor: .systemBackground,
       border: .solid(color: .quaternaryLabel, width: 0.6),
-      shadow: FKCornerShadowShadow(color: .black, opacity: 0.14, offset: CGSize(width: 0, height: 5), blur: 10, spread: 0, sides: [.bottom])
+      shadow: FKCornerShadowElevation(color: .black, opacity: 0.14, offset: CGSize(width: 0, height: 5), blur: 10, spread: 0, edges: [.bottom])
     )
   }
 }

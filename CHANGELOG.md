@@ -8,6 +8,26 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.43.8] - 2026-05-02
+
+### Changed (FKUIKit FKCornerShadow)
+
+**Breaking:** The CornerShadow module was reorganized and several public symbols were renamed. Update call sites using the migration table in `Sources/FKUIKit/Components/CornerShadow/README.md`.
+
+- Reorganized on-disk layout to match `Badge` and `BlurView`: exported types under `Public/`, implementation under `Internal/` (renderer, layer store, layout observer, main-thread assertion), and `UIView` entry points under `Extension/`.
+- Renamed `FKCornerShadowShadow` to `FKCornerShadowElevation`; renamed `FKCornerShadowSide` to `FKCornerShadowEdge`; renamed shadow parameter `sides` to `edges`.
+- Renamed `fk_applyCornerShadowFromGlobal` to `fk_applyCornerShadowFromDefaults(_:)`, and added a parameterless `fk_applyCornerShadowFromDefaults()` convenience on `FKCornerShadowStylable` via a protocol extension.
+- Replaced `FKCornerShadowThreading.swift` with `Internal/FKCornerShadowAssertions.swift`.
+- Improved per-edge shadow masks: padding now accounts for shadow offset, and mask layers are reused across layout passes to reduce allocation churn.
+
+### Changed (Examples)
+
+- Restructured CornerShadow samples to mirror other FKUIKit hubs: `FKCornerShadowExampleSupport`, root hub view controller, and scenario screens under `Examples/.../CornerShadow/Scenarios/`.
+
+### Changed
+
+- Root `README.md`: expanded the CornerShadow feature line and linked to the module README.
+
 ## [0.43.7] - 2026-05-02
 
 ### Added (FKUIKit Button)
@@ -1509,7 +1529,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.43.7...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.43.8...HEAD
+[0.43.8]: https://github.com/feng-zhang0712/FKKit/compare/0.43.7...0.43.8
 [0.43.7]: https://github.com/feng-zhang0712/FKKit/compare/0.43.6...0.43.7
 [0.43.6]: https://github.com/feng-zhang0712/FKKit/compare/0.43.4...0.43.6
 [0.43.4]: https://github.com/feng-zhang0712/FKKit/compare/0.43.3...0.43.4

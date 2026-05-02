@@ -1,22 +1,15 @@
 //
 // FKCornerShadowLayoutObserver.swift
 //
-// Auto layout observer for FKCornerShadow.
-//
 
-import UIKit
 import ObjectiveC.runtime
+import UIKit
 
-/// Hooks into `UIView.layoutSubviews()` once to refresh applied styles.
-///
-/// This observer ensures paths stay correct after Auto Layout or rotation-driven bounds
-/// changes without requiring manual refresh calls in view controllers.
+/// One-time `UIView.layoutSubviews` swizzle so bounded views refresh their cached paths.
 @MainActor
 enum FKCornerShadowLayoutObserver {
-  /// Tracks whether method swizzling has already been installed.
   private static var isInstalled = false
 
-  /// Ensures layout swizzling is installed only once.
   static func installIfNeeded() {
     fk_cornerShadowAssertMainThread()
     guard !isInstalled else { return }
@@ -38,11 +31,7 @@ enum FKCornerShadowLayoutObserver {
 }
 
 extension UIView {
-  /// Swizzled implementation that keeps corner/shadow paths in sync with bounds changes.
-  ///
-  /// - Note: This method replaces `layoutSubviews` implementation at runtime.
   @objc func fk_cornerShadow_layoutSubviews() {
-    // Calls original `layoutSubviews` after swizzling.
     fk_cornerShadow_layoutSubviews()
     FKCornerShadowRenderer.refreshIfNeeded(for: self)
   }
