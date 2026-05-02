@@ -118,9 +118,10 @@ Prefer `.system` for animated or scrolling content.
 
 See `Examples/FKKitExamples/.../Examples/FKUIKit/BlurView/`:
 
-- `FKBlurExamplesHubViewController.swift` — sample list
-- `FKBlurExampleSupport.swift` — shared cards / backgrounds
-- Scenario files (`FKBlurExampleBasicsViewController.swift`, …) — one concern per file
+| Location | Contents |
+|----------|----------|
+| Root | `FKBlurExamplesHubViewController.swift` (table of contents), `FKBlurExampleSupport.swift` (shared UI helpers) |
+| `Scenarios/` | One Swift file per topic (basics, custom parameters, modes, snapshot, mask, defaults, XIB, SwiftUI, performance) |
 
 ## License
 
