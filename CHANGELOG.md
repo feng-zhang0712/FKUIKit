@@ -23,13 +23,6 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - `UIScrollView` APIs: renamed the external parameter `model` to `configuration` on `fk_updateEmptyState(itemCount:configuration:)`, `fk_updateEmptyStateVisibility(isEmpty:configuration:)`, and `fk_updateEmptyStateForTable(configuration:)`.
 - **FKCompositeKit:** `FKListEmptyStateModelFactory` → `FKListEmptyStateConfigurationFactory`; `modelForEmptyList` → `configurationForEmptyList`; `modelForDisplayedError` → `configurationForDisplayedError`.
 
-### Added (FKUIKit FKEmptyState)
-
-- `FKEmptyState` namespace: `defaultConfiguration` and `configureDefault(_:)` for global styling.
-- `UIViewController` APIs: `fk_bindEmptyStateActions(from:handler:)` and `fk_clearEmptyStateActionObservers()` (library implementation; examples no longer duplicate this).
-- `UIView.fk_isEmptyStateOverlayVisible` for visibility checks.
-- `FKEmptyStateNotificationKeys.title` in `.fkEmptyStateActionInvoked` userInfo for richer notification routing.
-
 **Non-breaking**
 
 - Reorganized sources under `Public/`, `Internal/`, `Extension/`, and split `CoreLite/` into `FKEmptyStateSemantic.swift`, `FKEmptyStateI18n.swift`, and `FKEmptyStateFactory.swift` (single source of truth for Foundation-only APIs consumed by both targets).
@@ -37,6 +30,13 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Added `Internal/FKEmptyStateHostStorage.swift` for associated-object keys, configuration boxing, and scroll/refresh coordination; associated-object key renamed from `model` to `configuration`.
 - VoiceOver: loading-phase announcements now follow the same primary/secondary strings as the on-screen loading layout (`loadingMessage` / `title` / description visibility rules).
 - Documentation: rewrote `Sources/FKUIKit/Components/EmptyState/README.md`; updated the EmptyState line in the root `README.md`.
+
+### Added (FKUIKit FKEmptyState)
+
+- `FKEmptyState` namespace: `defaultConfiguration` and `configureDefault(_:)` for global styling.
+- `UIViewController` APIs: `fk_bindEmptyStateActions(from:handler:)` and `fk_clearEmptyStateActionObservers()` (library implementation; examples no longer duplicate this).
+- `UIView.fk_isEmptyStateOverlayVisible` for visibility checks.
+- `FKEmptyStateNotificationKeys.title` in `.fkEmptyStateActionInvoked` userInfo for richer notification routing.
 
 ### Changed (Examples)
 
