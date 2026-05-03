@@ -33,6 +33,7 @@ public final class FKBusinessUtilities: FKBusinessUtilitiesProviding, @unchecked
 
 // MARK: - Top view controller
 
+@MainActor
 enum FKTopViewControllerResolver {
   /// Resolves current top-most view controller in active foreground scene.
   ///

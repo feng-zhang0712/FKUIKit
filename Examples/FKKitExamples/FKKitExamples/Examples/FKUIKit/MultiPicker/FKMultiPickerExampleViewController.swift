@@ -7,93 +7,9 @@
 import UIKit
 import FKUIKit
 
-// MARK: - Global configuration
-
-/// Shared setup helpers for FKMultiPicker demo screens.
-enum FKMultiPickerDemoSupport {
-  private static var didConfigureGlobalStyle = false
-
-  /// Configures a global picker style once.
-  static func configureGlobalStyleIfNeeded() {
-    guard !didConfigureGlobalStyle else { return }
-    didConfigureGlobalStyle = true
-
-    var config = FKMultiPickerConfiguration()
-    config.componentCount = 4
-    config.presentationStyle = .halfScreen
-    config.toolbarStyle.title = "Global Picker"
-    config.toolbarStyle.confirmTitleColor = .systemBlue
-    config.toolbarStyle.cancelTitleColor = .secondaryLabel
-    config.rowStyle.textColor = .label
-    config.rowStyle.selectedTextColor = .systemBlue
-    config.rowStyle.rowHeight = 40
-    config.containerStyle.cornerRadius = 18
-    config.containerStyle.maskColor = UIColor.black.withAlphaComponent(0.38)
-    FKMultiPickerManager.shared.defaultConfiguration = config
-  }
-
-  /// Sample 3-level custom linkage data.
-  static let customThreeLevelNodes: [FKMultiPickerNode] = [
-    FKMultiPickerNode(
-      id: "electronics",
-      title: "Electronics",
-      children: [
-        FKMultiPickerNode(
-          id: "phone",
-          title: "Phone",
-          children: [
-            FKMultiPickerNode(id: "ios", title: "iOS"),
-            FKMultiPickerNode(id: "android", title: "Android"),
-          ]
-        ),
-        FKMultiPickerNode(
-          id: "laptop",
-          title: "Laptop",
-          children: [
-            FKMultiPickerNode(id: "ultrabook", title: "Ultrabook"),
-            FKMultiPickerNode(id: "gaming", title: "Gaming"),
-          ]
-        ),
-      ]
-    ),
-    FKMultiPickerNode(
-      id: "fashion",
-      title: "Fashion",
-      children: [
-        FKMultiPickerNode(
-          id: "men",
-          title: "Men",
-          children: [
-            FKMultiPickerNode(id: "tops", title: "Tops"),
-            FKMultiPickerNode(id: "pants", title: "Pants"),
-          ]
-        ),
-        FKMultiPickerNode(
-          id: "women",
-          title: "Women",
-          children: [
-            FKMultiPickerNode(id: "dress", title: "Dress"),
-            FKMultiPickerNode(id: "shoes", title: "Shoes"),
-          ]
-        ),
-      ]
-    ),
-  ]
-
-  /// Sample single-level data.
-  static let singleLevelNodes: [FKMultiPickerNode] = [
-    FKMultiPickerNode(id: "cash", title: "Cash"),
-    FKMultiPickerNode(id: "card", title: "Credit Card"),
-    FKMultiPickerNode(id: "bank", title: "Bank Transfer"),
-    FKMultiPickerNode(id: "wallet", title: "E-Wallet"),
-  ]
-}
-
 // MARK: - View controller
 
-/// A single screen that covers all FKMultiPicker core scenarios.
-///
-/// This file is intentionally self-contained so it can be copied into other projects.
+/// Single scrollable screen for `FKMultiPicker` scenarios (shared data lives under `Support/`).
 final class FKMultiPickerExampleViewController: UIViewController {
   private let scrollView = UIScrollView()
   private let contentStack = UIStackView()
@@ -102,13 +18,13 @@ final class FKMultiPickerExampleViewController: UIViewController {
   /// Keeps a strong reference for manual dismiss and dynamic updates.
   private var activePicker: FKMultiPicker?
   /// Stores mutable data for dynamic refresh scenario.
-  private var dynamicNodes: [FKMultiPickerNode] = FKMultiPickerDemoSupport.customThreeLevelNodes
+  private var dynamicNodes: [FKMultiPickerNode] = FKMultiPickerDemoSampleData.threeLevelCatalog
   private var dynamicVersion = 1
-  private let customProvider = FKMultiPickerCustomDataProvider()
+  private let catalogProvider = FKMultiPickerDemoCatalogProvider()
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    FKMultiPickerDemoSupport.configureGlobalStyleIfNeeded()
+    FKMultiPickerDemoSampleData.configureGlobalStyleIfNeeded()
     title = "FKMultiPicker"
     view.backgroundColor = .systemGroupedBackground
     setupLayout()
@@ -163,15 +79,15 @@ private extension FKMultiPickerExampleViewController {
   func addBasicScenesSection() {
     let section = makeSectionContainer(
       title: "Basic Picker Scenarios",
-      subtitle: "Includes 3-level custom, built-in region 4-level, single-level, and one-line popup API."
+      subtitle: "Three-level static tree, four-level sample address tree, single column, provider-driven linkage, one-line sample API."
     )
 
     section.addArrangedSubview(
       makeActionButton(title: "Show 3-level linkage picker (custom data)") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 3)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 3)
         config.toolbarStyle.title = "Select Product Category"
-        let picker = FKMultiPicker.present(in: self.view, nodes: FKMultiPickerDemoSupport.customThreeLevelNodes, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.present(in: self.view, roots: FKMultiPickerDemoSampleData.threeLevelCatalog, configuration: config) { [weak self] result in
           self?.appendLog("3-level confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "3-level-custom")
@@ -180,11 +96,11 @@ private extension FKMultiPickerExampleViewController {
     )
 
     section.addArrangedSubview(
-      makeActionButton(title: "Show province-city-district-street 4-level built-in picker") { [weak self] in
+      makeActionButton(title: "Show 4-level sample address picker (demo tree)") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 4)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 4)
         config.toolbarStyle.title = "Select Region"
-        let picker = FKMultiPicker.presentRegionPicker(in: self.view, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.presentSampleAddressPicker(in: self.view, configuration: config) { [weak self] result in
           self?.appendLog("Region confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "4-level-region")
@@ -195,9 +111,9 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Show single-level picker") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 1)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 1)
         config.toolbarStyle.title = "Payment Method"
-        let picker = FKMultiPicker.present(in: self.view, nodes: FKMultiPickerDemoSupport.singleLevelNodes, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.present(in: self.view, roots: FKMultiPickerDemoSampleData.singleLevelPayments, configuration: config) { [weak self] result in
           self?.appendLog("Single-level confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "single-level")
@@ -208,9 +124,9 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Show custom data linkage picker (provider protocol)") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 3)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 3)
         config.toolbarStyle.title = "Provider Linkage Picker"
-        let picker = FKMultiPicker.present(in: self.view, provider: self.customProvider, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.present(in: self.view, dataProvider: self.catalogProvider, configuration: config) { [weak self] result in
           self?.appendLog("Provider confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "provider-linkage")
@@ -222,7 +138,7 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "One-line show picker API demo") { [weak self] in
         guard let self else { return }
-        self.activePicker = FKMultiPicker.presentRegionPicker(in: self.view) { [weak self] result in
+        self.activePicker = FKMultiPicker.presentSampleAddressPicker(in: self.view) { [weak self] result in
           self?.appendLog("One-line confirmed -> \(result.joinedTitle)")
         }
       }
@@ -240,7 +156,7 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Custom picker UI (text/font/row/background)") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 3)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 3)
         config.toolbarStyle.title = "Custom UI Picker"
         config.toolbarStyle.titleColor = .white
         config.toolbarStyle.confirmTitleColor = .systemYellow
@@ -254,7 +170,7 @@ private extension FKMultiPickerExampleViewController {
         config.containerStyle.maskColor = UIColor.black.withAlphaComponent(0.55)
         config.containerStyle.cornerRadius = 22
 
-        let picker = FKMultiPicker.present(in: self.view, nodes: FKMultiPickerDemoSupport.customThreeLevelNodes, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.present(in: self.view, roots: FKMultiPickerDemoSampleData.threeLevelCatalog, configuration: config) { [weak self] result in
           self?.appendLog("Custom UI confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "custom-ui")
@@ -266,13 +182,13 @@ private extension FKMultiPickerExampleViewController {
       makeActionButton(title: "Custom popup style (fullscreen / half / corner radius)") { [weak self] in
         guard let self else { return }
         let useFullScreen = Bool.random()
-        var config = FKMultiPickerConfiguration(componentCount: 4)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 4)
         config.presentationStyle = useFullScreen ? .fullScreen : .halfScreen
         config.toolbarStyle.title = useFullScreen ? "Fullscreen Picker" : "Half Screen Picker"
         config.containerStyle.cornerRadius = useFullScreen ? 0 : 20
         config.animationDuration = 0.35
 
-        let picker = FKMultiPicker.presentRegionPicker(in: self.view, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.presentSampleAddressPicker(in: self.view, configuration: config) { [weak self] result in
           self?.appendLog("Popup style confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "popup-style")
@@ -292,10 +208,10 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Set default selected items when initialize") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 4)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 4)
         config.toolbarStyle.title = "Default Selection"
         config.defaultSelectionKeys = ["440000", "440300", "440305", "440305002"]
-        let picker = FKMultiPicker.presentRegionPicker(in: self.view, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.presentSampleAddressPicker(in: self.view, configuration: config) { [weak self] result in
           self?.appendLog("Default selection confirmed -> \(result.joinedTitle)")
         }
         self.installCommonCallbacks(on: picker, name: "default-selection")
@@ -315,9 +231,9 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Confirm callback + cancel callback + change callback") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 3)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 3)
         config.toolbarStyle.title = "Observe Callbacks"
-        let picker = FKMultiPicker.present(in: self.view, nodes: FKMultiPickerDemoSupport.customThreeLevelNodes, configuration: config) { [weak self] result in
+        let picker = FKMultiPicker.present(in: self.view, roots: FKMultiPickerDemoSampleData.threeLevelCatalog, configuration: config) { [weak self] result in
           self?.appendLog("Confirm callback -> \(result.joinedTitle)")
         }
         picker.onCancelled = { [weak self] in
@@ -342,7 +258,7 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Apply global style configuration for all pickers") { [weak self] in
         guard let self else { return }
-        FKMultiPickerDemoSupport.configureGlobalStyleIfNeeded()
+        FKMultiPickerDemoSampleData.configureGlobalStyleIfNeeded()
         self.appendLog("Global style configured. New picker instances use shared defaults.")
       }
     )
@@ -350,7 +266,7 @@ private extension FKMultiPickerExampleViewController {
     section.addArrangedSubview(
       makeActionButton(title: "Show dynamic refresh picker data") { [weak self] in
         guard let self else { return }
-        var config = FKMultiPickerConfiguration(componentCount: 3)
+        var config = FKMultiPickerConfiguration(numberOfColumns: 3)
         config.toolbarStyle.title = "Dynamic Data v\(self.dynamicVersion)"
 
         let picker = FKMultiPicker(configuration: config)

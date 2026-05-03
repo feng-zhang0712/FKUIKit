@@ -3,7 +3,7 @@ import UIKit
 
 /// Default implementation of ``FKBusinessAlertManaging`` with de-duplication.
 public final class FKBusinessAlertManager: FKBusinessAlertManaging, @unchecked Sendable {
-  /// Lock protecting de-duplication state.
+  /// Lock protecting de-duplication state when ``presentOnce`` schedules UI work.
   private let lock = NSLock()
   /// IDs of alerts currently being presented.
   private var presentingIDs: Set<String> = []
@@ -36,31 +36,35 @@ public final class FKBusinessAlertManager: FKBusinessAlertManaging, @unchecked S
     presentingIDs.insert(id)
     lock.unlock()
 
-    let presentBlock = { [weak self] in
-      guard let self else { return }
-      let vc = presenter ?? FKTopViewControllerResolver.topMostViewController()
-      guard let vc else {
+    Task { @MainActor [weak self] in
+      self?.presentAlertOnMain(id: id, title: title, message: message, actions: actions, presenter: presenter)
+    }
+  }
+
+  @MainActor
+  private func presentAlertOnMain(
+    id: String,
+    title: String?,
+    message: String?,
+    actions: [FKAlertAction],
+    presenter: UIViewController?
+  ) {
+    let vc = presenter ?? FKTopViewControllerResolver.topMostViewController()
+    guard let vc else {
+      finish(id: id)
+      return
+    }
+
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    let resolvedActions = actions.isEmpty ? [FKAlertAction(title: "OK", style: .default, handler: nil)] : actions
+    for action in resolvedActions {
+      alert.addAction(UIAlertAction(title: action.title, style: Self.mapStyle(action.style)) { _ in
+        action.handler?()
         self.finish(id: id)
-        return
-      }
-
-      let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-      let resolvedActions = actions.isEmpty ? [FKAlertAction(title: "OK", style: .default, handler: nil)] : actions
-      for action in resolvedActions {
-        alert.addAction(UIAlertAction(title: action.title, style: Self.mapStyle(action.style)) { _ in
-          action.handler?()
-          self.finish(id: id)
-        })
-      }
-
-      vc.present(alert, animated: true)
+      })
     }
 
-    if Thread.isMainThread {
-      presentBlock()
-    } else {
-      DispatchQueue.main.async(execute: presentBlock)
-    }
+    vc.present(alert, animated: true)
   }
 
   /// Marks alert identifier as finished so it can be presented again.
@@ -84,4 +88,3 @@ public final class FKBusinessAlertManager: FKBusinessAlertManaging, @unchecked S
     }
   }
 }
-

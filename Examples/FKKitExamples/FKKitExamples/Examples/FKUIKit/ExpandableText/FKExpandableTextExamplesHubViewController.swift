@@ -1,75 +1,51 @@
-//
-// FKExpandableTextExamplesHubViewController.swift
-//
-// Root menu for copy-ready FKExpandableText integration examples.
-//
-
+import FKUIKit
 import UIKit
 
-/// Entry list for FKExpandableText examples.
+/// Lists ExpandableText sample screens; each row pushes one example view controller.
 final class FKExpandableTextExamplesHubViewController: UITableViewController {
-  private enum Row: Int, CaseIterable {
-    case basic
-    case tableView
-    case collectionView
-
-    var title: String {
-      switch self {
-      case .basic:
-        return "Basic Features Playground"
-      case .tableView:
-        return "UITableView Reuse + State Cache"
-      case .collectionView:
-        return "UICollectionView Adaptation"
-      }
-    }
-
-    var subtitle: String {
-      switch self {
-      case .basic:
-        return "Text style, attributed text, custom button, animation, callback, manual control"
-      case .tableView:
-        return "High-volume list reuse with stable identifiers and dynamic height updates"
-      case .collectionView:
-        return "Card-style collection with expandable content and reuse-safe state restoration"
-      }
-    }
+  private struct Row {
+    let title: String
+    let subtitle: String
+    let make: () -> UIViewController
   }
+
+  private let rows: [Row] = [
+    Row(title: "UILabel — basic", subtitle: "Default configuration", make: { FKExpandableTextExampleLabelBasicViewController() }),
+    Row(title: "UITextView — rich text + links", subtitle: "`FKExpandableText.attach`", make: { FKExpandableTextExampleTextViewRichViewController() }),
+    Row(title: "Custom line limit", subtitle: "`collapseRule: .lines(2)`", make: { FKExpandableTextExampleLineLimitViewController() }),
+    Row(title: "Custom action styling", subtitle: "Token, fonts, `trailingBottom`", make: { FKExpandableTextExampleActionStyleViewController() }),
+    Row(title: "One-way expand", subtitle: "`oneWayExpand`", make: { FKExpandableTextExampleOneWayExpandViewController() }),
+    Row(title: "Tap full text area", subtitle: "`interactionMode: .fullTextArea`", make: { FKExpandableTextExampleFullTextAreaViewController() }),
+    Row(title: "Dynamic text", subtitle: "Runtime `fk_setExpandableText`", make: { FKExpandableTextExampleDynamicTextViewController() }),
+    Row(title: "UIKit composition", subtitle: "Label + text view", make: { FKExpandableTextExampleUIKitCompositionViewController() }),
+    Row(title: "SwiftUI bridge", subtitle: "`FKExpandableTextView`", make: { FKExpandableTextExampleSwiftUIViewController() }),
+  ]
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    title = "FKExpandableText"
+    title = "ExpandableText"
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.cellLayoutMarginsFollowReadableWidth = true
   }
 
-  override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    Row.allCases.count
+  override func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
+    rows.count
   }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-    let row = Row.allCases[indexPath.row]
-    var content = cell.defaultContentConfiguration()
-    content.text = row.title
-    content.secondaryText = row.subtitle
-    content.secondaryTextProperties.color = .secondaryLabel
-    cell.contentConfiguration = content
+    let row = rows[indexPath.row]
+    var config = cell.defaultContentConfiguration()
+    config.text = row.title
+    config.secondaryText = row.subtitle
+    config.secondaryTextProperties.color = .secondaryLabel
+    cell.contentConfiguration = config
     cell.accessoryType = .disclosureIndicator
     return cell
   }
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
-    let destination: UIViewController
-    switch Row.allCases[indexPath.row] {
-    case .basic:
-      destination = FKExpandableTextBasicExampleViewController()
-    case .tableView:
-      destination = FKExpandableTextTableExampleViewController()
-    case .collectionView:
-      destination = FKExpandableTextCollectionExampleViewController()
-    }
-    navigationController?.pushViewController(destination, animated: true)
+    navigationController?.pushViewController(rows[indexPath.row].make(), animated: true)
   }
 }

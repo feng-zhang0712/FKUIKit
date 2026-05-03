@@ -69,37 +69,34 @@ public final class FKBusinessVersionManager: FKBusinessVersioning, @unchecked Se
   ///   - presenter: Optional presenter view controller.
   public func presentUpdatePromptIfNeeded(result: FKVersionCheckResult, presenter: UIViewController?) {
     guard result.decision != .upToDate else { return }
+    Task { @MainActor [weak self] in
+      self?.presentUpdatePromptOnMain(result: result, presenter: presenter)
+    }
+  }
 
-    let presentBlock = { [weak self] in
-      guard let self else { return }
-      let vc = presenter ?? FKTopViewControllerResolver.topMostViewController()
-      guard let vc else { return }
-      let title = "Update Available"
-      let message = Self.buildMessage(remote: result.remote)
+  @MainActor
+  private func presentUpdatePromptOnMain(result: FKVersionCheckResult, presenter: UIViewController?) {
+    let vc = presenter ?? FKTopViewControllerResolver.topMostViewController()
+    guard let vc else { return }
+    let title = "Update Available"
+    let message = Self.buildMessage(remote: result.remote)
 
-      let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-      let updateTitle = "Update"
-      alert.addAction(UIAlertAction(title: updateTitle, style: .default) { _ in
-        if let url = result.remote.updateURL {
-          UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        }
-        if result.decision == .forceUpdate {
-          self.presentUpdatePromptIfNeeded(result: result, presenter: vc)
-        }
-      })
-
-      if result.decision == .optionalUpdate {
-        alert.addAction(UIAlertAction(title: "Later", style: .cancel))
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    let updateTitle = "Update"
+    alert.addAction(UIAlertAction(title: updateTitle, style: .default) { [weak self] _ in
+      if let url = result.remote.updateURL {
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
       }
+      if result.decision == .forceUpdate {
+        self?.presentUpdatePromptIfNeeded(result: result, presenter: vc)
+      }
+    })
 
-      vc.present(alert, animated: true)
+    if result.decision == .optionalUpdate {
+      alert.addAction(UIAlertAction(title: "Later", style: .cancel))
     }
 
-    if Thread.isMainThread {
-      presentBlock()
-    } else {
-      DispatchQueue.main.async(execute: presentBlock)
-    }
+    vc.present(alert, animated: true)
   }
 
   /// Builds alert message content from remote metadata.

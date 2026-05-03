@@ -22,7 +22,7 @@ public enum FKUtilsDevice {
   /// Returns current system version.
   public static func systemVersion() -> String {
     #if canImport(UIKit)
-    UIDevice.current.systemVersion
+    FKMainActorUIKitBridge.systemVersion()
     #else
     ProcessInfo.processInfo.operatingSystemVersionString
     #endif
@@ -31,7 +31,7 @@ public enum FKUtilsDevice {
   /// Returns screen size in points.
   public static func screenSize() -> CGSize {
     #if canImport(UIKit)
-    UIScreen.main.bounds.size
+    FKMainActorUIKitBridge.screenBoundsSize()
     #else
     .zero
     #endif
@@ -40,7 +40,7 @@ public enum FKUtilsDevice {
   /// Returns screen scale.
   public static func screenScale() -> CGFloat {
     #if canImport(UIKit)
-    UIScreen.main.scale
+    FKMainActorUIKitBridge.screenScale()
     #else
     1
     #endif
@@ -56,8 +56,7 @@ public enum FKUtilsDevice {
   /// Returns current battery level from 0 to 1.
   public static func batteryLevel() -> Float {
     #if canImport(UIKit)
-    UIDevice.current.isBatteryMonitoringEnabled = true
-    return UIDevice.current.batteryLevel
+    FKMainActorUIKitBridge.batteryLevel()
     #else
     -1
     #endif
@@ -66,14 +65,7 @@ public enum FKUtilsDevice {
   /// Returns current battery state.
   public static func batteryState() -> String {
     #if canImport(UIKit)
-    UIDevice.current.isBatteryMonitoringEnabled = true
-    switch UIDevice.current.batteryState {
-    case .unknown: return "unknown"
-    case .unplugged: return "unplugged"
-    case .charging: return "charging"
-    case .full: return "full"
-    @unknown default: return "unknown"
-    }
+    FKMainActorUIKitBridge.batteryStateDescription()
     #else
     return "unknown"
     #endif
@@ -157,7 +149,7 @@ public enum FKUtilsDevice {
   /// Returns a stable vendor identifier when available.
   public static func safeDeviceIdentifier() -> String {
     #if canImport(UIKit)
-    UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+    FKMainActorUIKitBridge.identifierForVendorUUIDString()
     #else
     UUID().uuidString
     #endif

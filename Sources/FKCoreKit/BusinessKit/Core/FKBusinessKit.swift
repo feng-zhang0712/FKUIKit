@@ -1,5 +1,4 @@
 import Foundation
-import UIKit
 
 /// Main entry point for high-frequency business capabilities.
 ///

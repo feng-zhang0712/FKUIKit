@@ -62,9 +62,10 @@ public final class FKSecurityUtils: FKSecurityUtilizing, @unchecked Sendable {
     guard !name.isEmpty else { return value }
     let maskedName: String
     if name.count <= 2 {
-      maskedName = name.prefix(1) + "*"
+      maskedName = String(name.prefix(1)) + "*"
     } else {
-      maskedName = name.prefix(1) + String(repeating: "*", count: name.count - 2) + name.suffix(1)
+      maskedName =
+        String(name.prefix(1)) + String(repeating: "*", count: name.count - 2) + String(name.suffix(1))
     }
     return "\(maskedName)@\(domain)"
   }

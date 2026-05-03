@@ -1,13 +1,6 @@
-//
-//  FKButtonExamplesHubViewController.swift
-//  FKKitExamples
-//
-//  Entry list: each row opens a focused demo screen.
-//
-
 import UIKit
 
-/// Groups `FKButton` samples by topic so the catalog stays navigable.
+/// Entry table for FKButton example screens (see `Scenarios/`).
 final class FKButtonExamplesHubViewController: UITableViewController {
 
   private struct Row {
@@ -29,7 +22,7 @@ final class FKButtonExamplesHubViewController: UITableViewController {
     ),
     Row(
       title: "Interaction",
-      subtitle: "Tap interval, hit target, long press, chaining",
+      subtitle: "Tap interval, hit target, long press, haptics/sound, chaining",
       controllerType: FKButtonExampleInteractionViewController.self
     ),
     Row(

@@ -1,291 +1,113 @@
 # FKDivider
 
-`FKDivider` is a lightweight, native Swift divider component for iOS with UIKit and SwiftUI support.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-  - [Swift Package Manager](#swift-package-manager)
-  - [CocoaPods](#cocoapods)
-- [Usage](#usage)
-  - [Quick Start](#quick-start)
-  - [Basic Divider](#basic-divider)
-  - [1px Auto Scale](#1px-auto-scale)
-  - [Indent & Margin](#indent--margin)
-  - [Dashed Divider](#dashed-divider)
-  - [Gradient Divider](#gradient-divider)
-  - [Auto Pin to Edge](#auto-pin-to-edge)
-  - [Global Configuration](#global-configuration)
-  - [Interface Builder Usage](#interface-builder-usage)
-  - [SwiftUI Support](#swiftui-support)
-- [API Reference](#api-reference)
-- [License](#license)
-
-## Overview
-
-`FKDivider` solves common UIKit/SwiftUI separator pain points:
-
-- blurry lines on different screen scales
-- repetitive Auto Layout code for edge-pinned separators
-- limited customization in native separators
-
-It provides a production-ready divider abstraction with pixel-perfect rendering, configurable line styles, gradient support, global defaults, and easy integration for both UIKit and SwiftUI.
-
-## Features
-
-- Horizontal and vertical divider support
-- 1 physical pixel auto-scaling (`isPixelPerfect`) for Retina clarity
-- Solid and dashed styles with customizable dash pattern
-- Fully configurable thickness, color, and content insets
-- Gradient divider support with configurable direction and colors
-- Fast auto-pinning helpers for top/bottom/left/right edges
-- Global default configuration via `FKDividerManager.shared`
-- Per-instance override with `FKDividerConfiguration`
-- Interface Builder support with `@IBDesignable` + `@IBInspectable`
-- Dark mode friendly (dynamic color refresh)
-- Thread-safe convenience API for adding dividers from any thread
-- Pure Swift implementation, no third-party dependency
+UIKit hairline and stroke-style separators with an optional SwiftUI twin (`FKDividerView`). Same configuration model for both stacks.
 
 ## Requirements
 
-- iOS 13.0+
-- Swift 5.9+
-- Xcode 14.0+
+- Swift 6 / iOS 15+
+- `import FKUIKit` (SwiftUI examples also `import SwiftUI`)
 
-## Installation
+## Source layout
 
-### Swift Package Manager
+Aligned with **`Badge`** and **`BlurView`**: **`Public`** (types you import), **`Internal`** (shared geometry), **`Extension`** (UIKit helpers).
 
-Add `FKKit` and use the `FKUIKit` product.
+Paths are under `Sources/FKUIKit/Components/Divider/`.
+
+### `Public/`
+
+| File | Role |
+|------|------|
+| `FKDividerConfiguration.swift` | `FKDividerConfiguration`, axis/line/gradient/pin enums |
+| `FKDivider.swift` | `FKDivider` (`UIView`), rendering, `defaultConfiguration`, intrinsic size |
+| `FKDivider+InterfaceBuilder.swift` | `@IBInspectable` bridges for Storyboards |
+| `FKDividerView.swift` | SwiftUI `FKDividerView` |
+
+### `Internal/`
+
+| File | Role |
+|------|------|
+| `FKDividerGeometry.swift` | Shared horizontal/vertical stroke math for UIKit + SwiftUI |
+
+### `Extension/`
+
+| File | Role |
+|------|------|
+| `UIView+FKDivider.swift` | `fk_addDivider(at:configuration:margin:)` |
+
+## Quick start
 
 ```swift
-dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.34.0")
-],
-targets: [
-  .target(
-    name: "YourApp",
-    dependencies: [
-      .product(name: "FKUIKit", package: "FKKit")
-    ]
-  )
-]
-```
-
-Then import:
-
-```swift
+import UIKit
 import FKUIKit
+
+let line = FKDivider(configuration: .init(color: .separator))
 ```
 
-### CocoaPods
-
-```ruby
-pod 'FKKit/FKUIKit'
-```
-
-Then run:
-
-```bash
-pod install
-```
-
-## Usage
-
-### Quick Start
-
-One-line divider creation:
+Set once at launch (optional):
 
 ```swift
-let divider = FKDivider()
+FKDivider.defaultConfiguration.color = .opaqueSeparator
 ```
 
-### Basic Divider
-
-Horizontal divider:
+Pin without writing constraints:
 
 ```swift
-var config = FKDividerConfiguration()
-config.direction = .horizontal
-let divider = FKDivider(configuration: config)
+card.fk_addDivider(at: .bottom, margin: 16)
 ```
 
-Vertical divider:
+## Global defaults
 
-```swift
-var config = FKDividerConfiguration()
-config.direction = .vertical
-let divider = FKDivider(configuration: config)
-```
+Use **`FKDivider.defaultConfiguration`** as the single baseline (same idea as `FKBlur.defaultConfiguration` / `FKBadge.defaultConfiguration`).  
+`FKDivider()` and `fk_addDivider(…)` copy that struct when you do not pass an explicit `FKDividerConfiguration`.
 
-### 1px Auto Scale
+## RTL and edges
 
-Enable physical-pixel rendering (default enabled):
+- **`FKDividerPinnedEdge.leading` / `.trailing`** pin to `leadingAnchor` / `trailingAnchor` (semantic edges).
+- Horizontal **gradients** follow layout direction in UIKit (`CAGradientLayer` flips under RTL) and in SwiftUI (`LinearGradient` uses `.leading` / `.trailing`).
 
-```swift
-var config = FKDividerConfiguration()
-config.isPixelPerfect = true
-let divider = FKDivider(configuration: config)
-```
+## `dashPattern`
 
-Disable it and use logical point thickness:
+Public API is **`[CGFloat]`** (stroke and gap lengths in points). Internally this maps to `CAShapeLayer.lineDashPattern`.
 
-```swift
-var config = FKDividerConfiguration()
-config.isPixelPerfect = false
-config.thickness = 1.0
-```
+## Auto Layout
 
-### Indent & Margin
+`FKDivider` implements **`intrinsicContentSize`** on the short axis (thickness) so `UIStackView` can size a horizontal line without an extra height constraint when you rely on the hairline thickness.
 
-Use `contentInsets` to shorten the rendered line:
+## Interface Builder
 
-```swift
-var config = FKDividerConfiguration()
-config.contentInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-let divider = FKDivider(configuration: config)
-```
+Subclass `UIView` → **`FKDivider`** and use the `ib*` inspectables defined in `FKDivider+InterfaceBuilder.swift`.
 
-Use `margin` with auto-pinning helper:
-
-```swift
-containerView.fk_addDivider(at: .bottom, margin: 20)
-```
-
-### Dashed Divider
-
-```swift
-var config = FKDividerConfiguration()
-config.lineStyle = .dashed
-config.dashPattern = [6, 3] // draw 6pt, gap 3pt
-let divider = FKDivider(configuration: config)
-```
-
-### Gradient Divider
-
-```swift
-var config = FKDividerConfiguration()
-config.showsGradient = true
-config.gradientStartColor = .systemBlue
-config.gradientEndColor = .systemTeal
-config.gradientDirection = .horizontal
-let divider = FKDivider(configuration: config)
-```
-
-### Auto Pin to Edge
-
-Attach dividers directly to container edges without manual constraints:
-
-```swift
-containerView.fk_addDivider(at: .top)
-containerView.fk_addDivider(at: .bottom, margin: 16)
-containerView.fk_addDivider(at: .left)
-containerView.fk_addDivider(at: .right)
-```
-
-### Global Configuration
-
-Set project-wide defaults:
-
-```swift
-@MainActor
-func setupDividerDefaults() {
-  var global = FKDividerConfiguration()
-  global.color = .separator
-  global.thickness = 1
-  global.isPixelPerfect = true
-  FKDividerManager.shared.defaultConfiguration = global
-}
-```
-
-Per-instance override:
-
-```swift
-var local = FKDividerManager.shared.defaultConfiguration
-local.lineStyle = .dashed
-let divider = FKDivider(configuration: local)
-```
-
-### Interface Builder Usage
-
-`FKDivider` is `@IBDesignable` and exposes `@IBInspectable` bridges:
-
-- `ibDirection` (`0: horizontal`, `1: vertical`)
-- `ibLineStyle` (`0: solid`, `1: dashed`)
-- `ibThickness`
-- `ibColor`
-- `ibInsetLeft`, `ibInsetRight`, `ibInsetTop`, `ibInsetBottom`
-- `ibPixelPerfect`
-- `ibShowsGradient`
-- `ibGradientStartColor`, `ibGradientEndColor`, `ibGradientDirection`
-- `ibDashLength`, `ibDashGap`
-
-You can drop a `UIView` in XIB/Storyboard, set its class to `FKDivider`, and configure these properties visually.
-
-### SwiftUI Support
-
-Use `FKDividerView` with the same configuration model:
+## SwiftUI
 
 ```swift
 import SwiftUI
 import FKUIKit
 
-struct DemoView: View {
-  var body: some View {
-    VStack(spacing: 20) {
-      FKDividerView(
-        configuration: .init(
-          direction: .horizontal,
-          lineStyle: .solid,
-          color: .separator
-        )
-      )
-      .frame(height: 1)
-
-      FKDividerView(
-        configuration: .init(
-          direction: .horizontal,
-          lineStyle: .dashed,
-          dashPattern: [4, 2],
-          showsGradient: true,
-          gradientStartColor: .systemPink,
-          gradientEndColor: .systemPurple
-        )
-      )
-      .frame(height: 1)
-    }
-    .padding()
-  }
-}
+FKDividerView(configuration: .init(direction: .horizontal, color: .separator))
+  .frame(height: 1)
 ```
 
-## API Reference
+## Examples
 
-Core types:
+Under `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/Divider/`:
 
-- `FKDivider`: UIKit divider view
-- `FKDividerConfiguration`: full divider style/config model
-- `FKDividerManager`: global default configuration manager
-- `FKDividerView`: SwiftUI adapter view
+| Location | Role |
+|----------|------|
+| `FKDividerExamplesHubViewController.swift` | Table of scenarios |
+| `FKDividerExampleSupport.swift` | Scroll stack + cards |
+| `Scenarios/` | Basics, line styles, layout/defaults, adaptive UI, SwiftUI host |
 
-Enums:
+## API summary
 
-- `FKDividerDirection` (`horizontal`, `vertical`)
-- `FKDividerLineStyle` (`solid`, `dashed`)
-- `FKDividerGradientDirection` (`horizontal`, `vertical`)
-- `FKDividerPinnedEdge` (`top`, `bottom`, `left`, `right`)
-
-Key APIs:
-
-- `FKDivider(configuration:)`
-- `FKDivider.apply(configuration:)`
-- `UIView.fk_addDivider(at:configuration:margin:)`
-- `FKDividerManager.shared.defaultConfiguration`
+| Symbol | Purpose |
+|--------|---------|
+| `FKDivider` | Separator `UIView` |
+| `FKDividerConfiguration` | Style model |
+| `FKDivider.defaultConfiguration` | Global baseline |
+| `FKDividerView` | SwiftUI wrapper |
+| `FKDividerPinnedEdge` | `.top`, `.bottom`, `.leading`, `.trailing` |
+| `UIView.fk_addDivider(at:configuration:margin:)` | Pinned helper |
 
 ## License
 
-`FKDivider` is part of FKKit and is distributed under the MIT License.  
-See [LICENSE](../../../../LICENSE).
+Part of FKKit — MIT. See repository `LICENSE`.

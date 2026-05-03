@@ -1,12 +1,12 @@
 # macOS
 .DS_Store
 
-# Swift Package Manager / Xcode 本地 Package 工作区（勿提交）
+# Swift Package Manager / Xcode local package workspace (do not commit)
 .build/
 .swiftpm/
 Package.resolved
 
-# Xcode（若在本仓库内打开 Package 或放 Example 工程）
+# Xcode (when opening a Package in-repo or adding an Example project)
 DerivedData/
 *.xcuserstate
 **/xcuserdata/
@@ -17,9 +17,13 @@ DerivedData/
 *.dSYM.zip
 *.dSYM
 
-# CocoaPods / Carthage（若后续混用）
+# CocoaPods / Carthage (if used later)
 Pods/
 Carthage/Build/
 
-# 其他
+# Cursor / Claude local editor and agent config (do not commit)
+.cursor/
+.claude/
+
+# Other
 .netrc

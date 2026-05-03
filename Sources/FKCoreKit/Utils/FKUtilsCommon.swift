@@ -190,13 +190,8 @@ public enum FKUtilsCommon {
   private static func openURL(_ string: String) {
     #if canImport(UIKit)
     guard let url = URL(string: string) else { return }
-    let execute = {
+    Task { @MainActor in
       UIApplication.shared.open(url, options: [:], completionHandler: nil)
-    }
-    if Thread.isMainThread {
-      execute()
-    } else {
-      DispatchQueue.main.async(execute: execute)
     }
     #endif
   }

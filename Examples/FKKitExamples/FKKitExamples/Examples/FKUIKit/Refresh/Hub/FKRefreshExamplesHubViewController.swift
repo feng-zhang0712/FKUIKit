@@ -1,90 +1,135 @@
-//
-// FKRefreshExamplesHubViewController.swift
-// FKKitExamples — FKRefresh demos
-//
-// Hub table: navigates to each demo screen (default, custom, GIF, delegate, settings, etc.).
-//
-
 import FKUIKit
 import UIKit
 
-/// Lists every demo that exercises a distinct public type or integration path.
+/// Entry list for FKRefresh samples (`Scenarios/`, `SwiftUI/`, `Shared/`, `Support/`).
 final class FKRefreshExamplesHubViewController: UITableViewController {
-
-  private enum Row: Int, CaseIterable {
-    case defaultIndicator
-    case asyncAwait
-    case customDots
-    case gif
-    case hosted
-    case configuration
-    case globalSettings
-    case delegate
-    case pagination
-    case collectionView
-    case plainScrollView
-
-    var title: String {
-      switch self {
-      case .defaultIndicator: return "Default indicator"
-      case .asyncAwait: return "Async/Await + auto end"
-      case .customDots: return "Custom dots (FKRefreshContentView)"
-      case .gif: return "GIF (FKGIFRefreshContentView)"
-      case .hosted: return "Hosted view (FKHostedRefreshContentView)"
-      case .configuration: return "Configuration & silent refresh"
-      case .globalSettings: return "Global defaults (FKRefreshSettings)"
-      case .delegate: return "Delegate (FKRefreshControlDelegate)"
-      case .pagination: return "Pagination helper (FKRefreshPagination)"
-      case .collectionView: return "UICollectionView"
-      case .plainScrollView: return "Plain UIScrollView"
-      }
-    }
-
-    var subtitle: String {
-      switch self {
-      case .defaultIndicator:
-        return "FKDefaultRefreshContentView — pull + load more, triggers"
-      case .asyncAwait:
-        return "asyncAction, auto end, and state transitions"
-      case .customDots:
-        return "Custom UIView conforming to FKRefreshContentView"
-      case .gif:
-        return "UIImage animatedImage in FKGIFRefreshContentView"
-      case .hosted:
-        return "Arbitrary UIView subtree (Lottie-style hosting)"
-      case .configuration:
-        return "FKRefreshText, silent, min loading visibility"
-      case .globalSettings:
-        return "FKRefreshSettings.pullToRefresh / loadMore"
-      case .delegate:
-        return "Protocol callbacks vs onStateChanged"
-      case .pagination:
-        return "FKRefreshPagination with page label"
-      case .collectionView:
-        return "Same APIs on UICollectionView"
-      case .plainScrollView:
-        return "Not UITableView — vertical UIScrollView"
-      }
-    }
+  private struct DemoItem {
+    let title: String
+    let subtitle: String
+    let factory: () -> UIViewController
   }
+
+  private struct DemoSection {
+    let title: String
+    let items: [DemoItem]
+  }
+
+  private lazy var sections: [DemoSection] = [
+    DemoSection(title: "Core scenarios", items: [
+      DemoItem(
+        title: "UITableView baseline",
+        subtitle: "Goal: pull gesture + programmatic trigger. Params: default config. Expect: success/error/empty/cancel safe transitions.",
+        factory: { FKRefreshDefaultDemoViewController() }
+      ),
+      DemoItem(
+        title: "UICollectionView baseline",
+        subtitle: "Goal: verify same API on collection lists. Params: segmented outcomes. Expect: paged loading and retry-ready failure state.",
+        factory: { FKRefreshCollectionDemoViewController() }
+      ),
+      DemoItem(
+        title: "UIScrollView generic",
+        subtitle: "Goal: non-list scroll integration. Params: manual footer mode. Expect: stable header/footer layout on plain scroll content.",
+        factory: { FKRefreshScrollViewDemoViewController() }
+      ),
+      DemoItem(
+        title: "Async/Await flow",
+        subtitle: "Goal: async handlers + auto end. Params: automaticEndDelay. Expect: no duplicate triggers while requests run.",
+        factory: { FKRefreshAsyncAwaitExampleViewController() }
+      ),
+    ]),
+    DemoSection(title: "Indicators & configuration", items: [
+      DemoItem(
+        title: "Configuration + silent mode",
+        subtitle: "Goal: text/theme/timing knobs. Params: minimum visibility + silent refresh. Expect: no loading flash and configurable copy.",
+        factory: { FKRefreshConfigurationDemoViewController() }
+      ),
+      DemoItem(
+        title: "Custom dots view",
+        subtitle: "Goal: custom indicator animation. Params: FKRefreshContentView protocol. Expect: progress-driven visuals stay in sync.",
+        factory: { FKRefreshDotsDemoViewController() }
+      ),
+      DemoItem(
+        title: "GIF indicator",
+        subtitle: "Goal: animated-image indicator. Params: FKGIFRefreshContentView. Expect: animation starts/stops by state.",
+        factory: { FKRefreshGIFDemoViewController() }
+      ),
+      DemoItem(
+        title: "Hosted view adapter",
+        subtitle: "Goal: host arbitrary UIKit subtree. Params: FKHostedRefreshContentView. Expect: custom view follows state transitions.",
+        factory: { FKRefreshHostedDemoViewController() }
+      ),
+    ]),
+    DemoSection(title: "Policy & state", items: [
+      DemoItem(
+        title: "Policy and stress test",
+        subtitle: "Goal: conflict policy + rapid gestures. Params: mutex/queue/parallel + autoFill. Expect: no duplicate in-flight actions.",
+        factory: { FKRefreshPolicyStressExampleViewController() }
+      ),
+      DemoItem(
+        title: "Delegate logging",
+        subtitle: "Goal: inspect exact state graph. Params: delegate + closure observers. Expect: deterministic transitions for QA logs.",
+        factory: { FKRefreshDelegateDemoViewController() }
+      ),
+      DemoItem(
+        title: "Pagination helper",
+        subtitle: "Goal: page1→pageN lifecycle. Params: FKRefreshPagination reset/advance. Expect: noMoreData and reset recovery.",
+        factory: { FKRefreshPaginationDemoViewController() }
+      ),
+    ]),
+    DemoSection(title: "Globals & environment", items: [
+      DemoItem(
+        title: "Global defaults",
+        subtitle: "Goal: shared style baseline. Params: FKRefreshSettings + manager updates. Expect: screens inherit defaults consistently.",
+        factory: { FKRefreshGlobalSettingsDemoViewController() }
+      ),
+      DemoItem(
+        title: "Complex environment suite",
+        subtitle: "Goal: large title + tab bar + keyboard + rotation. Params: nested nav/tab containers. Expect: stable insets and no state drift.",
+        factory: { FKRefreshComplexEnvironmentDemoViewController() }
+      ),
+      DemoItem(
+        title: "Localization + accessibility",
+        subtitle: "Goal: i18n and a11y validation. Params: English/Spanish + Dynamic Type + RTL. Expect: readable copy and VoiceOver feedback.",
+        factory: { FKRefreshLocalizationAccessibilityDemoViewController() }
+      ),
+    ]),
+    DemoSection(title: "SwiftUI Bridge", items: [
+      DemoItem(
+        title: "SwiftUI list via bridge",
+        subtitle: "Goal: reuse UIKit refresh core in SwiftUI. Params: FKRefreshSwiftUIBridge + token-safe completion. Expect: single logic path.",
+        factory: { FKRefreshSwiftUIBridgeDemoViewController() }
+      ),
+    ]),
+  ]
 
   override func viewDidLoad() {
     super.viewDidLoad()
     title = "FKRefresh"
+    navigationItem.largeTitleDisplayMode = .never
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     tableView.cellLayoutMarginsFollowReadableWidth = true
+    navigationController?.navigationBar.prefersLargeTitles = false
+  }
+
+  override func numberOfSections(in tableView: UITableView) -> Int {
+    sections.count
+  }
+
+  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    sections[section].title
   }
 
   override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    Row.allCases.count
+    sections[section].items.count
   }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-    let row = Row.allCases[indexPath.row]
+    let row = sections[indexPath.section].items[indexPath.row]
     var config = cell.defaultContentConfiguration()
     config.text = row.title
     config.secondaryText = row.subtitle
+    config.secondaryTextProperties.numberOfLines = 0
     config.secondaryTextProperties.color = .secondaryLabel
     cell.contentConfiguration = config
     cell.accessoryType = .disclosureIndicator
@@ -93,31 +138,7 @@ final class FKRefreshExamplesHubViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
-    let vc: UIViewController
-    switch Row.allCases[indexPath.row] {
-    case .defaultIndicator:
-      vc = FKRefreshDefaultDemoViewController()
-    case .asyncAwait:
-      vc = FKRefreshAsyncAwaitDemoViewController()
-    case .customDots:
-      vc = FKRefreshDotsDemoViewController()
-    case .gif:
-      vc = FKRefreshGIFDemoViewController()
-    case .hosted:
-      vc = FKRefreshHostedDemoViewController()
-    case .configuration:
-      vc = FKRefreshConfigurationDemoViewController()
-    case .globalSettings:
-      vc = FKRefreshGlobalSettingsDemoViewController()
-    case .delegate:
-      vc = FKRefreshDelegateDemoViewController()
-    case .pagination:
-      vc = FKRefreshPaginationDemoViewController()
-    case .collectionView:
-      vc = FKRefreshCollectionDemoViewController()
-    case .plainScrollView:
-      vc = FKRefreshScrollViewDemoViewController()
-    }
+    let vc = sections[indexPath.section].items[indexPath.row].factory()
     navigationController?.pushViewController(vc, animated: true)
   }
 }

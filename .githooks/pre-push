@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Run before `git push` when core.hooksPath is set to .githooks (see docs/GIT_HOOKS.md).
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+exec bash "$ROOT/scripts/verify-podspec-versions.sh"

@@ -16,7 +16,7 @@ import Foundation
  - Shared mutable maps (progress/completion handlers) are lock-protected.
  - This class does not own business-level parsing rules beyond Codable decoding.
  */
-public final class FKNetworkClient: NSObject, Networkable, URLSessionTaskDelegate, URLSessionDownloadDelegate {
+public final class FKNetworkClient: NSObject, Networkable, URLSessionTaskDelegate, URLSessionDownloadDelegate, @unchecked Sendable {
   /// Runtime configuration source.
   private let config: FKNetworkConfiguration
   /// Backing URLSession used for all task types.

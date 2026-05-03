@@ -1,319 +1,113 @@
 # FKExpandableText
 
-`FKExpandableText` is a pure UIKit expandable/collapsible long-text component for production iOS apps.
-It is designed for social feeds, comments, news cards, and any high-reuse list scene that needs smooth "Read more" behavior.
-
-The component is implemented with `Swift 5.9+` and native `UIKit`/`Foundation` APIs only.
-No Objective-C bridge and no third-party dependency are required.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Supported Scenarios](#supported-scenarios)
-  - [Normal Text Expand/Collapse](#normal-text-expandcollapse)
-  - [Attributed Text Support](#attributed-text-support)
-  - [UITableViewCell & UICollectionViewCell Adaptation](#uitableviewcell--uicollectionviewcell-adaptation)
-  - [Auto Hide Button For Short Text](#auto-hide-button-for-short-text)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Basic Usage](#basic-usage)
-  - [Create Expandable Text with Code](#create-expandable-text-with-code)
-  - [Create Expandable Text with XIB](#create-expandable-text-with-xib)
-  - [Set Max Collapsed Lines](#set-max-collapsed-lines)
-  - [Expand/Collapse Animation](#expandcollapse-animation)
-- [Advanced Usage](#advanced-usage)
-  - [Custom Text Style (Font/Color/Line Spacing)](#custom-text-style-fontcolorline-spacing)
-  - [Custom Expand/Collapse Button Text & Style](#custom-expandcollapse-button-text--style)
-  - [Global Style Configuration](#global-style-configuration)
-  - [State Cache for List Reuse](#state-cache-for-list-reuse)
-  - [Expand/Collapse Callback Events](#expandcollapse-callback-events)
-  - [Manual Control Expand State](#manual-control-expand-state)
-- [API Reference](#api-reference)
-- [Performance Optimization](#performance-optimization)
-- [Best Practices](#best-practices)
-- [Notes](#notes)
-- [License](#license)
-
-## Overview
-
-`FKExpandableText` wraps a `UILabel` and provides:
-
-- Automatic collapsed/expanded presentation for long text
-- Configurable collapsed line count
-- Built-in "Read more / Collapse" button behavior
-- Rich text (`NSAttributedString`) rendering
-- Reuse-safe state management for table/collection cells
-- Height pre-calculation for smooth scrolling performance
-
-The API is intentionally lightweight and suitable for both standalone usage and large-scale component libraries.
-
-## Features
-
-- Pure native Swift implementation (`UIKit` + `Foundation` only)
-- iOS `13.0+` compatibility
-- Supports plain text and attributed text
-- Configurable collapsed line count (`3`, `5`, or any custom value)
-- Auto hide action button when content does not exceed collapsed lines
-- Smooth animated expand/collapse transition
-- Flexible button style:
-  - custom title text
-  - custom color / highlighted color / font
-  - optional icon + text combination
-- Flexible button layout:
-  - `.tailFollow`
-  - `.bottomTrailing`
-- Configurable text style:
-  - font, color, alignment
-  - line spacing and kern
-- Trigger control:
-  - button tap
-  - text tap
-  - both
-- Reuse-friendly state cache with stable identifier
-- Height pre-calculation API with optional cache key
-- Works with code, XIB, and Storyboard initialization
-
-## Supported Scenarios
-
-### Normal Text Expand/Collapse
-
-Use regular string content and let the component handle truncation, expand/collapse, and animation automatically.
-
-### Attributed Text Support
-
-Use `NSAttributedString` while still applying component-level typography and layout behavior.
-
-### UITableViewCell & UICollectionViewCell Adaptation
-
-Bind a stable model identifier in reusable cells to restore expand/collapse state and avoid reuse mismatch.
-
-### Auto Hide Button For Short Text
-
-When text does not exceed the collapsed line limit, the expand/collapse button is hidden automatically.
+UIKit-first expandable attributed text: collapse long copy to a line budget, append localized actions, and update layout synchronously. A thin SwiftUI wrapper reuses the same `UITextView` engine.
 
 ## Requirements
 
-- Swift `5.9+`
-- iOS `13.0+`
-- `UIKit`
-- `Foundation`
+- Swift 6, iOS 15+
+- `import FKUIKit`
 
-## Installation
+## Source layout
 
-### Option 1: Swift Package Manager (Recommended)
+Aligned with `Badge`, `Divider`, and other FKUIKit modules:
 
-Add FKKit to your project, then import:
+| Layer | Files |
+|-------|--------|
+| **`Public/`** | `FKExpandableText` (namespace + `attach`), `FKExpandableTextConfiguration`, `FKExpandableTextState`, `FKExpandableTextLabelController`, `FKExpandableTextLinkedTextViewController`, `FKExpandableTextView` (SwiftUI) |
+| **`Internal/`** | `FKExpandableTextTextBuilder`, `FKExpandableTextLayoutCache`, `FKExpandableTextMeasurementWidth` |
+| **`Extension/`** | `UILabel+FKExpandableText`, `UITextView+FKExpandableText` |
 
-```swift
-import FKUIKit
-```
+## Concepts
 
-### Option 2: Source Integration
+- **Source text** — You always pass the *full* `NSAttributedString`. The library derives collapsed/expanded display strings.
+- **Defaults** — ``FKExpandableText/defaultConfiguration`` mirrors `FKBadge.defaultConfiguration`: assign once at launch, or pass an explicit `FKExpandableTextConfiguration` per call.
+- **`UILabel`** — Taps are hit-tested with Text Kit so `interactionMode == .buttonOnly` stays precise.
+- **`UITextView`** — Expand/collapse uses a synthetic `fkexpand://` link on the action substring; your real `http(s):` links call ``FKExpandableTextLinkedTextViewController/onLinkTapped`` and still reach any existing `UITextViewDelegate`.
 
-Copy `Sources/FKUIKit/Components/ExpandableText` into your project and include it in your app target.
-
-## Basic Usage
-
-### Create Expandable Text with Code
+## Quick start (UIKit)
 
 ```swift
 import UIKit
 import FKUIKit
 
-let expandableText = FKExpandableText()
-expandableText.setText(
-  "This is a very long content string used for expandable text demo...",
-  stateIdentifier: "post_1001"
+label.fk_setExpandableText(
+  NSAttributedString(string: longCopy, attributes: [.font: UIFont.preferredFont(forTextStyle: .body)]),
+  onExpansionChange: { state in
+    // analytics, reload rows, etc.
+  }
 )
 ```
 
-### Create Expandable Text with XIB
+```swift
+FKExpandableText.attach(
+  to: textView,
+  attributedText: richAttributedString,
+  onExpansionChange: { _ in }
+)?.onLinkTapped = { url in
+  UIApplication.shared.open(url)
+}
+```
+
+## Quick start (SwiftUI)
 
 ```swift
-import UIKit
+import SwiftUI
 import FKUIKit
 
-final class DemoViewController: UIViewController {
-  @IBOutlet private weak var expandableText: FKExpandableText!
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    expandableText.setText(
-      "Long content loaded from server...",
-      stateIdentifier: "news_2001"
-    )
-  }
-}
+FKExpandableTextView(
+  attributedText: model.body,
+  configuration: FKExpandableTextConfiguration(collapseRule: .lines(3)),
+  isExpanded: $model.isExpanded,
+  onExpansionChange: { _ in },
+  onLinkTapped: { url in /* open */ }
+)
 ```
 
-### Set Max Collapsed Lines
+## Global defaults
 
 ```swift
-expandableText.configure {
-  $0.behavior.collapsedNumberOfLines = 5
-}
+FKExpandableText.defaultConfiguration.expandActionText = NSAttributedString(
+  string: NSLocalizedString("read_more", comment: ""),
+  attributes: [.foregroundColor: UIColor.link]
+)
 ```
 
-### Expand/Collapse Animation
+## API summary
 
-```swift
-expandableText.configure {
-  $0.layoutStyle.animationDuration = 0.3
-}
+### `FKExpandableText`
 
-expandableText.setExpanded(true, animated: true)
-expandableText.setExpanded(false, animated: true)
-```
+- `defaultConfiguration` — shared baseline `FKExpandableTextConfiguration`.
+- `attach(to: UILabel, attributedText:configuration:onExpansionChange:)` → `FKExpandableTextLabelController`
+- `attach(to: UITextView, attributedText:configuration:onExpansionChange:)` → `FKExpandableTextLinkedTextViewController`
 
-## Advanced Usage
+### `UILabel` / `UITextView`
 
-### Custom Text Style (Font/Color/Line Spacing)
+- `fk_expandableText` — lazily created controller (retained via associated object).
+- `fk_setExpandableText(_:configuration:onExpansionChange:)` — attributed overload.
+- `fk_setExpandableText(_:attributes:configuration:onExpansionChange:)` — plain `String` overload.
+- `UITextView` adds `onLinkTapped` on the `String` overload as well.
 
-```swift
-expandableText.configure {
-  $0.textStyle.font = .systemFont(ofSize: 16, weight: .regular)
-  $0.textStyle.color = .label
-  $0.textStyle.alignment = .left
-  $0.textStyle.lineSpacing = 6
-  $0.textStyle.kern = 0.2
-}
-```
+### Controllers
 
-### Custom Expand/Collapse Button Text & Style
+- `setText(_:)`, `setConfiguration(_:)`, `toggle()`, `setExpanded(_:animated:)`, `refreshLayout()`, read-only `state`, `onExpansionChange`.
+- `FKExpandableTextLinkedTextViewController` also exposes `onLinkTapped`.
 
-```swift
-expandableText.configure {
-  $0.buttonStyle.expandTitle = "Read more"
-  $0.buttonStyle.collapseTitle = "Show less"
-  $0.buttonStyle.titleColor = .systemBlue
-  $0.buttonStyle.highlightedTitleColor = .systemGray
-  $0.buttonStyle.font = .systemFont(ofSize: 14, weight: .semibold)
-  $0.buttonStyle.image = UIImage(systemName: "chevron.down")
-  $0.buttonStyle.imageTintColor = .systemBlue
-  $0.buttonStyle.imageTitleSpacing = 6
-  $0.layoutStyle.buttonPosition = .bottomTrailing
-}
-```
+### `FKExpandableTextConfiguration`
 
-### Global Style Configuration
+- `collapseRule`: `.lines(n)` or `.noBodyTruncation`
+- `buttonPlacement`: `.inlineTail` (body + token + action within the line budget) or `.trailingBottom` (body + token within `n - 1` lines, then the action on the following line so overall height stays close to `n` lines).
+- `interactionMode`: `.buttonOnly` or `.fullTextArea`
+- `oneWayExpand`, `truncationToken`, `expandActionText`, `collapseActionText`, `accessibility`
 
-```swift
-FKExpandableText.defaultConfiguration = .build {
-  $0.behavior.collapsedNumberOfLines = 3
-  $0.textStyle.font = .systemFont(ofSize: 15)
-  $0.textStyle.lineSpacing = 5
-  $0.buttonStyle.expandTitle = "See more"
-  $0.buttonStyle.collapseTitle = "Collapse"
-  $0.layoutStyle.textButtonSpacing = 8
-}
-```
+## Layout notes
 
-### State Cache for List Reuse
+- Truncation uses the label or text view width. Before the first layout pass, width is inferred from `preferredMaxLayoutWidth` (labels) and then the nearest ancestor with a resolved width, instead of assuming the full screen width (which could hide “Read more” on narrow cards).
+- `UILabel` / `UITextView` hosts use **word wrapping** for line-budget math (UIKit’s default tail truncation skews Text Kit line counts).
+- After the host gets a real `bounds.width`, the controller schedules a one-shot `refreshLayout()` so line-based collapse picks up the correct width.
+- If you assign text before the view is in a hierarchy, `setText` schedules an extra `refreshLayout()` on the next run-loop turn once a superview exists.
+- You can still call ``FKExpandableTextLabelController/refreshLayout()`` manually after width-driven changes.
+- Prefer debouncing rapid model updates before calling `fk_setExpandableText` in high-frequency feeds.
 
-```swift
-// UITableViewCell
-cell.fk_bindExpandableText(expandableText, key: model.id, defaultExpanded: false)
-expandableText.setText(model.content, stateIdentifier: model.id)
+## Examples
 
-// UICollectionViewCell
-cell.fk_bindExpandableText(expandableText, key: model.id, defaultExpanded: false)
-expandableText.setText(model.content, stateIdentifier: model.id)
-```
-
-You can also clear one key manually:
-
-```swift
-expandableText.clearCachedState()
-```
-
-### Expand/Collapse Callback Events
-
-```swift
-expandableText.onStateChange = { context in
-  print("state:", context.state)
-  print("isTruncated:", context.isTruncated)
-  print("identifier:", context.identifier ?? "nil")
-}
-```
-
-### Manual Control Expand State
-
-```swift
-expandableText.setExpanded(true, animated: true)
-expandableText.setExpanded(false, animated: false)
-expandableText.toggle(animated: true)
-```
-
-You can lock display state via configuration:
-
-```swift
-expandableText.configure {
-  $0.behavior.fixedState = .expanded
-}
-```
-
-## API Reference
-
-Primary types:
-
-- `FKExpandableText`
-- `FKExpandableTextConfiguration`
-- `FKExpandableTextTextStyle`
-- `FKExpandableTextButtonStyle`
-- `FKExpandableTextLayoutStyle`
-- `FKExpandableTextBehavior`
-- `FKExpandableTextDisplayState`
-- `FKExpandableTextStateContext`
-- `FKExpandableTextManager`
-
-Core APIs:
-
-- `configure(_:)`
-- `setText(_:stateIdentifier:)`
-- `setAttributedText(_:stateIdentifier:)`
-- `setExpanded(_:animated:notify:)`
-- `toggle(animated:)`
-- `clearCachedState()`
-- `onStateChange`
-- `stateIdentifier`
-
-List helpers:
-
-- `UITableViewCell.fk_bindExpandableText(_:key:defaultExpanded:)`
-- `UICollectionViewCell.fk_bindExpandableText(_:key:defaultExpanded:)`
-
-Height pre-calculation:
-
-- `FKExpandableText.preferredHeight(text:attributedText:width:state:configuration:cacheKey:)`
-- `measuredHeight(for:state:)`
-
-## Performance Optimization
-
-`FKExpandableText` is designed for large list workloads:
-
-- Uses lightweight native view hierarchy (`UILabel` + button)
-- Supports state cache to avoid reuse-state mismatch
-- Provides static pre-measure API for off-path height planning
-- Includes optional height cache via `cacheKey`
-- Avoids heavy rendering paths and third-party layout dependencies
-- Main-thread oriented API to keep UI updates predictable
-
-## Best Practices
-
-- Use stable model IDs for `stateIdentifier` in reusable cells
-- Pre-calculate heights in your data source/layout layer when possible
-- Update table/collection layout after state change for dynamic cell heights
-- Keep callback logic light; dispatch heavy work asynchronously
-- Configure global defaults once, then override per-instance only when needed
-
-## Notes
-
-- UI operations should be performed on the main thread.
-- Button visibility depends on measured truncation result.
-- If you set `fixedState`, user interaction toggling is disabled by design.
-- For dynamic height lists, call layout updates in `onStateChange`.
-
-## License
-
-`FKExpandableText` is part of FKKit and is available under the [MIT License](../../../../LICENSE).
+See `Examples/FKKitExamples/FKKitExamples/Examples/FKUIKit/ExpandableText/` (`FKExpandableTextExampleSupport.swift`, `Examples/` per-topic view controllers, hub controller).

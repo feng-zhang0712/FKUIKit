@@ -192,7 +192,11 @@ final class FKUtilsExampleViewController: UIViewController {
 
   // MARK: - 6) UI
 
-  /// Demonstrates color conversion, adaptive UI, and main-thread-safe execution.
+  /// Demonstrates color conversion, adaptive UI, and main-thread-only mutations.
+  ///
+  /// - Note: `FKUtils.UI.runOnMain` takes a `@Sendable` closure and must not capture UIKit views.
+  ///   This selector runs on the main thread; update views directly here. From a background queue,
+  ///   use `Task { @MainActor in … }` (or schedule only `@Sendable` work through `runOnMain`).
   @objc private func demoUIUtilities() {
     let color = FKUtils.UI.color(hex: "#3366FF")
     let hex = FKUtils.UI.hex(from: color)
@@ -203,15 +207,12 @@ final class FKUtilsExampleViewController: UIViewController {
     _ = FKUtils.UI.addGradient(to: sampleCardView, colors: [color.withAlphaComponent(0.7), .systemPurple])
     FKUtils.UI.applyShadow(to: sampleCardView)
 
-    FKUtils.UI.runOnMain { [weak self] in
-      guard let self else { return }
-      self.outputView.font = adaptiveFont
-      let screenshot = FKUtils.UI.screenshot(of: self.sampleCardView)
-      self.demoImageView.image = screenshot
-      self.appendOutput("Color hex round-trip: \(hex)")
-      self.appendOutput("Adaptive font size: \(adaptiveFont.pointSize)")
-      self.appendOutput("Main-thread screenshot updated.")
-    }
+    outputView.font = adaptiveFont
+    let screenshot = FKUtils.UI.screenshot(of: sampleCardView)
+    demoImageView.image = screenshot
+    appendOutput("Color hex round-trip: \(hex)")
+    appendOutput("Adaptive font size: \(adaptiveFont.pointSize)")
+    appendOutput("Main-thread screenshot updated.")
   }
 
   // MARK: - 7) Collection

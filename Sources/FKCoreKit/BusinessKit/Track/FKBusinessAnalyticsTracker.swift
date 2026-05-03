@@ -1,5 +1,15 @@
 import Foundation
 
+private final class FKAnalyticsCommonParametersProviderBox: @unchecked Sendable {
+  let value: (any FKAnalyticsCommonParametersProviding)?
+  init(_ value: (any FKAnalyticsCommonParametersProviding)?) { self.value = value }
+}
+
+private final class FKAnalyticsUploaderBox: @unchecked Sendable {
+  let value: (any FKAnalyticsUploading)?
+  init(_ value: (any FKAnalyticsUploading)?) { self.value = value }
+}
+
 /// Default implementation of ``FKBusinessTracking`` with file-backed buffering and batched uploads.
 public final class FKBusinessAnalyticsTracker: FKBusinessTracking, @unchecked Sendable {
   /// Supplies runtime analytics configuration values.
@@ -53,15 +63,17 @@ public final class FKBusinessAnalyticsTracker: FKBusinessTracking, @unchecked Se
 
   /// Installs or removes additional common parameters provider.
   public func setCommonParametersProvider(_ provider: FKAnalyticsCommonParametersProviding?) {
+    let box = FKAnalyticsCommonParametersProviderBox(provider)
     queue.async { [weak self] in
-      self?.commonProvider = provider
+      self?.commonProvider = box.value
     }
   }
 
   /// Installs or removes batch uploader.
   public func setUploader(_ uploader: FKAnalyticsUploading?) {
+    let box = FKAnalyticsUploaderBox(uploader)
     queue.async { [weak self] in
-      self?.uploader = uploader
+      self?.uploader = box.value
     }
   }
 

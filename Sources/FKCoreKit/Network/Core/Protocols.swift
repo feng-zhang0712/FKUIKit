@@ -52,9 +52,9 @@ public extension Requestable {
 /// custom transport implementations without changing high-level client logic.
 public protocol NetworkSession {
   /// Completion signature for data and upload tasks.
-  typealias DataTaskCompletion = (Data?, URLResponse?, Error?) -> Void
+  typealias DataTaskCompletion = @Sendable (Data?, URLResponse?, Error?) -> Void
   /// Completion signature for download tasks.
-  typealias DownloadTaskCompletion = (URL?, URLResponse?, Error?) -> Void
+  typealias DownloadTaskCompletion = @Sendable (URL?, URLResponse?, Error?) -> Void
 
   /// Creates a data task.
   ///

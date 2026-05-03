@@ -1,5 +1,10 @@
 import Foundation
 
+private final class FKSecurityWorkBox<T>: @unchecked Sendable {
+  let work: () throws -> T
+  init(_ work: @escaping () throws -> T) { self.work = work }
+}
+
 /// Default executor for FKSecurity operations.
 public final class FKSecurityExecutor: FKSecurityExecuting {
   private let queue: DispatchQueue
@@ -12,10 +17,11 @@ public final class FKSecurityExecutor: FKSecurityExecuting {
   }
 
   public func run<T>(_ work: @escaping () throws -> T) async throws -> T {
-    try await withCheckedThrowingContinuation { continuation in
+    let box = FKSecurityWorkBox(work)
+    return try await withCheckedThrowingContinuation { continuation in
       queue.async {
         do {
-          continuation.resume(returning: try work())
+          continuation.resume(returning: try box.work())
         } catch {
           continuation.resume(throwing: error)
         }
@@ -23,4 +29,3 @@ public final class FKSecurityExecutor: FKSecurityExecuting {
     }
   }
 }
-

@@ -1,344 +1,153 @@
 # FKBadge
 
-`FKBadge` is a native Swift badge component for UIKit apps. It provides red dots, numeric badges, and text badges with flexible styling, animation, and positioning, while keeping your original view hierarchy and constraints intact.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Supported Views](#supported-views)
-- [Badge Types](#badge-types)
-- [Requirements](#requirements)
-- [Installation](#installation)
-  - [Swift Package Manager](#swift-package-manager)
-- [Basic Usage](#basic-usage)
-  - [Red Dot Badge](#red-dot-badge)
-  - [Number Badge](#number-badge)
-  - [Text Badge](#text-badge)
-  - [TabBar Item Badge](#tabbar-item-badge)
-  - [Navigation Bar Item Badge](#navigation-bar-item-badge)
-- [Advanced Usage](#advanced-usage)
-  - [Custom Style (Color, Font, Corner, Border)](#custom-style-color-font-corner-border)
-  - [Position & Offset Adjustment](#position--offset-adjustment)
-  - [Animation Effects](#animation-effects)
-  - [Global Style Configuration](#global-style-configuration)
-  - [Update/Remove/Hide Badge](#updateremovehide-badge)
-- [API Reference](#api-reference)
-  - [Core Types](#core-types)
-  - [Main APIs](#main-apis)
-  - [`FKBadgeController` Highlights](#fkbadgecontroller-highlights)
-- [Best Practices](#best-practices)
-- [Notes](#notes)
-- [License](#license)
-
-## Overview
-
-The component is designed for large-scale iOS projects:
-
-- Pure UIKit/Foundation implementation
-- No third-party dependencies
-- Non-intrusive overlay architecture
-- One-line APIs for show/update/hide/remove
-- Global style management with per-instance overrides
-
-## Features
-
-- Dot badge (no text)
-- Number badge with overflow formatting (`99+`, `999+`, etc.)
-- Text badge (`NEW`, `Hot`, custom strings)
-- Adaptive badge width based on content
-- Supports `UIView`, `UIButton`, `UILabel`, `UIImageView`
-- Supports `UIBarButtonItem` and `UITabBarItem`
-- Custom colors, font, corner radius, border, padding, kerning, size
-- Anchor + offset positioning (`topLeading`, `topTrailing`, `bottomLeading`, `bottomTrailing`)
-- Fade-in display, plus `pop`, `blink`, and `pulse` animations
-- Tap callback support on badge
-- Global hide/restore for all active badges
-- Main-thread-safe APIs and weak references to avoid leaks
-
-## Supported Views
-
-`FKBadge` can be attached to:
-
-- `UIView` and any subclass
-- `UIButton`
-- `UILabel`
-- `UIImageView`
-- `UIBarButtonItem` (custom and system items via host view resolution)
-- `UITabBarItem` (custom overlay badge + native `badgeValue` helper)
-
-## Badge Types
-
-- **Red Dot Badge**: visual reminder without text
-- **Number Badge**: integer display with max value truncation
-- **Text Badge**: custom string display
-- **Overflow Badge**: configurable suffix-based overflow (`maxDisplayCount + overflowSuffix`)
+UIKit badge overlay: dot, numeric (with overflow such as `99+`), and short text. The badge is a **sibling** of your target view in its superview so clipping and hit-testing on the target stay unchanged.
 
 ## Requirements
 
-- Swift 5.9+
-- UIKit / Foundation
-- iOS 15+ in the current `FKUIKit` package setup
+- Swift 6 / iOS 15+
+- `import FKUIKit`
 
-> Note: The badge implementation itself is UIKit-based and does not depend on Objective-C wrappers or third-party frameworks.
+## Source layout
 
-## Installation
+Same layering idea as `PresentationController`: **`Public`** (exported types), **`Internal`** (implementation details), **`Extension`** (UIKit entry points). Paths are under `Sources/FKUIKit/Components/Badge/`.
 
-### Swift Package Manager
+### `Public/`
 
-Add `FKKit` as a dependency and use the `FKUIKit` product.
+| File | Role |
+|------|------|
+| `FKBadgeController.swift` | Attachment, layout, content, gestures, accessibility |
+| `FKBadgeConfiguration.swift` | `FKBadgeConfiguration` + `FKBadge` defaults / global hide |
+| `FKBadgeAnimation.swift` | Optional entrance / emphasis animations |
+| `FKBadgeAnchor.swift` | Corner / center anchors (RTL-safe leading/trailing) |
+| `FKBadgeVisibilityPolicy.swift` | Automatic vs forced visibility |
+| `FKBadgeFormatter.swift` | Count formatting and digit-string parsing |
 
-```swift
-dependencies: [
-  .package(url: "https://github.com/your-org/FKKit.git", from: "1.0.0")
-],
-targets: [
-  .target(
-    name: "YourApp",
-    dependencies: [
-      .product(name: "FKUIKit", package: "FKKit")
-    ]
-  )
-]
-```
+### `Internal/`
 
-Then import:
+| File | Role |
+|------|------|
+| `FKBadgeContentView.swift` | Rendering view (dot / pill label) |
+| `FKBadgeRegistry.swift` | Weak registry for global hide / restore |
+| `FKBadgeHierarchyObserver.swift` | One-time `didMoveToSuperview` hook for re-attachment |
 
-```swift
-import FKUIKit
-```
+### `Extension/`
 
-## Basic Usage
+| File | Role |
+|------|------|
+| `UIView+FKBadge.swift` | `fk_badge` and one-line helpers |
+| `UIBarButtonItem+FKBadge.swift`, `UITabBarItem+FKBadge.swift` | Bar item / tab item helpers |
 
-### Red Dot Badge
+## Quick start
 
 ```swift
 import UIKit
 import FKUIKit
 
-final class DemoViewController: UIViewController {
-  @IBOutlet private weak var iconView: UIImageView!
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    iconView.fk_showBadgeDot(animated: true, animation: .pop())
-  }
-}
+iconView.fk_showBadgeDot(animated: true, animation: .pop())
+button.fk_showBadgeCount(12, animated: true)
+label.fk_showBadgeText("NEW", animated: true)
+button.fk_clearBadge(animated: true)
 ```
 
-### Number Badge
+Advanced control uses the lazily created controller:
 
 ```swift
-button.fk_showBadgeCount(12, animated: true)
-
-// Alternative API on controller
+button.fk_badge.setAnchor(.topTrailing, offset: UIOffset(horizontal: -4, vertical: 4))
 button.fk_badge.showCount(128, animated: true, animation: .pulse())
 ```
 
-### Text Badge
+## Global defaults and batch hide
+
+Set once at launch:
 
 ```swift
-label.fk_showBadgeText("NEW", animated: true, animation: .pop())
+FKBadge.defaultConfiguration.maxDisplayCount = 99
+FKBadge.defaultConfiguration.backgroundColor = .systemRed
 ```
 
-### TabBar Item Badge
+Hide or restore **all** active badges (weakly tracked):
 
 ```swift
-if let item = tabBarController?.tabBar.items?[0] {
-  // Native badgeValue formatting helper
-  item.fk_setBadgeCount(120, maxDisplay: 99, overflowSuffix: "+") // shows "99+"
-
-  // Custom overlay badge (dot/number/text)
-  item.fk_showBadgeText("Hot", animated: true, animation: .blink())
-}
+FKBadge.hideAllBadges(animated: true)
+FKBadge.restoreAllBadges(animated: true)
 ```
 
-### Navigation Bar Item Badge
+## API summary
 
-```swift
-let bellItem = UIBarButtonItem(
-  image: UIImage(systemName: "bell"),
-  style: .plain,
-  target: self,
-  action: #selector(onBellTap)
-)
-navigationItem.rightBarButtonItem = bellItem
+### `UIView`
 
-bellItem.fk_showBadgeCount(8, animated: true, animation: .pop())
-```
+- `fk_badge` — `FKBadgeController` (created on first access).
+- `fk_showBadgeDot(animated:animation:)`
+- `fk_showBadgeCount(_:animated:animation:)`
+- `fk_showBadgeText(_:animated:animation:)`
+- `fk_clearBadge(animated:)` — clears content (same as `fk_badge.clear`).
 
-## Advanced Usage
+### `UIBarButtonItem` / `UITabBarItem`
 
-### Custom Style (Color, Font, Corner, Border)
+- `fk_badge` — optional controller when a host `UIView` exists.
+- Same `fk_showBadge*` / `fk_clearBadge` helpers (forward to optional controller).
 
-```swift
-var style = FKBadgeConfiguration()
-style.backgroundColor = .systemBlue
-style.titleColor = .white
-style.font = .systemFont(ofSize: 10, weight: .bold)
-style.borderWidth = 1
-style.borderColor = .white
-style.textCornerRadius = 9
-style.horizontalPadding = 6
-style.verticalPadding = 2
-style.textKerning = 0.2
-style.dotDiameter = 10
-style.maxDisplayCount = 999
-style.overflowSuffix = "+"
+`UITabBarItem` additionally:
 
-avatarImageView.fk_badge.configuration = style
-avatarImageView.fk_showBadgeCount(1350, animated: true) // shows "999+"
-```
+- `fk_setBadgeCount(_:maxDisplay:overflowSuffix:)` — sets UIKit `badgeValue` using the same overflow rules as `FKBadgeFormatter`.
+- `fk_clearBadge` also clears `badgeValue`.
 
-### Position & Offset Adjustment
+### `FKBadgeController`
 
-```swift
-avatarImageView.fk_badge.setAnchor(.topTrailing, offset: UIOffset(horizontal: 8, vertical: -6))
+**Content**
 
-// Other anchors:
-// .topLeading, .bottomLeading, .bottomTrailing
-```
+- `showDot(animated:animation:)`
+- `showCount(_:animated:animation:)` — values `<= 0` hide under `.automatic`.
+- `showText(_:animated:animation:)` — whitespace-only → dot.
+- `setCount(parsing:animated:animation:)` — digits-only string; invalid input clears.
+- `clear(animated:)`
 
-### Animation Effects
+**Visibility**
 
-```swift
-// Entrance animation when showing
-messageButton.fk_showBadgeCount(3, animated: true, animation: .pop())
+- `visibilityPolicy` — `.automatic` / `.forcedHidden` / `.forcedVisible`
+- `setForcedHidden(_:animated:)` — `true` → `.forcedHidden`; `false` → `.automatic` (does not restore `.forcedVisible` if you had switched earlier).
 
-// Repeating effects
-messageButton.fk_badge.playAnimation(.blink(minAlpha: 0.4, maxAlpha: 1.0, duration: 0.6))
-messageButton.fk_badge.playAnimation(.pulse(scale: 1.15, duration: 0.8))
-```
+**Layout**
 
-### Global Style Configuration
+- `anchor`, `offset`, `setAnchor(_:offset:)`, `reattachIfNeeded()`
 
-```swift
-@MainActor
-func configureBadgeTheme() {
-  var global = FKBadgeConfiguration()
-  global.backgroundColor = .systemRed
-  global.titleColor = .white
-  global.maxDisplayCount = 99
+**Interaction & motion**
 
-  FKBadgeManager.shared.defaultConfiguration = global
-}
-```
+- `onTap`
+- `minimumTouchTargetSide` — expands hit testing when `onTap != nil` (e.g. `44`).
+- `playAnimation(_:)` — respects Reduce Motion.
 
-```swift
-@MainActor
-func toggleAllBadges(hidden: Bool) {
-  if hidden {
-    FKBadgeManager.shared.hideAll(animated: true)
-  } else {
-    FKBadgeManager.shared.restoreAll(animated: true)
-  }
-}
-```
+**Accessibility**
 
-### Update/Remove/Hide Badge
+- `accessibilityBadgeLabel` — optional override; numeric/text default to visible glyphs; pure dot needs a label if you want a separate VoiceOver element.
+- Numeric glyphs may use `.updatesFrequently`.
 
-```swift
-// Update count
-inboxView.fk_badge.updateCount(42, animated: true, animation: .pop())
+**Lifecycle**
 
-// Clear current content (hide badge)
-inboxView.fk_hideBadge(animated: true)
+- `removeFromTarget()` — removes view and clears association.
+- `isEffectivelyHidden`
 
-// Force hidden / restore automatic rule
-inboxView.fk_badge.setHidden(true, animated: true)
-inboxView.fk_badge.setHidden(false, animated: true)
+## Styling
 
-// Clear count by setting zero semantics
-inboxView.fk_badge.clearCount(animated: true)
+`FKBadgeConfiguration` controls fill, title color, font, border, padding, kerning, dot diameter, optional text corner radius, `maxDisplayCount`, `overflowSuffix`, and optional `minimumContentWidth`.
 
-// Fully remove controller association from target
-inboxView.fk_badge.removeFromTarget()
-```
+Assign to `fk_badge.configuration` (or pass into `FKBadgeController(target:configuration:)` if you construct manually).
 
-Tap callback:
+## Architecture notes
 
-```swift
-inboxView.fk_badge.onTap = { [weak self] badge in
-  guard let self else { return }
-  print("Badge tapped on: \(String(describing: badge.targetView))")
-}
-```
+- Badge is **not** a subview of the target; it shares the target’s superview.
+- `FKBadgeHierarchyObserver` swizzles `UIView.didMoveToSuperview` once so badges follow hierarchy changes.
+- APIs are main-thread oriented; the controller hops to the main actor when needed.
 
-## API Reference
+## Examples
 
-### Core Types
+See `Examples/FKKitExamples/.../Examples/FKUIKit/Badge/`:
 
-- `FKBadgeController`
-- `FKBadgeConfiguration`
-- `FKBadgeAnimation`
-- `FKBadgeAnchor`
-- `FKBadgeVisibilityPolicy`
-- `FKBadgeManager`
-
-### Main APIs
-
-- `UIView.fk_badge`
-- `UIView.fk_showBadgeDot(...)`
-- `UIView.fk_showBadgeCount(...)`
-- `UIView.fk_showBadgeText(...)`
-- `UIView.fk_hideBadge(...)`
-
-- `UIBarButtonItem.fk_badge`
-- `UIBarButtonItem.fk_showBadgeDot(...)`
-- `UIBarButtonItem.fk_showBadgeCount(...)`
-- `UIBarButtonItem.fk_showBadgeText(...)`
-- `UIBarButtonItem.fk_hideBadge(...)`
-
-- `UITabBarItem.fk_badge`
-- `UITabBarItem.fk_setBadgeCount(...)`
-- `UITabBarItem.fk_showBadgeDot(...)`
-- `UITabBarItem.fk_showBadgeCount(...)`
-- `UITabBarItem.fk_showBadgeText(...)`
-- `UITabBarItem.fk_hideBadge(...)`
-
-### `FKBadgeController` Highlights
-
-- Content:
-  - `showDot(animated:animation:)`
-  - `showCount(_:animated:animation:)`
-  - `showText(_:animated:animation:)`
-  - `showCountString(_:animated:animation:)`
-  - `clear(animated:)`
-- Visibility:
-  - `visibilityPolicy`
-  - `setHidden(_:animated:)`
-  - `isEffectivelyHidden`
-- Layout:
-  - `anchor`
-  - `offset`
-  - `setAnchor(_:offset:)`
-  - `reattachIfNeeded()`
-- Update/Lifecycle:
-  - `updateCount(_:animated:animation:)`
-  - `clearCount(animated:)`
-  - `removeFromTarget()`
-- Interaction/Animation:
-  - `onTap`
-  - `playAnimation(_:)`
-
-## Best Practices
-
-- Access badge APIs on the main actor when updating UIKit.
-- Configure global style at app launch, then apply per-view overrides only when needed.
-- Prefer one-line extension APIs for common flows and `fk_badge` for advanced control.
-- Use `maxDisplayCount` and `overflowSuffix` for server-driven large counts.
-- Keep `onTap` closures weak-captured to avoid retain cycles.
-- Use `fk_setBadgeCount` for native TabBar badge style; use overlay APIs for advanced custom UI.
-
-## Notes
-
-- `FKBadge` is attached as a sibling view of the target view, not as a subview of the target.
-- Existing constraints/layout of the target view are preserved.
-- Empty text is treated as a dot badge.
-- Numeric values `<= 0` are hidden under automatic visibility policy.
-- `UIBarButtonItem` and `UITabBarItem` overlay badges rely on UIKit host view availability.
-- RTL-safe anchors are supported through leading/trailing semantics.
+| Location | Contents |
+|----------|----------|
+| Root | `FKBadgeExamplesHubViewController.swift` (sample list), `FKBadgeExampleSupport.swift` (shared demo UI) |
+| `Scenarios/` | Basics, appearance, anchors, and integration screens (one Swift file per topic) |
 
 ## License
 
-`FKBadge` is part of the FKKit project and is distributed under the same license as this repository.
+Same as the FKKit repository.

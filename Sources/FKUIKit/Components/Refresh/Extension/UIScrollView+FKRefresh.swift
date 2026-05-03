@@ -1,24 +1,21 @@
-//
-// UIScrollView+FKRefresh.swift
-// FKUIKit — FKRefresh
-//
-// Associated-object API to attach one header and one footer control per scroll view; merges
-// `FKRefreshSettings` when `configuration` is nil.
-//
-
 import UIKit
 import ObjectiveC.runtime
 
-// MARK: - Associated object keys
+// One-line attachment for `FKRefreshControl` on scroll views; at most one header + one footer per view.
+// Pair policy: `fk_refreshPolicy`. Re-attaching replaces the previous control.
 
 private enum FKRefreshKeys {
   nonisolated(unsafe) static var pullToRefresh: UInt8 = 0
   nonisolated(unsafe) static var loadMore: UInt8 = 0
+  nonisolated(unsafe) static var coordinator: UInt8 = 0
 }
 
-// MARK: - UIScrollView extension
-
 public extension UIScrollView {
+  /// Concurrency, queueing, and auto-fill rules for the header + footer pair on this scroll view.
+  var fk_refreshPolicy: FKRefreshPolicy {
+    get { fk_refreshCoordinator.policy }
+    set { fk_refreshCoordinator.policy = newValue }
+  }
 
   // MARK: Pull-to-refresh
 
@@ -37,6 +34,21 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches pull-to-refresh with context callback that includes race-safe token metadata.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh
+    )
+    control.contextActionHandler = action
+    fk_setPullToRefresh(control)
+    return control
+  }
+
   /// Attaches a pull-to-refresh control with an async callback.
   @discardableResult
   func fk_addPullToRefresh(
@@ -48,6 +60,21 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.pullToRefresh,
       asyncAction: asyncAction
     )
+    fk_setPullToRefresh(control)
+    return control
+  }
+
+  /// Attaches pull-to-refresh with context async callback (token-safe completion with `async`/`await`).
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    contextAsyncAction: @escaping FKRefreshContextAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh
+    )
+    control.contextAsyncActionHandler = contextAsyncAction
     fk_setPullToRefresh(control)
     return control
   }
@@ -69,6 +96,23 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches pull-to-refresh with custom indicator and context callback.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh,
+      contentView: contentView
+    )
+    control.contextActionHandler = action
+    fk_setPullToRefresh(control)
+    return control
+  }
+
   /// Attaches a pull-to-refresh control with a custom content view and async callback.
   @discardableResult
   func fk_addPullToRefresh(
@@ -82,6 +126,23 @@ public extension UIScrollView {
       contentView: contentView,
       asyncAction: asyncAction
     )
+    fk_setPullToRefresh(control)
+    return control
+  }
+
+  /// Attaches pull-to-refresh with custom indicator and context async callback.
+  @discardableResult
+  func fk_addPullToRefresh(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    contextAsyncAction: @escaping FKRefreshContextAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .pullToRefresh,
+      configuration: configuration ?? FKRefreshSettings.pullToRefresh,
+      contentView: contentView
+    )
+    control.contextAsyncActionHandler = contextAsyncAction
     fk_setPullToRefresh(control)
     return control
   }
@@ -120,6 +181,21 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches load-more with context callback that includes race-safe token metadata.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore
+    )
+    control.contextActionHandler = action
+    fk_setLoadMore(control)
+    return control
+  }
+
   /// Attaches a load-more control with an async callback.
   @discardableResult
   func fk_addLoadMore(
@@ -131,6 +207,21 @@ public extension UIScrollView {
       configuration: configuration ?? FKRefreshSettings.loadMore,
       asyncAction: asyncAction
     )
+    fk_setLoadMore(control)
+    return control
+  }
+
+  /// Attaches load-more with context async callback (token-safe completion with `async`/`await`).
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    contextAsyncAction: @escaping FKRefreshContextAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore
+    )
+    control.contextAsyncActionHandler = contextAsyncAction
     fk_setLoadMore(control)
     return control
   }
@@ -152,6 +243,23 @@ public extension UIScrollView {
     return control
   }
 
+  /// Attaches load-more with custom indicator and context callback.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    action: @escaping FKRefreshActionHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore,
+      contentView: contentView
+    )
+    control.contextActionHandler = action
+    fk_setLoadMore(control)
+    return control
+  }
+
   /// Attaches a load-more control with a custom content view and async callback.
   @discardableResult
   func fk_addLoadMore(
@@ -165,6 +273,23 @@ public extension UIScrollView {
       contentView: contentView,
       asyncAction: asyncAction
     )
+    fk_setLoadMore(control)
+    return control
+  }
+
+  /// Attaches load-more with custom indicator and context async callback.
+  @discardableResult
+  func fk_addLoadMore(
+    configuration: FKRefreshConfiguration? = nil,
+    contentView: FKRefreshContentView,
+    contextAsyncAction: @escaping FKRefreshContextAsyncHandler
+  ) -> FKRefreshControl {
+    let control = FKRefreshControl(
+      kind: .loadMore,
+      configuration: configuration ?? FKRefreshSettings.loadMore,
+      contentView: contentView
+    )
+    control.contextAsyncActionHandler = contextAsyncAction
     fk_setLoadMore(control)
     return control
   }
@@ -215,12 +340,25 @@ public extension UIScrollView {
   private func fk_setPullToRefresh(_ control: FKRefreshControl) {
     fk_removePullToRefresh()
     objc_setAssociatedObject(self, &FKRefreshKeys.pullToRefresh, control, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    control.setCoordinator(fk_refreshCoordinator)
     control.attach(to: self)
   }
 
   private func fk_setLoadMore(_ control: FKRefreshControl) {
     fk_removeLoadMore()
     objc_setAssociatedObject(self, &FKRefreshKeys.loadMore, control, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    control.setCoordinator(fk_refreshCoordinator)
     control.attach(to: self)
+  }
+
+  private var fk_refreshCoordinator: FKRefreshCoordinator {
+    if let coordinator = objc_getAssociatedObject(self, &FKRefreshKeys.coordinator) as? FKRefreshCoordinator {
+      return coordinator
+    }
+    let coordinator = FKRefreshCoordinator()
+    coordinator.register(scrollView: self)
+    coordinator.policy = FKRefreshSettings.policy
+    objc_setAssociatedObject(self, &FKRefreshKeys.coordinator, coordinator, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    return coordinator
   }
 }

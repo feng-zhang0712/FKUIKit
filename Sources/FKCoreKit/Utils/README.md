@@ -36,15 +36,9 @@ The module is implemented with system frameworks only (`Foundation`, `UIKit`, `N
 Latest release: **0.20.1**
 
 ### Release Highlights (0.20.1)
-- Introduced a production-ready `FKBadge` module layout under `Sources/FKUIKit/Components/Badge/`:
-  - `Core`
-  - `Model`
-  - `Manager`
-  - `Extension`
-  - `Animation`
-- Added global badge manager API (`FKBadgeManager.shared`) and richer one-line usage for UIView, UIBarButtonItem, and UITabBarItem.
-- Added complete FKBadge module documentation:
-  - `Sources/FKUIKit/Components/Badge/README.md`
+- Introduced a production-ready `FKBadge` module under `Sources/FKUIKit/Components/Badge/` (`Public/`, `Internal/`, `Extension/`, same layering style as `PresentationController`).
+- Global defaults and batch hide use `FKBadge.defaultConfiguration`, `FKBadge.hideAllBadges`, and `FKBadge.restoreAllBadges`; one-line APIs on `UIView`, `UIBarButtonItem`, and `UITabBarItem`.
+- Module documentation: `Sources/FKUIKit/Components/Badge/README.md`
 
 ## Features
 - Pure native implementation with zero external dependencies.

@@ -86,9 +86,11 @@ public enum FKUtilsUI {
   }
 
   /// Executes block safely on main thread.
-  public static func runOnMain(_ block: @escaping () -> Void) {
+  public static func runOnMain(_ block: @escaping @Sendable () -> Void) {
     if Thread.isMainThread {
-      block()
+      MainActor.assumeIsolated {
+        block()
+      }
     } else {
       DispatchQueue.main.async(execute: block)
     }
