@@ -9,6 +9,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.44.2] - 2026-05-03
+
 ### Changed (FKUIKit FKProgressBar)
 
 **Breaking**
@@ -1865,7 +1867,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.44.1...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.44.2...HEAD
+[0.44.2]: https://github.com/feng-zhang0712/FKKit/compare/0.44.1...0.44.2
 [0.44.1]: https://github.com/feng-zhang0712/FKKit/compare/0.44.0...0.44.1
 [0.44.0]: https://github.com/feng-zhang0712/FKKit/compare/0.43.17...0.44.0
 [0.43.17]: https://github.com/feng-zhang0712/FKKit/compare/0.43.16...0.43.17
