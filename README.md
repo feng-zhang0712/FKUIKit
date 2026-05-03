@@ -1,7 +1,7 @@
 # FKKit
 
 [![iOS](https://img.shields.io/badge/iOS-15.0%2B-blue.svg)](https://developer.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-6.3%2B-orange.svg)](https://swift.org/)
+[![Swift](https://img.shields.io/badge/Swift-6.2%2B-orange.svg)](https://swift.org/)
 [![SPM](https://img.shields.io/badge/SPM-supported-brightgreen.svg)](https://swift.org/package-manager/)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-supported-ee3322.svg)](https://cocoapods.org/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
@@ -140,7 +140,7 @@ This module keeps **deep docs next to sources** (`README.md` per major folder); 
 
 ## Requirements
 - **iOS 15.0+** (declared in `Package.swift`; all package products are **iOS-only**)
-- Swift toolchain with **Swift 6.3** support (matches `swift-tools-version` in `Package.swift`)
+- Swift toolchain **6.2+** (matches `swift-tools-version` in `Package.swift`; CI uses **Xcode** `latest-stable`, currently **Swift 6.2.x**)
 
 ## Installation (SPM)
 

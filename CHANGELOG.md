@@ -14,6 +14,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 - **`.github/workflows/ci.yml`**: runs **`scripts/verify-podspec-versions.sh`** before the Xcode build so podspec version drift fails fast.
 
+### Fixed (CI)
+
+- **`Package.swift`**: lowered **`swift-tools-version`** from **6.3** to **6.2** so **`xcodebuild`** on GitHub Actions (**Xcode 16.1** / Swift **6.2.4** under **`latest-stable`**) can resolve the manifest (avoids exit code **74** / “installed version is 6.2.4”).
+
 ### Changed (CocoaPods)
 
 - Root **`*.podspec`**: normalized spacing (**`s.attr = value`**); no version or dependency behavior change at **0.45.0**.
@@ -27,7 +31,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 ### Changed (Documentation)
 
 - Removed **`docs/REFACTOR_PLAN.md`** now that the sustainability refactor backlog (R1–R11) is complete; **`docs/EXTENSION_VS_UTILS.md`** no longer links to it.
-- **`README.md`**: iOS / Swift badges and **Requirements** updated for **iOS-only** distribution and **Swift 6.3+**.
+- **`README.md`**: iOS / Swift badges and **Requirements** updated for **iOS-only** distribution and **Swift 6.2+** (matches **`Package.swift`** tools version used on CI).
 - **`README.md`**: **FKCoreKit: Extension vs Utils** subsection and Table of Contents link; points to **`docs/EXTENSION_VS_UTILS.md`** for contributor policy (`fk_*` extensions vs **`FKUtils.*`** static helpers).
 - **`README.md`**: **Module Structure** and **FKCompositeKit** sections now include **`AnchoredDropdownController/`** and link to the new component READMEs; clarifies that a standalone **Filter** component is **not** present in the package today (root tree stays minimal until something ships).
 - **`README.md`**: **Installation (CocoaPods)** links maintainers to **`docs/RELEASING.md`** and the **`scripts/bump-version.sh`** / **`scripts/verify-podspec-versions.sh`** workflow.
