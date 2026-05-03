@@ -4,6 +4,16 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 ## [Unreleased]
 
+### Changed (Package)
+
+**Breaking**
+
+- **Platforms**: `Package.swift` now declares **iOS 15+ only**; **macOS** was removed from `platforms` so the manifest matches UIKit-first modules and avoids unsupported `swift build` on macOS hosts without an iOS SDK.
+
+### Changed (Documentation)
+
+- **`README.md`**: iOS / Swift badges and **Requirements** updated for **iOS-only** distribution and **Swift 6.3+**.
+
 ### Planned
 
 - Unit test target and `Tests/` directory

@@ -6,7 +6,6 @@ let package = Package(
   name: "FKKit",
   platforms: [
     .iOS(.v15),
-    .macOS(.v10_15),
   ],
   products: [
     .library(name: "FKUIKit", targets: ["FKUIKit"]),

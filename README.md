@@ -1,7 +1,7 @@
 # FKKit
 
-[![iOS](https://img.shields.io/badge/iOS-13.0%2B-blue.svg)](https://developer.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org/)
+[![iOS](https://img.shields.io/badge/iOS-15.0%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-6.3%2B-orange.svg)](https://swift.org/)
 [![SPM](https://img.shields.io/badge/SPM-supported-brightgreen.svg)](https://swift.org/package-manager/)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-supported-ee3322.svg)](https://cocoapods.org/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
@@ -128,9 +128,8 @@ FKKit/
 This module currently focuses on source-level composable components; add internal docs in each directory as your team standard evolves.
 
 ## Requirements
-- iOS 15.0+ (as declared in `Package.swift`)
-- macOS 10.15+ (package-level declaration for compatible builds)
-- Swift toolchain with Swift 6.3 support
+- **iOS 15.0+** (declared in `Package.swift`; all package products are **iOS-only**)
+- Swift toolchain with **Swift 6.3** support (matches `swift-tools-version` in `Package.swift`)
 
 ## Installation (SPM)
 
