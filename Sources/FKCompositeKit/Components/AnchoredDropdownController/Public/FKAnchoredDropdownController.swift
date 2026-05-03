@@ -4,12 +4,14 @@ import FKUIKit
 /// A container controller that composes `FKTabBar` with an anchored embedded dropdown panel.
 ///
 /// This component is designed for "Meituan-like" tab-based filter dropdown interactions:
-/// - Tap a tab to open its panel anchored below the tab bar.
+/// - Tap a tab to open its panel anchored below the tab bar (default) or a custom ``UIView`` you configure.
 /// - Tap the same tab again to close (toggle).
 /// - Tap another tab to switch (previous closes, then new opens).
 /// - Tap backdrop to close.
 ///
 /// The dropdown presentation is powered by `FKPresentationController` in `.anchorEmbedded` mode.
+/// Customize attachment using ``FKAnchoredDropdownConfiguration/anchorOverride`` or
+/// ``FKAnchoredDropdownController/setCustomAnchor(source:overlayHost:)``.
 @MainActor
 public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewController {
   /// Close reasons unified across user interactions and programmatic control.
@@ -146,6 +148,32 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     selectedTabID = id
     tabBar.setSelectedIndex(idx, animated: animated, notify: false, reason: .programmatic)
     rebuildTabBarItems(keepSelectedTab: id)
+  }
+
+  /// Rebuilds tab bar items from the current `tabs` array without changing selection or expansion.
+  ///
+  /// Call this when `makeTabBarItem` reads external state (for example, a “3 selected” subtitle) and
+  /// that state changed without assigning a new `tabs` array.
+  public func reloadTabBarItems() {
+    rebuildTabBarItems(keepSelectedTab: selectedTabID)
+  }
+
+  /// Drops any cached content view controller for `tab` (see `configuration.contentCachingPolicy`).
+  ///
+  /// If that tab is currently expanded, the visible panel is replaced with a freshly resolved controller.
+  public func invalidateCachedContent(for tab: TabID) {
+    cachedContentControllers[tab] = nil
+    refreshPresentedContentIfNeeded(forExpandedTab: tab)
+  }
+
+  /// Clears all per-tab content caches.
+  ///
+  /// If a tab is expanded, its panel is replaced with a freshly resolved controller for that tab only.
+  public func invalidateAllCachedContent() {
+    cachedContentControllers.removeAll()
+    if let expanded = expandedTabID {
+      refreshPresentedContentIfNeeded(forExpandedTab: expanded)
+    }
   }
 
   // MARK: - UIViewController
@@ -341,23 +369,7 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     cfg.dismissBehavior.allowsTapOutside = configuration.allowsTapOutsideToDismiss
     cfg.dismissBehavior.allowsSwipe = configuration.allowsSwipeToDismiss
     cfg.dismissBehavior.allowsBackdropTap = configuration.allowsBackdropTapToDismiss
-    cfg.layout = .anchor (
-      FKAnchorConfiguration(
-        anchor: FKAnchor(
-          sourceView: tabBarHost.tabBar,
-          edge: .bottom,
-          direction: .down,
-          alignment: .fill,
-          widthPolicy: .matchContainer,
-          offset: 0
-        ),
-        // The anchor is the tab bar, but the host must be the full tab-bar host container.
-        // If we host in the tab bar's immediate superview, the overlay may be clipped to bar height.
-        hostStrategy: .inProvidedContainer(FKWeakReference(tabBarHost.view)),
-        zOrderPolicy: .keepAnchorAbovePresentation,
-        maskCoveragePolicy: .belowAnchorOnly
-      )
-    )
+    cfg.layout = .anchor(makePresentationAnchorConfiguration())
 
     let controller = FKPresentationController(contentController: container, configuration: cfg, delegate: self)
     fkPresentationController = controller
@@ -384,8 +396,15 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     case let .viewController(make):
       return make()
     case let .view(make):
-      return FKTabDropdownViewWrappingController(makeView: make)
+      return FKAnchoredDropdownViewWrappingController(makeView: make)
     }
+  }
+
+  private func refreshPresentedContentIfNeeded(forExpandedTab tab: TabID) {
+    guard expandedTabID == tab, let container = presentedContentContainer,
+          let tabModel = tabs.first(where: { $0.id == tab }) else { return }
+    let next = resolveContentController(for: tabModel)
+    container.setContent(next, transition: .none, completion: nil)
   }
 
   private func transitionToCollapse(reason: CloseReason, animated: Bool) {

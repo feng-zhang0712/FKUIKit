@@ -44,4 +44,3 @@ public final class FKDefaultTabDropdownTabBarHost: UIView, FKAnchoredDropdownTab
     ])
   }
 }
-

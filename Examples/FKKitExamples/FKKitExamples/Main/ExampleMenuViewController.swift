@@ -167,7 +167,7 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "Anchored Dropdown",
-          subtitle: "TabBar + anchorEmbedded dropdown: toggle/switch, replace-in-place, keyboard, dynamic height",
+          subtitle: "Hub → tab-bar anchor demo vs custom UIView anchor demo",
           make: { FKAnchoredDropdownExampleViewController() }
         ),
         ExampleMenuItem(

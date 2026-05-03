@@ -126,4 +126,3 @@ internal final class FKAnchoredDropdownContentContainerViewController: UIViewCon
     return CGSize(width: preferred.width, height: max(1, measured.height))
   }
 }
-

@@ -75,7 +75,8 @@ public struct FKAnchoredDropdownConfiguration {
   public var tabBarConfiguration: FKTabBarConfiguration
   /// Underlying `FKPresentationController` configuration to use.
   ///
-  /// The component will always force `.anchorEmbedded` mode and bind the anchor to the tab bar host.
+  /// The component always uses `FKPresentationConfiguration.Layout.anchor(_:)` for layout;
+  /// the concrete anchor is derived from ``anchorOverride`` (if any) and the tab bar host.
   public var presentationConfiguration: FKPresentationConfiguration
   /// Animation style when switching between two tabs while expanded.
   public var switchAnimationStyle: SwitchAnimationStyle
@@ -94,6 +95,12 @@ public struct FKAnchoredDropdownConfiguration {
   /// - Note: This maps to `presentationConfiguration.dismissBehavior`.
   public var allowsTapOutsideToDismiss: Bool
 
+  /// Optional custom anchor placement.
+  ///
+  /// When `nil`, the dropdown attaches to ``FKAnchoredDropdownTabBarHost/tabBar`` and hosts inside
+  /// the tab bar host’s root view (recommended default).
+  public var anchorOverride: FKAnchoredDropdownAnchorOverride?
+
   public init(
     tabBarConfiguration: FKTabBarConfiguration = FKAnchoredDropdownConfiguration.default.tabBarConfiguration,
     presentationConfiguration: FKPresentationConfiguration = FKAnchoredDropdownConfiguration.default.presentationConfiguration,
@@ -101,7 +108,8 @@ public struct FKAnchoredDropdownConfiguration {
     contentCachingPolicy: ContentCachingPolicy = .cachePerTab,
     allowsBackdropTapToDismiss: Bool = true,
     allowsSwipeToDismiss: Bool = true,
-    allowsTapOutsideToDismiss: Bool = true
+    allowsTapOutsideToDismiss: Bool = true,
+    anchorOverride: FKAnchoredDropdownAnchorOverride? = nil
   ) {
     self.tabBarConfiguration = tabBarConfiguration
     self.presentationConfiguration = presentationConfiguration
@@ -110,32 +118,6 @@ public struct FKAnchoredDropdownConfiguration {
     self.allowsBackdropTapToDismiss = allowsBackdropTapToDismiss
     self.allowsSwipeToDismiss = allowsSwipeToDismiss
     self.allowsTapOutsideToDismiss = allowsTapOutsideToDismiss
-  }
-
-  /// Default configuration tuned for an anchored dropdown below a top tab bar.
-  public static var `default`: FKAnchoredDropdownConfiguration {
-    var tab = FKTabBarConfiguration()
-    tab.layout.isScrollable = true
-    tab.layout.widthMode = .intrinsic
-    tab.layout.itemSpacing = 8
-    tab.layout.contentInsets = .init(top: 0, leading: 12, bottom: 0, trailing: 12)
-    tab.layout.contentAlignment = .leading
-    tab.appearance.backgroundStyle = .solid(.systemBackground)
-    tab.appearance.indicatorStyle = .none
-    tab.appearance.showsDivider = false
-
-    var presentation = FKPresentationConfiguration.default
-    presentation.cornerRadius = 10
-    presentation.backdropStyle = .dim(alpha: 0.25)
-    presentation.dismissBehavior = .init(allowsTapOutside: true, allowsSwipe: true, allowsBackdropTap: true)
-    presentation.keyboardAvoidance = .init(isEnabled: true, strategy: .interactive, additionalBottomInset: 8, targetScrollView: nil)
-    presentation.safeAreaPolicy = .contentRespectsSafeArea
-    presentation.rotationHandling = .relayoutAnimated
-    return FKAnchoredDropdownConfiguration(
-      tabBarConfiguration: tab,
-      presentationConfiguration: presentation,
-      switchAnimationStyle: .replaceInPlace(animation: .crossfade(duration: 0.18))
-    )
+    self.anchorOverride = anchorOverride
   }
 }
-
