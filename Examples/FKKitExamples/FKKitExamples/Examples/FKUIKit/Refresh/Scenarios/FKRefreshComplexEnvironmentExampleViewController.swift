@@ -103,7 +103,9 @@ private final class FKRefreshLargeTitleKeyboardDemoViewController: UIViewControl
     let visibleH = max(0, view.convert(frame, from: nil).intersection(view.bounds).height)
     UIView.animate(withDuration: duration) {
       self.tableView.contentInset.bottom = visibleH
-      self.tableView.scrollIndicatorInsets.bottom = visibleH
+      var indicators = self.tableView.verticalScrollIndicatorInsets
+      indicators.bottom = visibleH
+      self.tableView.verticalScrollIndicatorInsets = indicators
     }
   }
 }
