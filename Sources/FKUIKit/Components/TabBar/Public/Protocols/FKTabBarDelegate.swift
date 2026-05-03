@@ -1,5 +1,8 @@
 import UIKit
 
+/// Optional delegate for selection gating and tab lifecycle callbacks.
+///
+/// Prefer this when integrating with UIKit view controllers; closures on `FKTabBar` cover the same events for lightweight setups.
 @MainActor
 public protocol FKTabBarDelegate: AnyObject {
   /// Asks whether selection can proceed.

@@ -9,6 +9,28 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.43.15] - 2026-05-03
+
+### Changed (FKUIKit FKTabBar)
+
+**Non-breaking**
+
+- Reorganized `Sources/FKUIKit/Components/TabBar/` into **`Public/`** (`Configuration/`, `Models/`, `Protocols/`, `Indicator/`, `SwiftUI/`) and **`Internal/`** (`Selection/`, `Layout/`, `Views/`, `Badge/`), replacing the previous `Adapter/`, top-level `Configuration/`, `Core/`, `Indicator/`, and `UI/Internal/` layout (SwiftPM consumers still use `import FKUIKit` only).
+- Split modeling sources into **`FKTabBarContentConfiguration.swift`** (title/subtitle/image configuration types) and **`FKTabBarItem.swift`** (tab descriptor); public type names are unchanged.
+- Added **`visibleItems`** (`public private(set)`) exposing the currently laid-out tabs in strip order (hidden items excluded).
+- Added **`setSelectedIndex(forItemID:animated:notify:reason:)`** (`@discardableResult`, returns whether a matching visible tab exists).
+- **`FKTabBarRepresentable`**: when the visible strip’s stable ID sequence changes, the `Binding` syncs from UIKit after `reload`; binding-driven updates apply selection with **`notify: false`** to avoid feedback loops and redundant delegate/reselect side effects.
+
+### Changed (Documentation)
+
+- Rewrote **`Sources/FKUIKit/Components/TabBar/README.md`** (module map, selection APIs, SwiftUI sync, examples layout).
+
+### Changed (Examples)
+
+- TabBar sample app tree is grouped under **`Hub/`**, **`Shared/`**, and **`Scenarios/<topic>/`** (Basics, Scrollable, Indicator, Badge, ReplaceUITabBar, Accessibility, Dynamic, Performance).
+- Replaced **`FKTabCapabilityCompletionExamples.swift`** with smaller topic files (e.g. content types, layout+RTL, scroll+width strategies, badge anchors).
+- Removed the unused text-only basics demo that was not wired from the hub.
+
 ## [0.43.14] - 2026-05-02
 
 ### Changed (FKUIKit FKTextField)
@@ -1733,6 +1755,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
 [Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.43.14...HEAD
+[0.43.15]: https://github.com/feng-zhang0712/FKKit/compare/0.43.14...0.43.15
 [0.43.14]: https://github.com/feng-zhang0712/FKKit/compare/0.43.13...0.43.14
 [0.43.8]: https://github.com/feng-zhang0712/FKKit/compare/0.43.7...0.43.8
 [0.43.7]: https://github.com/feng-zhang0712/FKKit/compare/0.43.6...0.43.7

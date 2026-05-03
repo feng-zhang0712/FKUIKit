@@ -1,6 +1,8 @@
 import UIKit
 
-/// Shared text style used by title/subtitle configuration.
+// MARK: - Text
+
+/// Typography and styling for tab titles and subtitles.
 public struct FKTabBarTextStyle: Equatable {
   public var font: UIFont
   public var color: UIColor
@@ -35,7 +37,7 @@ public struct FKTabBarTextStyle: Equatable {
   }
 }
 
-/// Stateful text configuration for normal/selected/disabled rendering.
+/// Title or subtitle text with optional per-state overrides (`normal` / `selected` / `disabled`).
 public struct FKTabBarTextConfiguration: Equatable {
   public struct State: Equatable {
     public var text: String?
@@ -50,7 +52,7 @@ public struct FKTabBarTextConfiguration: Equatable {
   public var normal: State
   public var selected: State?
   public var disabled: State?
-  /// Vertical spacing between title and subtitle labels.
+  /// Vertical spacing between title and subtitle when both are shown.
   public var spacingToNextText: CGFloat
 
   public init(
@@ -76,25 +78,19 @@ public struct FKTabBarTextConfiguration: Equatable {
   }
 }
 
+// MARK: - Image
 
-/// Image source model for tab content.
+/// Resolved image input for a tab (local asset, symbol, remote placeholder, etc.).
 public enum FKTabBarImageSource: Equatable {
-  /// Direct image object.
   case image(UIImage)
-  /// SF Symbols name.
   case systemSymbol(name: String)
-  /// Local asset name from bundle.
   case asset(name: String, in: Bundle? = nil)
-  /// Remote URL mapped by host app with an optional placeholder.
-  ///
-  /// `FKTabBar` does not perform networking. Apps can resolve this value in
-  /// `FKTabBar.itemViewProvider` or pre-map to `.image`.
+  /// Remote URL for host-side loading. `FKTabBar` does not fetch network data; resolve in `itemViewProvider` or map to `.image`.
   case remote(urlString: String, placeholder: UIImage? = nil)
 }
 
-/// Image rendering style.
+/// Layout and tint for tab images.
 public struct FKTabBarImageStyle: Equatable {
-  /// Position of image relative to title when both are present.
   public enum Position: Equatable {
     case leading
     case trailing
@@ -118,7 +114,7 @@ public struct FKTabBarImageStyle: Equatable {
   }
 }
 
-/// Stateful image configuration for normal/selected/disabled rendering.
+/// Image with optional per-state overrides (`normal` / `selected` / `disabled`).
 public struct FKTabBarImageConfiguration: Equatable {
   public struct State: Equatable {
     public var source: FKTabBarImageSource?
@@ -154,88 +150,3 @@ public struct FKTabBarImageConfiguration: Equatable {
     return normal
   }
 }
-
-/// A single tab descriptor used by `FKTabBar`.
-///
-/// Keep `id` stable across dynamic updates to preserve selection and animation continuity.
-public struct FKTabBarItem: Equatable {
-  /// Stable identifier for diffing and selection retention.
-  public let id: String
-
-  /// Primary title text configuration.
-  ///
-  /// Priority: item-level configuration > `FKTabBarConfiguration.appearance` defaults > internal fallback.
-  public var title: FKTabBarTextConfiguration
-  /// Optional subtitle text configuration.
-  public var subtitle: FKTabBarTextConfiguration?
-  /// Optional image configuration.
-  public var image: FKTabBarImageConfiguration?
-  /// Optional custom content identifier.
-  ///
-  /// When non-`nil`, `FKTabBar.itemViewProvider` is used to resolve custom view content.
-  public var customContentIdentifier: String?
-
-  /// Whether this tab can be selected.
-  public var isEnabled: Bool
-
-  /// Whether this tab is visible in the header.
-  ///
-  /// Hidden tabs are excluded from layout and interaction.
-  public var isHidden: Bool
-
-  /// Badge configuration.
-  public var badge: FKTabBarBadgeConfiguration
-
-  /// Optional accessibility label override.
-  ///
-  /// When `nil`, title text from `title.normal.text` or `id` is used as fallback.
-  public var accessibilityLabel: String?
-
-  /// Optional accessibility hint override.
-  public var accessibilityHint: String?
-
-  /// Creates a tab item.
-  ///
-  /// - Parameters:
-  ///   - id: Stable identifier.
-  ///   - title: Primary title configuration.
-  ///   - subtitle: Optional subtitle configuration.
-  ///   - image: Optional image configuration.
-  ///   - customContentIdentifier: Optional custom content key consumed by `itemViewProvider`.
-  ///   - isEnabled: Enabled state.
-  ///   - isHidden: Hidden state in header layout.
-  ///   - badge: Badge configuration.
-  ///   - accessibilityLabel: Optional accessibility label.
-  ///   - accessibilityHint: Optional accessibility hint.
-  public init(
-    id: String,
-    title: FKTabBarTextConfiguration = .init(),
-    subtitle: FKTabBarTextConfiguration? = nil,
-    image: FKTabBarImageConfiguration? = nil,
-    customContentIdentifier: String? = nil,
-    isEnabled: Bool = true,
-    isHidden: Bool = false,
-    badge: FKTabBarBadgeConfiguration = .init(),
-    accessibilityLabel: String? = nil,
-    accessibilityHint: String? = nil
-  ) {
-    self.id = id
-    self.title = title
-    self.subtitle = subtitle
-    self.image = image
-    self.customContentIdentifier = customContentIdentifier
-    self.isEnabled = isEnabled
-    self.isHidden = isHidden
-    self.badge = badge
-    self.accessibilityLabel = accessibilityLabel
-    self.accessibilityHint = accessibilityHint
-  }
-}
-
-public extension FKTabBarItem {
-  /// Convenience accessor for primary title text.
-  var titleText: String? { title.normal.text }
-  /// Convenience accessor for primary subtitle text.
-  var subtitleText: String? { subtitle?.normal.text }
-}
-

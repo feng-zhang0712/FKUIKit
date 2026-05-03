@@ -1,5 +1,10 @@
 import UIKit
 
+/// Layout, appearance, and animation tokens for `FKTabBar`.
+///
+/// Use `FKTabBarConfiguration` as the single configuration entry point from app code.
+/// `FKTabBarDefaults.defaultConfiguration` provides the factory default.
+
 // MARK: - Layout
 
 /// Item content layout direction.

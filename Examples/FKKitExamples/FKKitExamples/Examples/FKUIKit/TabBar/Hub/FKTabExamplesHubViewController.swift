@@ -125,13 +125,13 @@ final class FKTabBarExamplesHubViewController: UITableViewController {
           make: { FKTabBarAccessibilityExampleViewController() }
         ),
         RowModel(
-          title: "Reference — layout direction + RTL override",
-          subtitle: "Advanced knobs: itemLayoutDirection and rtlBehavior override (legacy reference page).",
+          title: "Layout direction + RTL override",
+          subtitle: "itemLayoutDirection (horizontal/vertical) and rtlBehavior (automatic / forced).",
           make: { FKTabBarLayoutRTLExampleViewController() }
         ),
         RowModel(
-          title: "Reference — i18n + VoiceOver",
-          subtitle: "Multilingual labels with quick RTL toggle (legacy reference page).",
+          title: "i18n + VoiceOver",
+          subtitle: "Localized titles with RTL toggle for accessibility verification.",
           make: { FKTabBarI18nA11yExampleViewController() }
         ),
       ]

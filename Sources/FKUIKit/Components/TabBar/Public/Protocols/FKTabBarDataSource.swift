@@ -1,5 +1,8 @@
 import UIKit
 
+/// Supplies tab items dynamically, similar to `UITableViewDataSource`.
+///
+/// When set, `reloadData()` rebuilds from this source; `reload(items:)` still updates the manual cache used when `dataSource` is `nil`.
 @MainActor
 public protocol FKTabBarDataSource: AnyObject {
   /// Returns number of items available for the tab bar.

@@ -1,5 +1,9 @@
 import UIKit
 
+/// High-performance UIKit tab strip backed by `UICollectionView`.
+///
+/// Contributor note: shipped API sources live under `Public/`; helpers under `Internal/`. See `README.md` alongside this target.
+
 /// A high-performance tab header component.
 ///
 /// `FKTabBar` is UI-only: it manages tab rendering, selection state, and indicator animation.
@@ -131,7 +135,8 @@ public final class FKTabBar: UIView {
   /// Hidden items remain in this array so hosts can toggle visibility without rebuilding IDs.
   public private(set) var items: [FKTabBarItem] = []
   private var manualItems: [FKTabBarItem] = []
-  private var visibleItems: [FKTabBarItem] = []
+  /// Tabs currently laid out in the strip, in order (`isHidden` items excluded).
+  public private(set) var visibleItems: [FKTabBarItem] = []
 
   /// Current selected index.
   public private(set) var selectedIndex: Int = 0
@@ -462,6 +467,22 @@ public final class FKTabBar: UIView {
   ///   - reason: Semantic selection reason (defaults to `.programmatic`).
   ///
   /// - Important: `notify == false` does not prevent UI updates; it only suppresses callbacks.
+  /// Selects the tab with the given stable item identifier.
+  ///
+  /// - Returns: `false` when no visible tab matches `itemID` or the strip is empty.
+  @discardableResult
+  public func setSelectedIndex(
+    forItemID itemID: String,
+    animated: Bool = true,
+    notify: Bool = true,
+    reason: SelectionReason = .programmatic
+  ) -> Bool {
+    assertMainThreadInDebug()
+    guard let index = visibleItems.firstIndex(where: { $0.id == itemID }) else { return false }
+    setSelectedIndex(index, animated: animated, notify: notify, reason: reason)
+    return true
+  }
+
   public func setSelectedIndex(
     _ index: Int,
     animated: Bool = true,

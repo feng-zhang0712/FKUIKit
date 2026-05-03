@@ -1,5 +1,7 @@
 import Foundation
 
+/// Selection state machine for `FKTabBar`. `FKTabBarSwitchPhase` is public; snapshot/reducer types are internal.
+
 /// Runtime phase of tab switching.
 ///
 /// `switching` is explicit so callers can debounce expensive side effects while transition is in progress.
