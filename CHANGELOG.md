@@ -9,6 +9,20 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.45.0] - 2026-05-03
+
+### Added (FKCoreKit)
+
+- **`Sources/FKCoreKit/Extension/`**: a curated set of **`public`** Swift extensions, grouped by layer:
+  - **`Foundation/`** — common helpers on `String`, `Data`, `Date`, `URL`, `Array`, `Dictionary`, `Optional`, `Collection`, numeric protocols, `Bundle`, `UserDefaults`, `NotificationCenter`, `JSONEncoder` / `JSONDecoder`, `UUID`, `Decimal`, `NSRange`, `NSAttributedString`, `ProcessInfo`, and related types.
+  - **`CoreGraphics/`** — helpers on `CGFloat`, `CGPoint`, `CGSize`, and `CGRect`.
+  - **`UIKit/`** — UI helpers (guarded with **`#if canImport(UIKit)`**) on views, controls, colors, images, layers, navigation, traits, and screen metrics.
+- All extension members use an **`fk_`** prefix to reduce collisions with consumer extensions and future SDK APIs.
+
+### Changed (Documentation)
+
+- **`README.md`**: module tree and **FKCoreKit** overview now include **`Extension/`**; SPM snippet minimum version example updated to **`0.45.0`** and usage sample mentions an extension API.
+
 ## [0.44.2] - 2026-05-03
 
 ### Changed (FKUIKit FKProgressBar)

@@ -52,6 +52,7 @@ FKKit/
 │  ├─ FKCoreKit/
 │  │  ├─ Async/
 │  │  ├─ BusinessKit/
+│  │  ├─ Extension/
 │  │  ├─ FileManager/
 │  │  ├─ Logger/
 │  │  ├─ Network/
@@ -96,6 +97,7 @@ FKKit/
 - `FileManager`: file I/O, directory utilities, and transfer-oriented helpers.
 - `Async`: concurrency utilities (queues, cancellable task wrappers, debounce/throttle helpers).
 - `BusinessKit`: app/business infrastructure (version, deeplink, lifecycle, analytics, i18n helpers).
+- `Extension`: cross-cutting `public` extensions for **Foundation**, **CoreGraphics**, and **UIKit** (UIKit files use `#if canImport(UIKit)`); members use an `fk_` prefix to reduce name clashes with app and SDK code.
 - `Utils`: high-frequency utility APIs for date/string/number/device/UI/collection/common operations.
 
 ### FKUIKit
@@ -145,7 +147,7 @@ This module currently focuses on source-level composable components; add interna
 ### Package.swift
 ```swift
 dependencies: [
-  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.41.0")
+  .package(url: "https://github.com/feng-zhang0712/FKKit.git", from: "0.45.0")
 ],
 targets: [
   .target(
@@ -175,6 +177,7 @@ Example quick integrations:
 ```swift
 // FKCoreKit
 let isEmail = FKUtils.Regex.isValidEmail("dev@example.com")
+let trimmed = "  hello  ".fk_trimmed
 
 // FKUIKit
 someView.fk_showSkeleton()
