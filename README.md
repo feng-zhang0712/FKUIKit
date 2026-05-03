@@ -16,6 +16,7 @@
   - [FKCompositeKit](#fkcompositekit)
 - [Requirements](#requirements)
 - [Installation (SPM)](#installation-spm)
+- [Installation (CocoaPods)](#installation-cocoapods)
 - [Usage](#usage)
 - [Branching & Collaboration (Recommended)](#branching--collaboration-recommended)
 - [License](#license)
@@ -23,7 +24,7 @@
 
 ## Overview
 FKKit is a modular, pure-native Swift component library for iOS applications.  
-It is built on top of Apple system frameworks and distributed via Swift Package Manager (SPM), with no third-party runtime dependencies.
+It is built on top of Apple system frameworks and distributed via **Swift Package Manager (SPM)** and **CocoaPods** (see root `*.podspec` files), with no third-party runtime dependencies.
 
 The repository is organized into three product modules:
 - `FKCoreKit`
@@ -38,7 +39,7 @@ In addition, the package exposes a small Foundation-only product for EmptyState 
 ## Features
 - Pure Swift implementation (Swift 6 language mode in package settings).
 - No third-party dependencies.
-- Swift Package Manager first-class integration.
+- Swift Package Manager and CocoaPods integration (four published pod names mirror SPM products).
 - Modular architecture with clear package products.
 - Protocol-oriented design in multiple components for extensibility and testability.
 - Example project included for direct integration reference.
@@ -79,7 +80,6 @@ FKKit/
 │  └─ FKCompositeKit/
 │     └─ Components/
 │        ├─ Base/
-│        ├─ Filter/
 │        └─ ListKit/
 └─ Examples/
 ```
@@ -122,7 +122,6 @@ FKKit/
 `FKCompositeKit` builds business-facing composite components on top of `FKCoreKit` + `FKUIKit`:
 
 - `Base`: reusable base foundation for cells and controllers.
-- `Filter`: filter bar/panel/pill and multi-layout filtering components.
 - `ListKit`: list state/pagination coordination and plugin-style list assembly.
 
 This module currently focuses on source-level composable components; add internal docs in each directory as your team standard evolves.
@@ -159,6 +158,45 @@ targets: [
     ]
   )
 ]
+```
+
+## Installation (CocoaPods)
+
+The repository ships **one podspec per Swift product**, aligned with SPM (`FKCoreKit`, `FKEmptyStateCoreLite`, `FKUIKit`, `FKCompositeKit`). Each podspec’s **`s.version`** must match a **published Git tag** (for example `0.45.0`).
+
+### Podfile (Git tag)
+
+```ruby
+platform :ios, '15.0'
+
+pod 'FKEmptyStateCoreLite', :git => 'https://github.com/feng-zhang0712/FKKit.git', :tag => '0.45.0'
+pod 'FKCoreKit',           :git => 'https://github.com/feng-zhang0712/FKKit.git', :tag => '0.45.0'
+pod 'FKUIKit',             :git => 'https://github.com/feng-zhang0712/FKKit.git', :tag => '0.45.0'
+pod 'FKCompositeKit',      :git => 'https://github.com/feng-zhang0712/FKKit.git', :tag => '0.45.0'
+```
+
+Order does not matter; CocoaPods resolves dependencies (`FKUIKit` → `FKEmptyStateCoreLite`; `FKCompositeKit` → `FKCoreKit`, `FKUIKit`).
+
+### Podfile (local path, for development)
+
+Point `pod` to a **checkout that contains the podspec files at its root** (same layout as this repository):
+
+```ruby
+platform :ios, '15.0'
+
+pod 'FKEmptyStateCoreLite', :path => '../FKKit'
+pod 'FKCoreKit',           :path => '../FKKit'
+pod 'FKUIKit',             :path => '../FKKit'
+pod 'FKCompositeKit',      :path => '../FKKit'
+```
+
+### Linting podspecs (maintainers)
+
+```text
+pod spec lint FKCoreKit.podspec --allow-warnings
+pod spec lint FKEmptyStateCoreLite.podspec --allow-warnings
+pod spec lint FKUIKit.podspec --allow-warnings
+pod spec lint FKCompositeKit.podspec --allow-warnings
 ```
 
 ## Usage

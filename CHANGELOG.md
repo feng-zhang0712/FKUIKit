@@ -14,6 +14,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 - **`README.md`**: iOS / Swift badges and **Requirements** updated for **iOS-only** distribution and **Swift 6.3+**.
 
+### Added (Distribution)
+
+- **CocoaPods**: root **`FKCoreKit.podspec`**, **`FKEmptyStateCoreLite.podspec`**, **`FKUIKit.podspec`**, and **`FKCompositeKit.podspec`** (iOS 15+, Swift 6.0 module language) mirroring SPM products; **`README.md`** adds an **Installation (CocoaPods)** section (Git tag, local path, and `pod spec lint` notes).
+
 ### Planned
 
 - Unit test target and `Tests/` directory
