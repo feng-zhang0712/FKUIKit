@@ -9,6 +9,35 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Unit test target and `Tests/` directory
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.43.16] - 2026-05-03
+
+### Changed (FKUIKit FKSkeleton)
+
+**Breaking**
+
+- **`FKSkeletonPresentable`** is now **`internal`** (previously `public`). Downstream code must not conform to this protocol; use **`FKSkeletonManager`** and the **`UIView`** skeleton extensions instead.
+- **`UIView.fk_withSkeletonLoading`** now takes `loadingAction` as **`@escaping (@escaping () -> Void) -> Void`** so the nested completion can be stored and invoked safely alongside main-queue marshaling.
+
+**Non-breaking**
+
+- Reorganized **`Sources/FKUIKit/Components/Skeleton/`** into **`Public/`** (`FKSkeleton`, `Manager/`, `Models/` including **`FKSkeletonShimmerDirection.swift`**, `Views/`, `Cells/`, `Presets/`), **`Internal/`** (`FKSkeletonController`, `FKSkeletonDispatch`, **`FKSkeletonVisibleCells`**, `Rendering/`), and **`Extension/`** (**`UIView+FKSkeleton.swift`**, **`UIKit+FKSkeletonConvenience.swift`**).
+- Folded **`FKSkeletonUIKitExtensions.swift`** into **`UIKit+FKSkeletonConvenience.swift`** (symbols unchanged).
+- **`FKSkeletonManager`** centralizes main-queue scheduling for auto skeleton show/hide; **`fk_showAutoSkeleton`**, **`fk_hideAutoSkeleton`**, and **`fk_setSkeletonLoading`** call through without duplicating an outer `DispatchQueue.main.async`.
+- **`fk_withSkeletonLoading`** invokes the user completion on the main queue before hiding so UI mutations stay thread-safe.
+- **`UITableView`** / **`UICollectionView`** visible-cell helpers share **`FKSkeletonVisibleCells`** for mapping cells to `contentView`.
+- **`FKSkeletonContainerView.hideSkeleton(animated:completion:)`**: when **`usesUnifiedShimmer`** is enabled, the unified shimmer layer fades out with the blocks so it cannot sit visually above an animated dismiss; **`completion`** runs after host and child transitions finish.
+- **`FKSkeletonView`** and **`FKSkeletonContainerView`** re-resolve dynamic **`UIColor`** values when the interface style changes; **`FKSkeletonView.refreshSkeletonAppearanceForCurrentTraits()`** forces a layer refresh.
+
+### Changed (Documentation)
+
+- Rewrote **`Sources/FKUIKit/Components/Skeleton/README.md`** (module layout, threading model, API overview).
+
+### Changed (Examples)
+
+- Replaced the single **`FKSkeletonExampleViewController`** with **`FKSkeletonExamplesHubViewController`** plus **`Hub/`**, **`Support/`**, and **`Scenarios/`** topic screens.
+- Added **`FKSkeletonExampleAnimationEffectsViewController`** for **`FKSkeletonAnimationMode`**, shimmer directions, **`UIColorWell`** overrides for **`baseColor`** / **`highlightColor`**, and a side-by-side gallery.
+- **`ExampleMenuViewController`** routes Skeleton samples through the new hub.
+
 ## [0.43.15] - 2026-05-03
 
 ### Changed (FKUIKit FKTabBar)
@@ -1755,6 +1784,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
 [Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.43.14...HEAD
+[0.43.16]: https://github.com/feng-zhang0712/FKKit/compare/0.43.15...0.43.16
 [0.43.15]: https://github.com/feng-zhang0712/FKKit/compare/0.43.14...0.43.15
 [0.43.14]: https://github.com/feng-zhang0712/FKKit/compare/0.43.13...0.43.14
 [0.43.8]: https://github.com/feng-zhang0712/FKKit/compare/0.43.7...0.43.8

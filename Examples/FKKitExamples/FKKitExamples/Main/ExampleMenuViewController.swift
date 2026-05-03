@@ -80,8 +80,8 @@ final class ExampleMenuViewController: UITableViewController {
         ),
         ExampleMenuItem(
           title: "Skeleton",
-          subtitle: "Overlay, presets, standalone blocks, table/collection skeleton cells, unified shimmer",
-          make: { FKSkeletonExampleViewController() }
+          subtitle: "Hub: overlay, auto, presets, container, lists, manager, global defaults",
+          make: { FKSkeletonExamplesHubViewController() }
         ),
         ExampleMenuItem(
           title: "TabBar",
