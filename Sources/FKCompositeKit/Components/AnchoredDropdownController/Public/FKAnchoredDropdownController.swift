@@ -284,7 +284,8 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     let items = tabs.map { $0.makeTabBarItem(snapshot) }
     tabBar.reload(items: items, updatePolicy: .preserveSelection)
     if let keepSelectedTab, let idx = tabs.firstIndex(where: { $0.id == keepSelectedTab }) {
-      tabBar.setSelectedIndex(idx, animated: false, notify: false, reason: .programmatic)
+      // Animate selection scroll/indicator so the strip does not feel “stuck” after item rebuilds.
+      tabBar.setSelectedIndex(idx, animated: true, notify: false, reason: .programmatic)
     }
   }
 

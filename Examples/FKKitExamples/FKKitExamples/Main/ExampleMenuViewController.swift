@@ -171,6 +171,11 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKAnchoredDropdownExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "Filter",
+          subtitle: "FKFilterController hub: full demo, equal-width tabs, and blank hosts",
+          make: { FKFilterExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "ListKit",
           subtitle: "Plugin list: refresh, paging, skeleton, empty/error",
           make: { FKListKitTableExampleViewController() }
