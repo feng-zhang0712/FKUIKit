@@ -1,7 +1,7 @@
 import UIKit
 import FKCompositeKit
 
-/// Builds ``FKFilterPanelFactory`` sources matching each ``FKFilterPanelKind`` used in the sample app.
+/// Builds a ``FKFilterPanelFactory`` for each ``FKFilterPanelKind`` used in the sample app.
 enum FKFilterExamplePanelSupport {
   @MainActor
   static func makePanelFactory(
@@ -20,7 +20,7 @@ enum FKFilterExamplePanelSupport {
     onTagsSelectionEmptied: (() -> Void)? = nil
   ) -> FKFilterPanelFactory {
     FKFilterPanelFactory(
-      sources: [
+      panelSources: [
         .hierarchy: .twoColumnList(
           model: knowledgeModel,
           onChange: onKnowledgeChange,
@@ -88,14 +88,13 @@ enum FKFilterExamplePanelSupport {
           configuration: .init(
             rowHeight: 44,
             cellStyle: FKFilterListCellStyle(
-              font: UIFont.preferredFont(forTextStyle: .footnote),
               textAlignment: .center
             )
           )
         ),
       ],
       loadingTitle: "Loading...",
-      wrapsTopHairline: true
+      wrapsPanelWithTopHairline: true
     )
   }
 }

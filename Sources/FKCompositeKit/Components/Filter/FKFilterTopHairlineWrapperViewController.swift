@@ -8,7 +8,7 @@ import UIKit
 /// - This wrapper keeps panel controllers simple and reusable (they don't need to know about hairlines).
 ///
 /// Usage:
-/// - Typically created by `FKFilterPanelFactory` when `wrapsTopHairline == true`.
+/// - Typically created by ``FKFilterPanelFactory`` when ``FKFilterPanelFactory/wrapsPanelWithTopHairline`` is true.
 final class FKFilterTopHairlineWrapperViewController: UIViewController {
   private let contentVC: UIViewController
   private let hairline = UIView()

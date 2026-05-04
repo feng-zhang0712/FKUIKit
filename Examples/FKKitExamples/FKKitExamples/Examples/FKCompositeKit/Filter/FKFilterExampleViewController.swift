@@ -117,27 +117,23 @@ final class FKFilterExampleViewController: UIViewController {
   }
 
   private static func makeTabs(tagsTitle: @escaping () -> String) -> [FKFilterTab<String>] {
-    let ty = FKFilterExampleAppearance.titleStyle
-    let st = FKFilterExampleAppearance.subtitleStyle
-    let cs = FKFilterExampleAppearance.chevronSize
-    let csp = FKFilterExampleAppearance.chevronSpacing
-    let tss = FKFilterExampleAppearance.titleSubtitleSpacing
+    let sm = FKFilterExampleAppearance.filterStripMetrics
     return [
       .init(
         id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录",
-        titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
       .init(
         id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程", subtitle: "精选",
-        titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
       .init(
         id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部",
-        titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
       .init(
         id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属",
-        titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
       FKFilterTab(
         id: TabID.tags.rawValue,
@@ -145,15 +141,11 @@ final class FKFilterExampleViewController: UIViewController {
         title: tagsTitle,
         subtitle: { Optional("可多选") },
         allowsMultipleSelection: true,
-        titleTextStyle: ty,
-        subtitleTextStyle: st,
-        chevronSize: cs,
-        chevronSpacing: csp,
-        titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
       .init(
         id: TabID.sort.rawValue, panelKind: .singleList, title: "最新",
-        titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+        stripMetrics: sm
       ),
     ]
   }

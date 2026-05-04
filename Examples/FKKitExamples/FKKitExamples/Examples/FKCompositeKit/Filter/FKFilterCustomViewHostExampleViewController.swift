@@ -33,24 +33,20 @@ final class FKFilterCustomViewHostExampleViewController: UIViewController {
   )
 
   private lazy var filterHost: FKFilterController<String> = {
-    let ty = FKFilterExampleAppearance.titleStyle
-    let st = FKFilterExampleAppearance.subtitleStyle
-    let cs = FKFilterExampleAppearance.chevronSize
-    let csp = FKFilterExampleAppearance.chevronSpacing
-    let tss = FKFilterExampleAppearance.titleSubtitleSpacing
+    let sm = FKFilterExampleAppearance.filterStripMetrics
     return FKFilterController(
       tabs: [
         .init(
           id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录",
-          titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
         .init(
           id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部",
-          titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
         .init(
           id: TabID.sort.rawValue, panelKind: .singleList, title: "最新",
-          titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
       ],
       panelFactory: panelFactory,

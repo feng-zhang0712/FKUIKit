@@ -321,7 +321,7 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
     } else {
       cell.detailTextLabel?.attributedText = nil
       cell.detailTextLabel?.text = item.subtitle
-      cell.detailTextLabel?.font = .preferredFont(forTextStyle: .caption1)
+      cell.detailTextLabel?.font = .preferredFont(forTextStyle: .subheadline)
       cell.detailTextLabel?.textColor = .secondaryLabel
     }
     if !item.isEnabled {

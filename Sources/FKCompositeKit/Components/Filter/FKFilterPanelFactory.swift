@@ -1,33 +1,25 @@
 import UIKit
 
-/// Builds common filter panels from lightweight data providers, so callers only maintain model state.
-///
-/// Design goals:
-/// - Keep app code minimal: pass in closures for current model and update callbacks.
-/// - Centralize panel construction and selection wiring (typically via ``FKFilterController``).
+/// Builds filter panels from model providers so screens only hold state and callbacks.
 @MainActor
 public final class FKFilterPanelFactory {
-  /// Describes how a panel is built and how its state is persisted.
-  public enum Source {
-    /// Two-column panel: left list + right list (`UITableView`).
+  /// How a ``FKFilterPanelKind`` is constructed and persisted.
+  public enum PanelSource {
     case twoColumnList(
       model: () -> FKFilterTwoColumnModel?,
       onChange: (FKFilterTwoColumnModel) -> Void,
       configuration: FKFilterTwoColumnListViewController.Configuration = .init()
     )
-    /// Two-column panel: left list + right grid (`UICollectionView`).
     case twoColumnGrid(
       model: () -> FKFilterTwoColumnModel?,
       onChange: (FKFilterTwoColumnModel) -> Void,
       configuration: FKFilterTwoColumnGridViewController.Configuration = .init()
     )
-    /// Grid-like chips panel (`UICollectionView`).
     case chips(
       sections: () -> [FKFilterSection],
       onChange: ([FKFilterSection]) -> Void,
       configuration: FKFilterChipsViewController.Configuration = .init()
     )
-    /// Single list panel (`UITableView`).
     case singleList(
       section: () -> FKFilterSection?,
       onChange: (FKFilterSection) -> Void,
@@ -35,30 +27,30 @@ public final class FKFilterPanelFactory {
     )
   }
 
-  public var sources: [FKFilterPanelKind: Source]
+  public var panelSources: [FKFilterPanelKind: PanelSource]
   public var loadingTitle: String
-  public var wrapsTopHairline: Bool
+  /// When true, panel controllers are wrapped with a one-pixel top hairline under the tab strip.
+  public var wrapsPanelWithTopHairline: Bool
 
   public init(
-    sources: [FKFilterPanelKind: Source],
+    panelSources: [FKFilterPanelKind: PanelSource],
     loadingTitle: String = "Loading...",
-    wrapsTopHairline: Bool = true
+    wrapsPanelWithTopHairline: Bool = true
   ) {
-    self.sources = sources
+    self.panelSources = panelSources
     self.loadingTitle = loadingTitle
-    self.wrapsTopHairline = wrapsTopHairline
+    self.wrapsPanelWithTopHairline = wrapsPanelWithTopHairline
   }
 
-  /// Builds the panel for `kind`, wiring selection into `onSelectItem`.
+  /// Builds the panel for `kind` and forwards taps to `onSelectItem`.
   ///
-  /// - Parameters:
-  ///   - allowsMultipleSelection: Panel-level gate combined with each ``FKFilterSection/selectionMode`` (see ``FKFilterSelection``).
+  /// `allowsMultipleSelection` is combined with each section’s ``FKFilterSection/selectionMode`` (single wins unless both allow multiple).
   public func makePanel(
     for kind: FKFilterPanelKind,
     allowsMultipleSelection: Bool,
     onSelectItem: @escaping (FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void
   ) -> UIViewController? {
-    guard let source = sources[kind] else { return nil }
+    guard let source = panelSources[kind] else { return nil }
     let panel: UIViewController
     switch source {
     case let .twoColumnList(model, onChange, configuration):
@@ -107,7 +99,9 @@ public final class FKFilterPanelFactory {
         allowsMultipleSelection: allowsMultipleSelection
       )
     }
-    return wrapsTopHairline ? FKFilterTopHairlineWrapperViewController(contentVC: panel) : panel
+    return wrapsPanelWithTopHairline
+      ? FKFilterTopHairlineWrapperViewController(contentVC: panel)
+      : panel
   }
 
   private func loadingPanel() -> UIViewController {
@@ -125,6 +119,8 @@ public final class FKFilterPanelFactory {
       label.centerXAnchor.constraint(equalTo: vc.view.centerXAnchor),
       label.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor, constant: -20),
     ])
-    return wrapsTopHairline ? FKFilterTopHairlineWrapperViewController(contentVC: vc) : vc
+    return wrapsPanelWithTopHairline
+      ? FKFilterTopHairlineWrapperViewController(contentVC: vc)
+      : vc
   }
 }

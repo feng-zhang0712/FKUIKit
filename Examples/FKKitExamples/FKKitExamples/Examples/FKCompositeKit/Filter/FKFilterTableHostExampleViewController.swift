@@ -33,20 +33,16 @@ final class FKFilterTableHostExampleViewController: UIViewController {
   )
 
   private lazy var filterHost: FKFilterController<String> = {
-    let ty = FKFilterExampleAppearance.titleStyle
-    let st = FKFilterExampleAppearance.subtitleStyle
-    let cs = FKFilterExampleAppearance.chevronSize
-    let csp = FKFilterExampleAppearance.chevronSpacing
-    let tss = FKFilterExampleAppearance.titleSubtitleSpacing
+    let sm = FKFilterExampleAppearance.filterStripMetrics
     return FKFilterController(
       tabs: [
         .init(
           id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属",
-          titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
         .init(
           id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程",
-          titleTextStyle: ty, subtitleTextStyle: st, chevronSize: cs, chevronSpacing: csp, titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
         .init(
           id: TabID.tags.rawValue,
@@ -54,11 +50,7 @@ final class FKFilterTableHostExampleViewController: UIViewController {
           title: "标签",
           subtitle: "可多选",
           allowsMultipleSelection: true,
-          titleTextStyle: ty,
-          subtitleTextStyle: st,
-          chevronSize: cs,
-          chevronSpacing: csp,
-          titleSubtitleSpacing: tss
+          stripMetrics: sm
         ),
       ],
       panelFactory: panelFactory,

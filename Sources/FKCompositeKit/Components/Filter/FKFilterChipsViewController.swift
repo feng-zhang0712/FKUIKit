@@ -16,7 +16,7 @@ final class FKFilterChipCell: UICollectionViewCell {
     let scale = max(traitCollection.displayScale, 1)
     contentView.layer.borderWidth = 1 / scale
 
-    label.font = .preferredFont(forTextStyle: .callout)
+    label.font = .preferredFont(forTextStyle: .subheadline)
     label.textAlignment = .center
     label.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(label)

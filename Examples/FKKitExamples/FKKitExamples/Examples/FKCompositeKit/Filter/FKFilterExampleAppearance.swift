@@ -5,18 +5,27 @@ import FKUIKit
 /// Shared tab bar + chevron metrics for Filter examples.
 enum FKFilterExampleAppearance {
   static let panelPillStyle = FKFilterPillStyle(
-    font: UIFont.preferredFont(forTextStyle: .footnote),
     cornerRadius: 6,
     contentInsets: .init(top: 6, left: 8, bottom: 6, right: 8)
   )
 
-  static let panelListCellStyle = FKFilterListCellStyle(font: UIFont.preferredFont(forTextStyle: .footnote))
+  static let panelListCellStyle = FKFilterListCellStyle()
 
   static let titleStyle: UIFont.TextStyle = .subheadline
   static let subtitleStyle: UIFont.TextStyle = .caption2
   static let chevronSize = CGSize(width: 14, height: 14)
   static let chevronSpacing: CGFloat = 4
   static let titleSubtitleSpacing: CGFloat = 2
+
+  static var filterStripMetrics: FKFilterStripMetrics {
+    FKFilterStripMetrics(
+      titleTextStyle: titleStyle,
+      subtitleTextStyle: subtitleStyle,
+      chevronSize: chevronSize,
+      chevronSpacing: chevronSpacing,
+      titleSubtitleSpacing: titleSubtitleSpacing
+    )
+  }
 
   /// Six-tab hub: intrinsic tab widths (horizontal scroll), so long titles are not clipped.
   static func hubAnchoredConfiguration() -> FKAnchoredDropdownConfiguration {

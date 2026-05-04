@@ -1,32 +1,18 @@
 import Foundation
 
-/// Stable identifier used across the Filters module.
-///
-/// Why a wrapper instead of `String`?
-/// - Avoids leaking backend IDs into UI code directly (stronger semantics than raw strings).
-/// - Keeps models Hashable and easy to diff in UI layers.
-/// - Allows future migration (e.g. numeric IDs) without changing public APIs.
+/// Stable identifier for filter rows, sections, and categories.
 public struct FKFilterID: Hashable, Sendable, RawRepresentable {
   public let rawValue: String
   public init(rawValue: String) { self.rawValue = rawValue }
 }
 
-/// Selection semantics for a section/panel.
-///
-/// Note:
-/// - `FKFilterTab.allowsMultipleSelection` (or your own gating) is an additional gate.
-/// - The effective mode is determined by the intersection of "panel allows multi" and "section requests multi".
+/// Single vs multiple selection for a section.
 public enum FKFilterSelectionMode: Sendable {
   case single
   case multiple
 }
 
-/// An option item (row / chip / grid pill) displayed in filter panels.
-///
-/// This is intentionally UI-friendly:
-/// - `title` is presentation text
-/// - `isSelected` drives selection UI state
-/// - `isEnabled` allows disabling items without removing them
+/// One selectable row, chip, or grid cell in a filter panel.
 public struct FKFilterOptionItem: Hashable, Sendable {
   public let id: FKFilterID
   public var title: String
@@ -57,11 +43,7 @@ public struct FKFilterOptionItem: Hashable, Sendable {
   }
 }
 
-/// A logical section inside a panel (e.g. a group on the right side of a two-column panel).
-///
-/// - `title`: optional section header text.
-/// - `selectionMode`: desired selection semantics for `items`.
-/// - `items`: options to render; concrete UI (table/chips/grid) is decided by the panel controller.
+/// A titled group of options inside a panel.
 public struct FKFilterSection: Hashable, Sendable {
   public let id: FKFilterID
   public var title: String?
@@ -81,15 +63,7 @@ public struct FKFilterSection: Hashable, Sendable {
   }
 }
 
-/// Data model for a two-column panel.
-///
-/// Typical UI:
-/// - Left: categories (`Category`)
-/// - Right: sections for the currently selected category (`sectionsByCategoryID`)
-///
-/// This model can drive both implementations:
-/// - left list + right list (`FKFilterTwoColumnListViewController`)
-/// - left list + right grid (`FKFilterTwoColumnGridViewController`)
+/// Left column categories and right-hand sections keyed by category id.
 public struct FKFilterTwoColumnModel: Hashable, Sendable {
   public struct Category: Hashable, Sendable {
     public let id: FKFilterID
@@ -104,12 +78,21 @@ public struct FKFilterTwoColumnModel: Hashable, Sendable {
   }
 
   public var categories: [Category]
-  /// Mapping categoryId -> sections displayed on the right.
   public var sectionsByCategoryID: [FKFilterID: [FKFilterSection]]
 
   public init(categories: [Category], sectionsByCategoryID: [FKFilterID: [FKFilterSection]]) {
     self.categories = categories
     self.sectionsByCategoryID = sectionsByCategoryID
+  }
+}
+
+/// Combines panel-level multi-select with each section’s requested mode.
+enum FKFilterSelection {
+  static func effectiveMode(
+    requestedMode: FKFilterSelectionMode,
+    allowsMultipleSelection: Bool
+  ) -> FKFilterSelectionMode {
+    (allowsMultipleSelection && requestedMode == .multiple) ? .multiple : .single
   }
 }
 
