@@ -31,21 +31,10 @@ enum AnchoredDropdownExampleDropdownFactory {
     ]
 
     var config = FKAnchoredDropdownConfiguration.default
-
-    // Selection is shown by text/icon tint only (same font weight as unselected).
-    let titleFont = UIFont.preferredFont(forTextStyle: .subheadline)
-    config.tabBarConfiguration.appearance.typography.normalFont = titleFont
-    config.tabBarConfiguration.appearance.typography.selectedFont = titleFont
-    config.tabBarConfiguration.appearance.typography.adjustsForContentSizeCategory = true
-    config.tabBarConfiguration.appearance.colors.normalText = .secondaryLabel
-    config.tabBarConfiguration.appearance.colors.selectedText = .label
-    config.tabBarConfiguration.appearance.colors.normalIcon = .secondaryLabel
-    config.tabBarConfiguration.appearance.colors.selectedIcon = .label
+    config.applyTintOnlyChevronTabTypography()
 
     config.presentationConfiguration.contentInsets = .init(top: 8, leading: 12, bottom: 12, trailing: 12)
     config.presentationConfiguration.cornerRadius = 12
-    config.presentationConfiguration.backdropStyle = .dim(alpha: 0.25)
-    config.switchAnimationStyle = .replaceInPlace(animation: .crossfade(duration: 0.18))
 
     let callbacks = FKAnchoredDropdownConfiguration.Callbacks<AnchoredDropdownExampleTabID>(
       stateDidChange: { state in onLog("state: \(state)") },

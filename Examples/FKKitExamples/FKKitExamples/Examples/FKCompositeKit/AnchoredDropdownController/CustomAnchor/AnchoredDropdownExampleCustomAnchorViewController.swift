@@ -3,7 +3,7 @@ import FKCompositeKit
 
 /// Custom **`UIView`** anchor only (no visible `FKTabBar`). Tap the bar to call `toggle(tab:)`; Open/Close use the same controller APIs.
 final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController {
-  private let logView = UITextView()
+  private let logView = AnchoredDropdownExampleLogHelpers.makeCallbackLogTextView()
   private let host = AnchoredDropdownExampleCustomAnchorHostView()
   private lazy var dropdown: FKAnchoredDropdownController<AnchoredDropdownExampleTabID> = {
     AnchoredDropdownExampleDropdownFactory.makeController(tabBarHost: host) { [weak self] line in
@@ -35,36 +35,11 @@ final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController 
   }
 
   private func setupChild() {
-    addChild(dropdown)
-    dropdown.view.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(dropdown.view)
-    dropdown.didMove(toParent: self)
-
-    NSLayoutConstraint.activate([
-      dropdown.view.topAnchor.constraint(equalTo: view.topAnchor),
-      dropdown.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      dropdown.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      dropdown.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-    ])
+    dropdown.embed(in: self)
   }
 
   private func setupLogView() {
-    logView.translatesAutoresizingMaskIntoConstraints = false
-    logView.isEditable = false
-    logView.backgroundColor = UIColor.secondarySystemBackground
-    logView.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-    logView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-    logView.layer.cornerRadius = 10
-    logView.layer.masksToBounds = true
-
-    view.insertSubview(logView, belowSubview: dropdown.view)
-    NSLayoutConstraint.activate([
-      logView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-      logView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-      logView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
-      logView.heightAnchor.constraint(equalToConstant: 180),
-    ])
-    view.bringSubviewToFront(dropdown.view)
+    AnchoredDropdownExampleLogHelpers.installLogView(logView, in: view, below: dropdown.view)
   }
 
   private func applyCustomAnchor() {
@@ -72,14 +47,7 @@ final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController 
   }
 
   private func appendLog(_ text: String) {
-    let line = "[\(AnchoredDropdownExampleLogHelpers.timestamp())] \(text)"
-    if logView.text?.isEmpty ?? true {
-      logView.text = line
-    } else {
-      logView.text = (logView.text ?? "") + "\n" + line
-    }
-    let range = NSRange(location: max(0, logView.text.count - 1), length: 1)
-    logView.scrollRangeToVisible(range)
+    AnchoredDropdownExampleLogHelpers.appendLogLine(text, to: logView)
   }
 
   @objc private func didTapAnchorControl() {
