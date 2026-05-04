@@ -31,8 +31,8 @@ final class FKAnchorHostViewController: UIViewController {
   private let shadowContainerView = UIView()
   /// Inner card that clips content to rounded corners.
   private let cardView = UIView()
-  /// Optional blur material rendered behind anchor content.
-  private let containerBlurView = FKBlurView()
+  /// Optional blur material rendered behind anchor content (installed only when `configuration.containerBlur.isEnabled`).
+  private var containerBlurView: FKBlurView?
   /// Public handle for layout/animation; maps to `shadowContainerView`.
   let wrapperView = UIView()
 
@@ -94,7 +94,6 @@ final class FKAnchorHostViewController: UIViewController {
     chromeView.backgroundColor = .clear
     chromeView.isUserInteractionEnabled = false
 
-    cardView.addSubview(containerBlurView)
     cardView.addSubview(contentContainerView)
     cardView.addSubview(chromeView)
     shadowContainerView.addSubview(cardView)
@@ -129,7 +128,7 @@ final class FKAnchorHostViewController: UIViewController {
     wrapperView.frame = layout.presentationFrame
     shadowContainerView.frame = wrapperView.bounds
     cardView.frame = shadowContainerView.bounds
-    containerBlurView.frame = cardView.bounds
+    containerBlurView?.frame = cardView.bounds
     chromeView.frame = cardView.bounds
     contentContainerView.frame = cardView.bounds.inset(by: UIEdgeInsets(configuration.contentInsets))
 
@@ -201,21 +200,32 @@ final class FKAnchorHostViewController: UIViewController {
   private func configureContainerBlurIfNeeded() {
     let blur = configuration.containerBlur
     guard blur.isEnabled else {
-      containerBlurView.isHidden = true
-      containerBlurView.blurSourceView = nil
-      containerBlurView.maskPath = nil
+      containerBlurView?.blurSourceView = nil
+      containerBlurView?.maskPath = nil
+      containerBlurView?.removeFromSuperview()
+      containerBlurView = nil
       cardView.backgroundColor = .systemBackground
       return
     }
 
-    containerBlurView.isHidden = false
-    containerBlurView.configuration = blur.configuration
-    containerBlurView.blurSourceView = presentingViewController?.view
+    let blurView: FKBlurView
+    if let existing = containerBlurView {
+      blurView = existing
+    } else {
+      let v = FKBlurView()
+      v.isUserInteractionEnabled = false
+      cardView.insertSubview(v, belowSubview: contentContainerView)
+      containerBlurView = v
+      blurView = v
+    }
+    blurView.isHidden = false
+    blurView.configuration = blur.configuration
+    blurView.blurSourceView = presentingViewController?.view
     cardView.backgroundColor = .clear
   }
 
   private func updateBlurMask(for direction: FKAnchor.Direction) {
-    guard !containerBlurView.isHidden else { return }
+    guard let containerBlurView, !containerBlurView.isHidden else { return }
     let radius = max(0, configuration.cornerRadius)
     guard radius > 0 else {
       containerBlurView.maskPath = nil

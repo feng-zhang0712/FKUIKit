@@ -6,15 +6,26 @@ extension FKContainerPresentationController {
   func configureContainerBlurIfNeeded() {
     let blur = configuration.containerBlur
     guard blur.isEnabled else {
-      containerBlurView.isHidden = true
-      containerBlurView.blurSourceView = nil
+      containerBlurView?.blurSourceView = nil
+      containerBlurView?.removeFromSuperview()
+      containerBlurView = nil
       wrapperView.backgroundColor = .systemBackground
       return
     }
 
-    containerBlurView.isHidden = false
-    containerBlurView.configuration = blur.configuration
-    containerBlurView.blurSourceView = presentingViewController.view
+    let blurView: FKBlurView
+    if let existing = containerBlurView {
+      blurView = existing
+    } else {
+      let v = FKBlurView()
+      v.isUserInteractionEnabled = false
+      wrapperView.insertSubview(v, belowSubview: contentContainerView)
+      containerBlurView = v
+      blurView = v
+    }
+    blurView.isHidden = false
+    blurView.configuration = blur.configuration
+    blurView.blurSourceView = presentingViewController.view
     wrapperView.backgroundColor = .clear
   }
 }

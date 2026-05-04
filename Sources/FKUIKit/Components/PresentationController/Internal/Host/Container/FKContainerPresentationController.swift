@@ -11,8 +11,8 @@ final class FKContainerPresentationController: UIPresentationController, UIGestu
   let backdropView = FKPresentationBackdropView()
   /// Non-interactive chrome host for grabber and related affordances.
   let chromeView = UIView()
-  /// Optional blur material rendered behind the presented content.
-  let containerBlurView = FKBlurView()
+  /// Optional blur material rendered behind the presented content (installed only when `configuration.containerBlur.isEnabled`).
+  var containerBlurView: FKBlurView?
   /// Presentation shell carrying frame, corners, border, and shadow.
   let wrapperView = UIView()
   /// Content host that embeds the system provided presented view.
@@ -99,8 +99,6 @@ final class FKContainerPresentationController: UIPresentationController, UIGestu
     chromeView.isUserInteractionEnabled = false
 
     wrapperView.backgroundColor = .systemBackground
-    containerBlurView.isUserInteractionEnabled = false
-    wrapperView.addSubview(containerBlurView)
     // Content should be below chrome so the grabber is never covered by the presented view.
     wrapperView.addSubview(contentContainerView)
     wrapperView.addSubview(chromeView)
