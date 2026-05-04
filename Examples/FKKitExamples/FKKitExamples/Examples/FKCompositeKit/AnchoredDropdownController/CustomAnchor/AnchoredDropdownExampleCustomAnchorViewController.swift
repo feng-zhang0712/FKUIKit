@@ -1,7 +1,7 @@
 import UIKit
 import FKCompositeKit
 
-/// Custom **`UIView`** anchor only (no visible `FKTabBar`). Tap the bar to call `toggle(tab:)`; Open/Close use the same controller APIs.
+/// Custom **`UIView`** anchor only (no visible `FKTabBar`). Tap the bar to call ``togglePanel(for:animated:)``; Open/Close use the same APIs.
 final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController {
   private let logView = AnchoredDropdownExampleLogHelpers.makeCallbackLogTextView()
   private let host = AnchoredDropdownExampleCustomAnchorHostView()
@@ -43,7 +43,7 @@ final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController 
   }
 
   private func applyCustomAnchor() {
-    dropdown.setCustomAnchor(source: host.anchorControl, overlayHost: host)
+    dropdown.setAnchor(source: host.anchorControl, overlayHost: host)
   }
 
   private func appendLog(_ text: String) {
@@ -51,14 +51,14 @@ final class AnchoredDropdownExampleCustomAnchorViewController: UIViewController 
   }
 
   @objc private func didTapAnchorControl() {
-    dropdown.toggle(tab: .filters, animated: true)
+    dropdown.togglePanel(for: .filters, animated: true)
   }
 
   @objc private func didTapOpenFilters() {
-    dropdown.open(tab: .filters, animated: true)
+    dropdown.expandPanel(for: .filters, animated: true)
   }
 
   @objc private func didTapClose() {
-    dropdown.close(animated: true)
+    dropdown.collapsePanel(animated: true)
   }
 }

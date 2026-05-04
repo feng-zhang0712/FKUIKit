@@ -13,18 +13,16 @@ private final class FKFilterSelectionCallbackStorage {
   var onSelection: FKFilterSelectionCallback?
 }
 
-/// Holds a weak dropdown reference so panel selection can collapse the sheet after `onSelection` fires.
 @MainActor
 private final class FKFilterDropdownDismissBond<TabID: Hashable> {
   weak var dropdown: FKAnchoredDropdownController<TabID>?
 
   func dismissAfterSelectionIfNeeded(effectiveMode: FKFilterSelectionMode) {
     guard effectiveMode == .single else { return }
-    dropdown?.close(animated: true)
+    dropdown?.collapsePanel(animated: true)
   }
 }
 
-/// Tab bar title overrides after single-select picks (see ``FKFilterController``).
 @MainActor
 private final class FKFilterTabTitleOverrideStore<TabID: Hashable> {
   private var overrides: [TabID: String] = [:]
@@ -46,10 +44,7 @@ private final class FKFilterTabTitleOverrideStore<TabID: Hashable> {
   }
 }
 
-/// Filter bar + anchored dropdown, wired to ``FKFilterPanelFactory`` panel types.
-///
-/// This wraps ``FKAnchoredDropdownController`` so bar items use the standard chevron title style and
-/// each tab’s sheet content comes from your ``FKFilterPanelFactory`` `sources`.
+/// Filter bar plus anchored dropdown, driven by ``FKFilterPanelFactory``.
 @MainActor
 public final class FKFilterController<TabID: Hashable>: UIViewController {
   public let dropdownController: FKAnchoredDropdownController<TabID>
@@ -60,11 +55,9 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
   private let dismissBond = FKFilterDropdownDismissBond<TabID>()
   private let titleOverrideStore = FKFilterTabTitleOverrideStore<TabID>()
 
-  /// Called when a panel forwards a selection (after the panel updates its model via `onChange`).
+  /// Called when a panel reports a selection (after the panel updates its model via `onChange`).
   ///
-  /// For ``FKFilterSelectionMode/single`` selections, the tab’s primary title is updated to the picked
-  /// ``FKFilterOptionItem/title`` before this runs, then the anchored panel collapses. Multi-select panels
-  /// stay open until the user dismisses them and do not change the tab title automatically.
+  /// For single-select panels the tab title updates to the picked item, then the panel collapses.
   public var onSelection: FKFilterSelectionCallback? {
     get { selectionStorage.onSelection }
     set { selectionStorage.onSelection = newValue }
@@ -75,7 +68,7 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
     panelFactory: FKFilterPanelFactory,
     configuration: FKAnchoredDropdownConfiguration = .default,
     tabBarHost: (any FKAnchoredDropdownTabBarHost)? = nil,
-    callbacks: FKAnchoredDropdownConfiguration.Callbacks<TabID> = .init(),
+    events: FKAnchoredDropdownConfiguration.Events<TabID> = .init(),
     onSelection: FKFilterSelectionCallback? = nil
   ) {
     self.filterTabs = tabs
@@ -91,7 +84,7 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
       ),
       tabBarHost: tabBarHost,
       configuration: configuration,
-      callbacks: callbacks
+      events: events
     )
     super.init(nibName: nil, bundle: nil)
     dismissBond.dropdown = dropdownController
@@ -122,13 +115,11 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
     dropdownController.didMove(toParent: self)
   }
 
-  /// Replaces the tab descriptors and rebuilds the anchored tab list (see ``FKAnchoredDropdownController/setTabs(_:)``).
-  ///
-  /// Clears tab title overrides so they do not carry over to the new tab set.
+  /// Replaces filter tabs and refreshes the anchored bar. Clears title overrides.
   public func setFilterTabs(_ tabs: [FKFilterTab<TabID>]) {
     filterTabs = tabs
     titleOverrideStore.removeAll()
-    dropdownController.setTabs(
+    dropdownController.updateTabs(
       Self.makeAnchoredTabs(
         tabs: tabs,
         panelFactory: panelFactory,
@@ -139,30 +130,23 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
     )
   }
 
-  /// Clears the tab bar title override for one tab so the bar shows ``FKFilterTab/title`` again.
   public func clearTabTitleOverride(for tabID: TabID) {
     titleOverrideStore.removeTitle(for: tabID)
     dropdownController.reloadTabBarItems()
   }
 
-  /// Clears all tab bar title overrides.
   public func clearAllTabTitleOverrides() {
     titleOverrideStore.removeAll()
     dropdownController.reloadTabBarItems()
   }
 
-  /// Invalidates cached panel content for a tab when factory data changes (see ``FKAnchoredDropdownController/invalidateCachedContent(for:)``).
   public func invalidateCachedPanelContent(for tab: TabID) {
     dropdownController.invalidateCachedContent(for: tab)
   }
 
-  /// Pins the anchored dropdown’s **overlay host** (dimming + sheet layout bounds) to a larger view than this controller’s own bounds.
-  ///
-  /// By default the overlay uses ``FKAnchoredDropdownTabBarHost/view``, which is only as tall as your tab strip. The anchor layout then
-  /// computes downward ``availableHeight`` from that small bounds, which often collapses to **~0** when this controller’s height is fixed
-  /// to the strip (see ``FKPresentationAnchorLayout``). Pass the hosting screen container—typically the parent view controller’s `view`.
+  /// Pins mask and panel layout to `hostView` (e.g. the parent screen’s root view) while keeping the tab bar as the anchor source.
   public func pinAnchoredPresentationOverlay(to hostView: UIView) {
-    dropdownController.setCustomAnchor(source: dropdownController.tabBar, overlayHost: hostView)
+    dropdownController.setAnchor(source: dropdownController.tabBar, overlayHost: hostView)
   }
 
   private static func makeAnchoredTabs(

@@ -93,18 +93,31 @@ final class FKTabBarItemCell: UICollectionViewCell {
     let useSelectedFont = progress >= 0.5 ? true : selected
     let baseFont = useSelectedFont ? appearance.typography.selectedFont : appearance.typography.normalFont
 
+    let normalTitleColor = item.title.normal.style.color
+    let selectedTitleColor = item.title.selected?.style.color ?? normalTitleColor
+
     let textColor: UIColor
     let iconColor: UIColor
     if !item.isEnabled {
-      textColor = appearance.colors.disabledText
+      textColor = item.title.resolved(isSelected: selected, isEnabled: false).style.color
       iconColor = appearance.colors.disabledIcon
     } else if selected || progress > 0 {
-      // During interaction, interpolate colors to match `selectionProgress`.
-      textColor = interpolate(from: appearance.colors.normalText, to: appearance.colors.selectedText, progress: progress)
-      iconColor = interpolate(from: appearance.colors.normalIcon, to: appearance.colors.selectedIcon, progress: progress)
+      // Prefer per-item title colors (composite bars often encode state in `FKTabBarItem` styles).
+      textColor = interpolate(from: normalTitleColor, to: selectedTitleColor, progress: progress)
+      if let imageConfiguration = item.image, imageConfiguration.normal.source != nil {
+        let normalTint = imageConfiguration.normal.style.tintColor ?? appearance.colors.normalIcon
+        let selectedTint = (imageConfiguration.selected ?? imageConfiguration.normal).style.tintColor ?? appearance.colors.selectedIcon
+        iconColor = interpolate(from: normalTint, to: selectedTint, progress: progress)
+      } else {
+        iconColor = interpolate(from: appearance.colors.normalIcon, to: appearance.colors.selectedIcon, progress: progress)
+      }
     } else {
-      textColor = appearance.colors.normalText
-      iconColor = appearance.colors.normalIcon
+      textColor = item.title.resolved(isSelected: false, isEnabled: true).style.color
+      if let imageConfiguration = item.image, imageConfiguration.normal.source != nil {
+        iconColor = imageConfiguration.normal.style.tintColor ?? appearance.colors.normalIcon
+      } else {
+        iconColor = appearance.colors.normalIcon
+      }
     }
     let titleText = resolvedTitle(for: item, isSelected: selected)
     let lineBreakMode: NSLineBreakMode

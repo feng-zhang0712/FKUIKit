@@ -818,6 +818,15 @@ public final class FKTabBar: UIView {
     indicator.move(to: target, animation: resolvedAnimation().indicatorAnimation, animated: animated)
   }
 
+  /// Re-applies the current `visibleItems` to already-visible cells.
+  ///
+  /// Call after you replace models via ``reload(items:updatePolicy:)`` when `selectedIndex` is unchanged,
+  /// because the selection reducer may skip per-cell refresh for the same index.
+  public func reapplyVisibleItemConfigurations() {
+    assertMainThreadInDebug()
+    refreshVisibleCellsForCurrentState()
+  }
+
   private func refreshVisibleCellsForCurrentState() {
     collectionView.visibleCells.forEach { cell in
       guard let indexPath = collectionView.indexPath(for: cell),

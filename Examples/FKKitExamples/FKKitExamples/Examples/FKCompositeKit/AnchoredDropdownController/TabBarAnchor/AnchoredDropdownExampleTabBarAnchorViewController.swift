@@ -4,7 +4,7 @@ import FKCompositeKit
 /// Dropdown anchored to **`FKTabBar`** (default). Tabs, switch animations, callbacks — no custom anchor APIs.
 ///
 /// Uses `AnchoredDropdownExampleTabBarHostView` so the tab row stays **top-aligned** with natural height.
-/// `FKDefaultTabDropdownTabBarHost` pins `FKTabBar` to the full host height and vertically centers items (wrong here).
+/// ``FKAnchoredDropdownDefaultTabBarHost`` would pin ``FKTabBar`` to the full host height (undesirable for top-aligned titles).
 final class AnchoredDropdownExampleTabBarAnchorViewController: UIViewController {
   private let logView = AnchoredDropdownExampleLogHelpers.makeCallbackLogTextView()
   private let host = AnchoredDropdownExampleTabBarHostView()
@@ -50,11 +50,11 @@ final class AnchoredDropdownExampleTabBarAnchorViewController: UIViewController 
   }
 
   @objc private func didTapOpenFilters() {
-    dropdown.open(tab: .filters, animated: true)
+    dropdown.expandPanel(for: .filters, animated: true)
   }
 
   @objc private func didTapClose() {
-    dropdown.close(animated: true)
+    dropdown.collapsePanel(animated: true)
   }
 
   @objc private func didChangeAnimationStyle() {

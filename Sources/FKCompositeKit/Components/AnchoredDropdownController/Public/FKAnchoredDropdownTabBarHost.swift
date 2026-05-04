@@ -1,21 +1,16 @@
 import UIKit
 import FKUIKit
 
-/// Abstraction for hosting an `FKTabBar` inside a customizable container.
-///
-/// This enables apps to fully customize the "red box" area (background, divider, padding, shadows),
-/// while still reusing `FKTabBar` for selection logic and events.
+/// Hosts an ``FKTabBar`` inside a container you control (background, dividers, safe area, etc.).
 @MainActor
 public protocol FKAnchoredDropdownTabBarHost: AnyObject {
-  /// The root view that will be placed in the controller's hierarchy.
   var view: UIView { get }
-  /// The underlying tab bar used by the component.
   var tabBar: FKTabBar { get }
 }
 
-/// Default tab bar host: the tab bar fills the container.
+/// Default host: the tab bar fills the bounds of this view.
 @MainActor
-public final class FKDefaultTabDropdownTabBarHost: UIView, FKAnchoredDropdownTabBarHost {
+public final class FKAnchoredDropdownDefaultTabBarHost: UIView, FKAnchoredDropdownTabBarHost {
   public let tabBar: FKTabBar = {
     let bar = FKTabBar()
     bar.translatesAutoresizingMaskIntoConstraints = false

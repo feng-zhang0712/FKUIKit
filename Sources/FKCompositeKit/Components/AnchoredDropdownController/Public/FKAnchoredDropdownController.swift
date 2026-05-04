@@ -1,32 +1,20 @@
 import UIKit
 import FKUIKit
 
-/// A container controller that composes `FKTabBar` with an anchored embedded dropdown panel.
+/// Hosts an ``FKTabBar`` and presents an anchor-attached panel per tab via ``FKPresentationController``.
 ///
-/// This component is designed for "Meituan-like" tab-based filter dropdown interactions:
-/// - Tap a tab to open its panel anchored below the tab bar (default) or a custom ``UIView`` you configure.
-/// - Tap the same tab again to close (toggle).
-/// - Tap another tab to switch (previous closes, then new opens).
-/// - Tap backdrop to close.
-///
-/// The dropdown presentation is powered by `FKPresentationController` in `.anchorEmbedded` mode.
-/// Customize attachment using ``FKAnchoredDropdownConfiguration/anchorOverride`` or
-/// ``FKAnchoredDropdownController/setCustomAnchor(source:overlayHost:)``.
+/// Typical interaction: tap a tab to expand its panel below the bar (or a custom anchor), tap again to collapse,
+/// switch tabs while expanded, or dismiss via backdrop / swipe when enabled in ``FKAnchoredDropdownConfiguration/presentationConfiguration``.
 @MainActor
 public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewController {
-  /// Close reasons unified across user interactions and programmatic control.
-  public enum CloseReason: Equatable, Sendable {
-    /// The user tapped the already-expanded tab again.
-    case repeatedTap
-    /// The user tapped the backdrop or swiped to dismiss.
-    case maskTapOrSwipe
-    /// Closed by host code via API.
+  /// Why the panel transitioned to the collapsed state.
+  public enum DismissReason: Equatable, Sendable {
+    case userToggledSameTab
+    case backdropOrSwipe
     case programmatic
-    /// Closed as part of a tab switch.
-    case switching
+    case switchingTab
   }
 
-  /// Current high-level state.
   public enum State: Equatable {
     case collapsed
     case expanding(tab: TabID)
@@ -35,53 +23,35 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     case switching(from: TabID, to: TabID)
   }
 
-  // MARK: - Public API
-
-  /// Current state snapshot (read-only).
   public private(set) var state: State = .collapsed
 
-  /// Currently selected tab id (if any).
-  ///
-  /// - Note: Selection does not necessarily imply the dropdown is expanded.
-  public var selectedTab: TabID? { selectedTabID }
+  public var selectedTabID: TabID? { selectedTabInternal }
 
-  /// Currently expanded tab id (if any).
-  public var expandedTab: TabID? { expandedTabID }
+  public var expandedTabID: TabID? { expandedTabInternal }
 
-  /// Tab bar host. You may provide your own host to customize the full tab bar container UI.
   public let tabBarHost: any FKAnchoredDropdownTabBarHost
 
-  /// Underlying tab bar used for interaction and selection rendering.
   public var tabBar: FKTabBar { tabBarHost.tabBar }
 
-  /// Component configuration.
   public var configuration: FKAnchoredDropdownConfiguration {
     didSet {
       applyConfiguration()
-      rebuildTabBarItems(keepSelectedTab: selectedTabID)
+      rebuildTabBarItems(keepSelectedTab: selectedTabInternal)
     }
   }
 
-  /// State callbacks.
-  public var callbacks: FKAnchoredDropdownConfiguration.Callbacks<TabID>
+  public var events: FKAnchoredDropdownConfiguration.Events<TabID>
 
-  /// Creates a dropdown controller.
-  ///
-  /// - Parameters:
-  ///   - tabs: Initial tab list.
-  ///   - tabBarHost: A host object that contains an `FKTabBar`. Use the default host or provide a custom one.
-  ///   - configuration: Configuration applied to the tab bar and presentation.
-  ///   - callbacks: State callbacks.
   public init(
     tabs: [FKAnchoredDropdownTab<TabID>],
     tabBarHost: (any FKAnchoredDropdownTabBarHost)? = nil,
     configuration: FKAnchoredDropdownConfiguration = .default,
-    callbacks: FKAnchoredDropdownConfiguration.Callbacks<TabID> = .init()
+    events: FKAnchoredDropdownConfiguration.Events<TabID> = .init()
   ) {
     self.tabs = tabs
-    self.tabBarHost = tabBarHost ?? FKDefaultTabDropdownTabBarHost()
+    self.tabBarHost = tabBarHost ?? FKAnchoredDropdownDefaultTabBarHost()
     self.configuration = configuration
-    self.callbacks = callbacks
+    self.events = events
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -90,15 +60,12 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     fatalError("init(coder:) has not been implemented")
   }
 
-  /// Updates tabs at runtime.
-  ///
-  /// This method keeps the current selection when possible.
-  public func setTabs(_ tabs: [FKAnchoredDropdownTab<TabID>]) {
+  public func updateTabs(_ tabs: [FKAnchoredDropdownTab<TabID>]) {
     self.tabs = tabs
-    rebuildTabBarItems(keepSelectedTab: selectedTabID)
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal)
 
-    if let expanded = expandedTabID, tabs.contains(where: { $0.id == expanded }) == false {
-      close(animated: true)
+    if let expanded = expandedTabInternal, tabs.contains(where: { $0.id == expanded }) == false {
+      collapsePanel(animated: true)
     }
 
     switch configuration.contentCachingPolicy {
@@ -112,68 +79,96 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     }
   }
 
-  /// Opens the dropdown for the given tab.
-  public func open(tab id: TabID, animated: Bool = true) {
-    enqueueDesiredExpandedTab(id, animated: animated, closeReasonWhenCollapsing: .programmatic)
+  public func expandPanel(for tab: TabID, animated: Bool = true) {
+    enqueueDesiredExpandedTab(tab, animated: animated, collapseReasonWhenDismissing: .programmatic)
   }
 
-  /// Closes the currently expanded dropdown (if any).
-  public func close(animated: Bool = true) {
-    enqueueDesiredExpandedTab(nil, animated: animated, closeReasonWhenCollapsing: .programmatic)
+  public func collapsePanel(animated: Bool = true) {
+    enqueueDesiredExpandedTab(nil, animated: animated, collapseReasonWhenDismissing: .programmatic)
   }
 
-  /// Sets the expanded tab id.
-  ///
-  /// Pass `nil` to collapse.
-  ///
-  /// This API is useful for state restoration where the expanded tab is your source of truth.
-  public func setExpandedTab(_ id: TabID?, animated: Bool = true) {
-    enqueueDesiredExpandedTab(id, animated: animated, closeReasonWhenCollapsing: .programmatic)
-  }
-
-  /// Toggles the dropdown for a given tab.
-  public func toggle(tab id: TabID, animated: Bool = true) {
-    if expandedTabID == id {
-      enqueueDesiredExpandedTab(nil, animated: animated, closeReasonWhenCollapsing: .programmatic)
+  public func togglePanel(for tab: TabID, animated: Bool = true) {
+    if expandedTabInternal == tab {
+      enqueueDesiredExpandedTab(nil, animated: animated, collapseReasonWhenDismissing: .programmatic)
     } else {
-      enqueueDesiredExpandedTab(id, animated: animated, closeReasonWhenCollapsing: .programmatic)
+      enqueueDesiredExpandedTab(tab, animated: animated, collapseReasonWhenDismissing: .programmatic)
     }
   }
 
-  /// Selects a tab in the tab bar without opening the dropdown.
-  ///
-  /// This is useful for restoring state while keeping the panel collapsed.
-  public func select(tab id: TabID, animated: Bool = false) {
+  public func selectTab(_ id: TabID, animated: Bool = false) {
     guard let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
-    selectedTabID = id
+    selectedTabInternal = id
     tabBar.setSelectedIndex(idx, animated: animated, notify: false, reason: .programmatic)
     rebuildTabBarItems(keepSelectedTab: id)
   }
 
-  /// Rebuilds tab bar items from the current `tabs` array without changing selection or expansion.
-  ///
-  /// Call this when `makeTabBarItem` reads external state (for example, a “3 selected” subtitle) and
-  /// that state changed without assigning a new `tabs` array.
   public func reloadTabBarItems() {
-    rebuildTabBarItems(keepSelectedTab: selectedTabID)
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal)
   }
 
-  /// Drops any cached content view controller for `tab` (see `configuration.contentCachingPolicy`).
-  ///
-  /// If that tab is currently expanded, the visible panel is replaced with a freshly resolved controller.
   public func invalidateCachedContent(for tab: TabID) {
     cachedContentControllers[tab] = nil
     refreshPresentedContentIfNeeded(forExpandedTab: tab)
   }
 
-  /// Clears all per-tab content caches.
-  ///
-  /// If a tab is expanded, its panel is replaced with a freshly resolved controller for that tab only.
   public func invalidateAllCachedContent() {
     cachedContentControllers.removeAll()
-    if let expanded = expandedTabID {
+    if let expanded = expandedTabInternal {
       refreshPresentedContentIfNeeded(forExpandedTab: expanded)
     }
+  }
+
+  // MARK: - Anchor & embedding
+
+  /// Pins the panel to `source` and optionally uses a larger `overlayHost` for mask/layout bounds.
+  public func setAnchor(source: UIView, overlayHost: UIView? = nil) {
+    if configuration.anchorPlacement == nil {
+      var next = configuration
+      next.anchorPlacement = FKAnchoredDropdownAnchorPlacement()
+      configuration = next
+    }
+    configuration.anchorPlacement?.sourceView = source
+    configuration.anchorPlacement?.overlayHostView = overlayHost
+  }
+
+  public func updateAnchorPlacement(
+    attachmentEdge: FKAnchor.Edge? = nil,
+    expansionDirection: FKAnchor.Direction? = nil,
+    horizontalAlignment: FKAnchor.Alignment? = nil,
+    widthPolicy: FKAnchor.WidthPolicy? = nil,
+    attachmentOffset: CGFloat? = nil
+  ) {
+    guard let placement = configuration.anchorPlacement else { return }
+    if let attachmentEdge { placement.attachmentEdge = attachmentEdge }
+    if let expansionDirection { placement.expansionDirection = expansionDirection }
+    if let horizontalAlignment { placement.horizontalAlignment = horizontalAlignment }
+    if let widthPolicy { placement.widthPolicy = widthPolicy }
+    if let attachmentOffset { placement.attachmentOffset = attachmentOffset }
+  }
+
+  public func resetAnchorToDefault() {
+    guard configuration.anchorPlacement != nil else { return }
+    var next = configuration
+    next.anchorPlacement = nil
+    configuration = next
+  }
+
+  /// Adds this controller as a child of `parent` and pins ``view`` to `container` (default: `parent.view`).
+  public func embed(in parent: UIViewController, pinTo container: UIView? = nil) {
+    guard let host = container ?? parent.view else {
+      assertionFailure("embed(in:pinTo:) requires a loaded parent.view or an explicit container.")
+      return
+    }
+    parent.addChild(self)
+    view.translatesAutoresizingMaskIntoConstraints = false
+    host.addSubview(view)
+    NSLayoutConstraint.activate([
+      view.topAnchor.constraint(equalTo: host.topAnchor),
+      view.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+      view.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+      view.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+    ])
+    didMove(toParent: parent)
   }
 
   // MARK: - UIViewController
@@ -183,36 +178,32 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     view.backgroundColor = .clear
     installTabBarHost()
     applyConfiguration()
-    rebuildTabBarItems(keepSelectedTab: selectedTabID)
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal)
     wireTabBarEvents()
   }
 
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    // External callers may request `open(tab:)` before this controller is attached to a window
-    // (deep links, state restoration, push transitions). We keep the desired state and reconcile here.
     reconcileIfPossible()
   }
 
   public override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    // When container size changes (rotation, split view), rebuild items so custom tab views can
-    // respond if they measure based on bounds. Avoid reloading if not needed.
     tabBar.realignSelection(animated: false)
   }
 
-  // MARK: - Internal storage
+  // MARK: - Private
 
   private var tabs: [FKAnchoredDropdownTab<TabID>] = []
-  private var selectedTabID: TabID?
-  private var expandedTabID: TabID? {
-    didSet { callbacks.expandedTabDidChange?(expandedTabID) }
+  private var selectedTabInternal: TabID?
+  private var expandedTabInternal: TabID? {
+    didSet { events.onExpandedTabChange?(expandedTabInternal) }
   }
 
   private var fkPresentationController: FKPresentationController?
   private var presentedContentContainer: FKAnchoredDropdownContentContainerViewController?
-  private var scheduledCloseReason: CloseReason?
-  private var lastClosingTabID: TabID?
+  private var scheduledDismissReason: DismissReason?
+  private var lastCollapsingTabID: TabID?
   private var pendingSwitchTargetTabID: TabID?
   private var pendingSwitchAnimated: Bool = true
   private var isSwitchingContentInPlace: Bool = false
@@ -220,14 +211,12 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
   private struct DesiredExpandedRequest: Equatable {
     var tab: TabID?
     var animated: Bool
-    var closeReasonWhenCollapsing: CloseReason
+    var collapseReasonWhenDismissing: DismissReason
   }
 
   private var desiredExpanded: DesiredExpandedRequest?
   private var isReconciling = false
   private var cachedContentControllers: [TabID: UIViewController] = [:]
-
-  // MARK: - Setup
 
   private func installTabBarHost() {
     let hostView = tabBarHost.view
@@ -243,56 +232,52 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
 
   private func wireTabBarEvents() {
     tabBar.tapEventTriggerBehavior = .onceAfterSelection
-    tabBar.onSelectionChanged = { [weak self] item, index, reason in
+    tabBar.onSelectionChanged = { [weak self] _, index, reason in
       guard let self else { return }
       guard reason == .userTap else { return }
       guard let tab = self.tabs[safe: index] else { return }
-      self.selectedTabID = tab.id
+      self.selectedTabInternal = tab.id
       self.handleUserTap(tab: tab.id)
     }
-    tabBar.onReselect = { [weak self] item, index in
+    tabBar.onReselect = { [weak self] _, index in
       guard let self else { return }
       guard let tab = self.tabs[safe: index] else { return }
-      self.selectedTabID = tab.id
+      self.selectedTabInternal = tab.id
       self.handleUserTap(tab: tab.id)
     }
   }
 
   private func handleUserTap(tab id: TabID) {
-    if let expanded = expandedTabID {
+    if let expanded = expandedTabInternal {
       if expanded == id {
-        enqueueDesiredExpandedTab(nil, animated: true, closeReasonWhenCollapsing: .repeatedTap)
+        enqueueDesiredExpandedTab(nil, animated: true, collapseReasonWhenDismissing: .userToggledSameTab)
       } else {
-        enqueueDesiredExpandedTab(id, animated: true, closeReasonWhenCollapsing: .switching)
+        enqueueDesiredExpandedTab(id, animated: true, collapseReasonWhenDismissing: .switchingTab)
       }
       return
     }
-    enqueueDesiredExpandedTab(id, animated: true, closeReasonWhenCollapsing: .programmatic)
+    enqueueDesiredExpandedTab(id, animated: true, collapseReasonWhenDismissing: .programmatic)
   }
 
   private func applyConfiguration() {
     tabBar.configuration = configuration.tabBarConfiguration
   }
 
-  // MARK: - Tab bar items
-
-  private func rebuildTabBarItems(keepSelectedTab: TabID?) {
+  private func rebuildTabBarItems(keepSelectedTab: TabID?, forceCollapsedChrome: Bool = false) {
     let snapshot = FKAnchoredDropdownTab<TabID>.StateSnapshot(
-      expandedTab: expandedTabID,
+      expandedTab: forceCollapsedChrome ? nil : expandedTabInternal,
       selectedTab: keepSelectedTab
     )
     let items = tabs.map { $0.makeTabBarItem(snapshot) }
     tabBar.reload(items: items, updatePolicy: .preserveSelection)
     if let keepSelectedTab, let idx = tabs.firstIndex(where: { $0.id == keepSelectedTab }) {
-      // Animate selection scroll/indicator so the strip does not feel “stuck” after item rebuilds.
       tabBar.setSelectedIndex(idx, animated: true, notify: false, reason: .programmatic)
     }
+    tabBar.reapplyVisibleItemConfigurations()
   }
 
-  // MARK: - Command reconciliation
-
-  private func enqueueDesiredExpandedTab(_ tab: TabID?, animated: Bool, closeReasonWhenCollapsing: CloseReason) {
-    desiredExpanded = DesiredExpandedRequest(tab: tab, animated: animated, closeReasonWhenCollapsing: closeReasonWhenCollapsing)
+  private func enqueueDesiredExpandedTab(_ tab: TabID?, animated: Bool, collapseReasonWhenDismissing: DismissReason) {
+    desiredExpanded = DesiredExpandedRequest(tab: tab, animated: animated, collapseReasonWhenDismissing: collapseReasonWhenDismissing)
     reconcileIfPossible()
   }
 
@@ -301,7 +286,6 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     guard let desiredExpanded else { return }
     guard isSwitchingContentInPlace == false else { return }
     guard let presented = fkPresentationController else {
-      // No active controller. Either present, or remain collapsed.
       if let target = desiredExpanded.tab {
         let started = transitionToExpand(tab: target, animated: desiredExpanded.animated)
         if started {
@@ -317,10 +301,10 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     isReconciling = true
     defer { isReconciling = false }
 
-    let currentExpanded = expandedTabID
+    let currentExpanded = expandedTabInternal
     let target = desiredExpanded.tab
     let animated = desiredExpanded.animated
-    let closeReasonWhenCollapsing = desiredExpanded.closeReasonWhenCollapsing
+    let collapseReasonWhenDismissing = desiredExpanded.collapseReasonWhenDismissing
     self.desiredExpanded = nil
 
     switch (currentExpanded, target) {
@@ -329,17 +313,12 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     case (nil, .some(let to)):
       transitionToExpand(tab: to, animated: animated)
     case (.some, nil):
-      transitionToCollapse(reason: closeReasonWhenCollapsing, animated: animated)
+      transitionToCollapse(reason: collapseReasonWhenDismissing, animated: animated)
     case (.some(let from), .some(let to)):
-      if from == to {
-        // already expanded, do nothing
-        return
-      }
+      if from == to { return }
       transitionToSwitch(from: from, to: to, animated: animated)
     }
   }
-
-  // MARK: - Transitions
 
   @discardableResult
   private func transitionToExpand(tab id: TabID, animated: Bool) -> Bool {
@@ -347,10 +326,10 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     guard fkPresentationController == nil else { return false }
     guard viewIfLoaded?.window != nil else { return false }
 
-    callbacks.willOpen?(id)
+    events.onWillExpand?(id)
     setState(.expanding(tab: id))
-    expandedTabID = id
-    rebuildTabBarItems(keepSelectedTab: selectedTabID ?? id)
+    expandedTabInternal = id
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal ?? id)
 
     let container = FKAnchoredDropdownContentContainerViewController()
     container.onPreferredContentSizeDidChange = { [weak self] in
@@ -367,9 +346,6 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     presentedContentContainer = container
 
     var cfg = configuration.presentationConfiguration
-    cfg.dismissBehavior.allowsTapOutside = configuration.allowsTapOutsideToDismiss
-    cfg.dismissBehavior.allowsSwipe = configuration.allowsSwipeToDismiss
-    cfg.dismissBehavior.allowsBackdropTap = configuration.allowsBackdropTapToDismiss
     cfg.layout = .anchor(makePresentationAnchorConfiguration())
 
     let controller = FKPresentationController(contentController: container, configuration: cfg, delegate: self)
@@ -402,22 +378,23 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
   }
 
   private func refreshPresentedContentIfNeeded(forExpandedTab tab: TabID) {
-    guard expandedTabID == tab, let container = presentedContentContainer,
+    guard expandedTabInternal == tab, let container = presentedContentContainer,
           let tabModel = tabs.first(where: { $0.id == tab }) else { return }
     let next = resolveContentController(for: tabModel)
     container.setContent(next, transition: .none, completion: nil)
   }
 
-  private func transitionToCollapse(reason: CloseReason, animated: Bool) {
+  private func transitionToCollapse(reason: DismissReason, animated: Bool) {
     guard let controller = fkPresentationController else { return }
-    let closingTab = expandedTabID
-    lastClosingTabID = closingTab
-    scheduledCloseReason = reason
+    let closingTab = expandedTabInternal
+    lastCollapsingTabID = closingTab
+    scheduledDismissReason = reason
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal, forceCollapsedChrome: true)
     if let closingTab {
-      callbacks.willClose?(closingTab, reason)
+      events.onWillCollapse?(closingTab, reason)
       setState(.collapsing(tab: closingTab))
     } else {
-      callbacks.willClose?(nil, reason)
+      events.onWillCollapse?(nil, reason)
       setState(.collapsed)
     }
     controller.dismiss(animated: animated, completion: nil)
@@ -428,25 +405,24 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
       transitionToExpand(tab: to, animated: animated)
       return
     }
-    callbacks.willSwitch?(from, to)
+    events.onWillSwitchTab?(from, to)
     setState(.switching(from: from, to: to))
 
     let style = configuration.switchAnimationStyle
     switch style {
     case let .dismissThenPresent(dismissAnimated, presentAnimated):
-      callbacks.willClose?(from, .switching)
-      lastClosingTabID = from
-      scheduledCloseReason = .switching
+      events.onWillCollapse?(from, .switchingTab)
+      lastCollapsingTabID = from
+      scheduledDismissReason = .switchingTab
       pendingSwitchTargetTabID = to
       pendingSwitchAnimated = presentAnimated
       controller.dismiss(animated: dismissAnimated, completion: nil)
 
     case let .replaceInPlace(animation):
       guard let container = presentedContentContainer else {
-        // Fallback to safe behavior.
-        callbacks.willClose?(from, .switching)
-        lastClosingTabID = from
-        scheduledCloseReason = .switching
+        events.onWillCollapse?(from, .switchingTab)
+        lastCollapsingTabID = from
+        scheduledDismissReason = .switchingTab
         pendingSwitchTargetTabID = to
         pendingSwitchAnimated = true
         controller.dismiss(animated: false, completion: nil)
@@ -455,109 +431,50 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
       guard let tab = tabs.first(where: { $0.id == to }) else { return }
       let nextContent = resolveContentController(for: tab)
 
-      // Update expanded state early so tab UI can reflect "expanded" for the new tab.
-      expandedTabID = to
-      rebuildTabBarItems(keepSelectedTab: selectedTabID ?? to)
+      expandedTabInternal = to
+      rebuildTabBarItems(keepSelectedTab: selectedTabInternal ?? to)
 
       isSwitchingContentInPlace = true
       container.setContent(nextContent, transition: containerTransition(for: animation)) { [weak self] in
         guard let self else { return }
         self.fkPresentationController?.updateLayout(animated: true, duration: 0.24, options: .curveEaseInOut)
         self.isSwitchingContentInPlace = false
-        // The user might have tapped another tab while we were animating.
-        // Only commit `didSwitch` if we actually ended on the expected target.
-        if self.expandedTabID == to {
-          self.callbacks.didSwitch?(from, to)
+        if self.expandedTabInternal == to {
+          self.events.onDidSwitchTab?(from, to)
           self.setState(.expanded(tab: to))
         }
         self.reconcileIfPossible()
       }
     }
   }
-}
 
-// MARK: - FKPresentationControllerDelegate
+  private func makePresentationAnchorConfiguration() -> FKAnchorConfiguration {
+    let placement = configuration.anchorPlacement
+    let sourceView = placement?.sourceView ?? tabBarHost.tabBar
+    let hostView = placement?.overlayHostView ?? tabBarHost.view
 
-extension FKAnchoredDropdownController: FKPresentationControllerDelegate {
-  public func presentationControllerWillPresent(_ controller: FKPresentationController) {}
-
-  public func presentationControllerDidPresent(_ controller: FKPresentationController) {
-    guard let expanded = expandedTabID else { return }
-    callbacks.didOpen?(expanded)
-    setState(.expanded(tab: expanded))
-    reconcileIfPossible()
+    return FKAnchorConfiguration(
+      anchor: FKAnchor(
+        sourceView: sourceView,
+        edge: placement?.attachmentEdge ?? .bottom,
+        direction: placement?.expansionDirection ?? .down,
+        alignment: placement?.horizontalAlignment ?? .fill,
+        widthPolicy: placement?.widthPolicy ?? .matchContainer,
+        offset: placement?.attachmentOffset ?? 0
+      ),
+      hostStrategy: .inProvidedContainer(FKWeakReference(hostView)),
+      zOrderPolicy: .keepAnchorAbovePresentation,
+      maskCoveragePolicy: .belowAnchorOnly
+    )
   }
 
-  public func presentationControllerWillDismiss(_ controller: FKPresentationController) {
-    // User-driven dismissal (backdrop tap / swipe) flows here.
-    if scheduledCloseReason == nil {
-      scheduledCloseReason = .maskTapOrSwipe
-      lastClosingTabID = expandedTabID
-      callbacks.willClose?(expandedTabID, .maskTapOrSwipe)
-      if let expanded = expandedTabID {
-        setState(.collapsing(tab: expanded))
-      }
-    }
-  }
-
-  public func presentationControllerDidDismiss(_ controller: FKPresentationController) {
-    let reason = scheduledCloseReason ?? .maskTapOrSwipe
-    let closingTab = lastClosingTabID ?? expandedTabID
-
-    // Clear current presentation state first so any follow-up open can proceed.
-    fkPresentationController = nil
-    presentedContentContainer = nil
-    expandedTabID = nil
-    scheduledCloseReason = nil
-    lastClosingTabID = nil
-
-    callbacks.didClose?(closingTab, reason)
-    setState(.collapsed)
-    rebuildTabBarItems(keepSelectedTab: selectedTabID)
-
-    if let fromTo = resolvePendingSwitchAfterDismiss(previouslyExpanded: closingTab) {
-      callbacks.didSwitch?(fromTo.from, fromTo.to)
-      transitionToExpand(tab: fromTo.to, animated: fromTo.animated)
-      return
-    }
-
-    reconcileIfPossible()
-  }
-
-  public func presentationController(_ controller: FKPresentationController, didUpdateProgress progress: CGFloat) {}
-
-  public func presentationController(_ controller: FKPresentationController, didChangeDetent detent: FKPresentationDetent, index: Int) {}
-}
-
-private extension FKAnchoredDropdownController {
-  func containerTransition(for animation: FKAnchoredDropdownConfiguration.ReplaceInPlaceAnimation) -> FKAnchoredDropdownContentContainerViewController.Transition {
-    switch animation {
-    case let .crossfade(duration):
-      return .crossfade(duration: duration)
-    case let .slideVertical(direction, duration):
-      let d: FKAnchoredDropdownContentContainerViewController.Transition.SlideDirection = (direction == .up) ? .up : .down
-      return .slideVertical(direction: d, duration: duration)
-    }
-  }
-}
-
-private extension FKAnchoredDropdownConfiguration.SwitchAnimationStyle {
-  var isReplaceInPlace: Bool {
-    if case .replaceInPlace = self { return true }
-    return false
-  }
-}
-
-private extension FKAnchoredDropdownController {
-  func setState(_ newValue: State) {
+  private func setState(_ newValue: State) {
     if state == newValue { return }
     state = newValue
-    callbacks.stateDidChange?(newValue)
+    events.onStateChange?(newValue)
   }
-}
 
-private extension FKAnchoredDropdownController {
-  func resolvePendingSwitchAfterDismiss(previouslyExpanded: TabID?) -> (from: TabID, to: TabID, animated: Bool)? {
+  private func resolvePendingSwitchAfterDismiss(previouslyExpanded: TabID?) -> (from: TabID, to: TabID, animated: Bool)? {
     guard let from = previouslyExpanded else {
       pendingSwitchTargetTabID = nil
       return nil
@@ -568,12 +485,67 @@ private extension FKAnchoredDropdownController {
     pendingSwitchAnimated = true
     return (from: from, to: to, animated: animated)
   }
-}
 
-private extension Array {
-  subscript(safe index: Int) -> Element? {
-    guard indices.contains(index) else { return nil }
-    return self[index]
+  private func containerTransition(for animation: FKAnchoredDropdownConfiguration.ReplaceInPlaceAnimation) -> FKAnchoredDropdownContentContainerViewController.Transition {
+    switch animation {
+    case let .crossfade(duration):
+      return .crossfade(duration: duration)
+    case let .slideVertical(direction, duration):
+      let d: FKAnchoredDropdownContentContainerViewController.Transition.SlideDirection = (direction == .up) ? .up : .down
+      return .slideVertical(direction: d, duration: duration)
+    }
   }
 }
 
+// MARK: - FKPresentationControllerDelegate
+
+extension FKAnchoredDropdownController: FKPresentationControllerDelegate {
+  public func presentationControllerDidPresent(_ controller: FKPresentationController) {
+    guard let expanded = expandedTabInternal else { return }
+    events.onDidExpand?(expanded)
+    setState(.expanded(tab: expanded))
+    reconcileIfPossible()
+  }
+
+  public func presentationControllerWillDismiss(_ controller: FKPresentationController) {
+    if scheduledDismissReason == nil {
+      scheduledDismissReason = .backdropOrSwipe
+      lastCollapsingTabID = expandedTabInternal
+      rebuildTabBarItems(keepSelectedTab: selectedTabInternal, forceCollapsedChrome: true)
+      events.onWillCollapse?(expandedTabInternal, .backdropOrSwipe)
+      if let expanded = expandedTabInternal {
+        setState(.collapsing(tab: expanded))
+      }
+    }
+  }
+
+  public func presentationControllerDidDismiss(_ controller: FKPresentationController) {
+    let reason = scheduledDismissReason ?? .backdropOrSwipe
+    let collapsingTab = lastCollapsingTabID ?? expandedTabInternal
+
+    fkPresentationController = nil
+    presentedContentContainer = nil
+    expandedTabInternal = nil
+    scheduledDismissReason = nil
+    lastCollapsingTabID = nil
+
+    events.onDidCollapse?(collapsingTab, reason)
+    setState(.collapsed)
+    rebuildTabBarItems(keepSelectedTab: selectedTabInternal)
+
+    if let fromTo = resolvePendingSwitchAfterDismiss(previouslyExpanded: collapsingTab) {
+      events.onDidSwitchTab?(fromTo.from, fromTo.to)
+      transitionToExpand(tab: fromTo.to, animated: fromTo.animated)
+      return
+    }
+
+    reconcileIfPossible()
+  }
+}
+
+private extension FKAnchoredDropdownConfiguration.SwitchAnimationStyle {
+  var isReplaceInPlace: Bool {
+    if case .replaceInPlace = self { return true }
+    return false
+  }
+}

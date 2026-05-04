@@ -2,7 +2,7 @@ import UIKit
 import FKCompositeKit
 import FKUIKit
 
-/// Builds the sample `FKAnchoredDropdownController` and wires callbacks to the demo log sink.
+/// Builds the sample ``FKAnchoredDropdownController`` and wires ``FKAnchoredDropdownConfiguration/Events`` to the demo log.
 enum AnchoredDropdownExampleDropdownFactory {
   static func makeController(
     tabBarHost: FKAnchoredDropdownTabBarHost,
@@ -36,26 +36,25 @@ enum AnchoredDropdownExampleDropdownFactory {
     config.presentationConfiguration.contentInsets = .init(top: 8, leading: 12, bottom: 12, trailing: 12)
     config.presentationConfiguration.cornerRadius = 12
 
-    let callbacks = FKAnchoredDropdownConfiguration.Callbacks<AnchoredDropdownExampleTabID>(
-      stateDidChange: { state in onLog("state: \(state)") },
-      expandedTabDidChange: { expanded in onLog("expandedTab: \(expanded?.rawValue ?? "nil")") },
-      willOpen: { tab in onLog("willOpen: \(tab.rawValue)") },
-      didOpen: { tab in onLog("didOpen: \(tab.rawValue)") },
-      willClose: { tab, reason in onLog("willClose: \(tab?.rawValue ?? "nil") reason=\(reason)") },
-      didClose: { tab, reason in onLog("didClose: \(tab?.rawValue ?? "nil") reason=\(reason)") },
-      willSwitch: { from, to in onLog("willSwitch: \(from.rawValue) → \(to.rawValue)") },
-      didSwitch: { from, to in onLog("didSwitch: \(from.rawValue) → \(to.rawValue)") }
+    let events = FKAnchoredDropdownConfiguration.Events<AnchoredDropdownExampleTabID>(
+      onStateChange: { state in onLog("state: \(state)") },
+      onExpandedTabChange: { expanded in onLog("expandedTab: \(expanded?.rawValue ?? "nil")") },
+      onWillExpand: { tab in onLog("onWillExpand: \(tab.rawValue)") },
+      onDidExpand: { tab in onLog("onDidExpand: \(tab.rawValue)") },
+      onWillCollapse: { tab, reason in onLog("onWillCollapse: \(tab?.rawValue ?? "nil") reason=\(reason)") },
+      onDidCollapse: { tab, reason in onLog("onDidCollapse: \(tab?.rawValue ?? "nil") reason=\(reason)") },
+      onWillSwitchTab: { from, to in onLog("onWillSwitchTab: \(from.rawValue) → \(to.rawValue)") },
+      onDidSwitchTab: { from, to in onLog("onDidSwitchTab: \(from.rawValue) → \(to.rawValue)") }
     )
 
     let vc = FKAnchoredDropdownController<AnchoredDropdownExampleTabID>(
       tabs: tabs,
       tabBarHost: tabBarHost,
       configuration: config,
-      callbacks: callbacks
+      events: events
     )
 
-    // Demonstrate external "state restore" style API: preselect but do not open.
-    vc.select(tab: .filters, animated: false)
+    vc.selectTab(.filters, animated: false)
     return vc
   }
 }

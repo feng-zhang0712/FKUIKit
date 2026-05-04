@@ -6,7 +6,7 @@ import FKUIKit
 /// `FKTabBar` stays in the hierarchy (required by `FKAnchoredDropdownController`) but is laid out **off-screen**
 /// so it does not appear in the UI — interaction uses `open` / `close` / `toggle` from code instead of tab taps.
 final class AnchoredDropdownExampleCustomAnchorHostView: UIView, FKAnchoredDropdownTabBarHost {
-  /// User-visible bar (same frame as the Tab-bar demo’s tab row); also the `setCustomAnchor` source view.
+  /// User-visible bar; also the ``FKAnchoredDropdownController/setAnchor(source:overlayHost:)`` source view.
   let anchorControl: UIButton = {
     var configuration = UIButton.Configuration.filled()
     configuration.title = "Custom anchor — tap to toggle Filters"

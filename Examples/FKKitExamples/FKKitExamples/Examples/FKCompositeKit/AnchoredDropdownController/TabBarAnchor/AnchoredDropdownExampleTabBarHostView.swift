@@ -4,8 +4,8 @@ import FKUIKit
 
 /// Shared chrome for anchored-dropdown examples: **one** top bar (`FKTabBar` + divider).
 ///
-/// - **Tab-bar anchor demo**: uses the default anchor (`FKTabBar`); no `setCustomAnchor`.
-/// - **Custom-anchor demo**: calls `setCustomAnchor(source: chromeBar, …)` so geometry comes from this
+/// - **Tab-bar anchor demo**: uses the default anchor (``FKTabBar``).
+/// - **Custom-anchor demo**: calls ``FKAnchoredDropdownController/setAnchor(source:overlayHost:)`` on a separate control.
 ///   wrapper view instead of `tabBar` — still a **single** on-screen bar (no extra “strip” above tabs).
 final class AnchoredDropdownExampleTabBarHostView: UIView, FKAnchoredDropdownTabBarHost {
   let tabBar: FKTabBar = {

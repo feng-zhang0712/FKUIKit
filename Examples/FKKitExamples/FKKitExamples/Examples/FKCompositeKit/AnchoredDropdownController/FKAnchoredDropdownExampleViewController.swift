@@ -18,9 +18,9 @@ final class FKAnchoredDropdownExampleViewController: UIViewController {
     var subtitle: String {
       switch self {
       case .tabBarAnchor:
-        return "Default: panel attaches to FKTabBar. Tabs, switch animations, callbacks."
+        return "Default: panel attaches to FKTabBar. Tabs, switch animations, optional Events hooks."
       case .customViewAnchor:
-        return "Custom UIView anchor + tap; no visible TabBar (programmatic open/close/toggle)."
+        return "Custom UIView anchor + tap; hidden tab bar (programmatic expand/collapse)."
       }
     }
 
