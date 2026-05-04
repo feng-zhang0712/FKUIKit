@@ -131,7 +131,7 @@ public final class FKFilterTwoColumnListViewController: UIViewController {
   private var model: FKFilterTwoColumnModel
   private let configuration: Configuration
   private let onChange: (FKFilterTwoColumnModel) -> Void
-  private let onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)?
+  private let onSelection: ((FKFilterPanelSelection) -> Void)?
   private let allowsMultipleSelection: Bool
 
   private let leftTable = UITableView(frame: .zero, style: .plain)
@@ -147,13 +147,13 @@ public final class FKFilterTwoColumnListViewController: UIViewController {
     model: FKFilterTwoColumnModel,
     configuration: Configuration = .init(),
     onChange: @escaping (FKFilterTwoColumnModel) -> Void,
-    onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)? = nil,
+    onSelection: ((FKFilterPanelSelection) -> Void)? = nil,
     allowsMultipleSelection: Bool = false
   ) {
     self.model = model
     self.configuration = configuration
     self.onChange = onChange
-    self.onSelectItem = onSelectItem
+    self.onSelection = onSelection
     self.allowsMultipleSelection = allowsMultipleSelection
     super.init(nibName: nil, bundle: nil)
   }
@@ -373,7 +373,7 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
       let sections = model.sectionsByCategoryID[tappedID] ?? []
       if sections.isEmpty {
         let item = FKFilterOptionItem(id: selectedCategory.id, title: selectedCategory.title, isSelected: true)
-        onSelectItem?(nil, item, .single)
+        onSelection?(.init(sectionID: nil, item: item, effectiveSelectionMode: .single))
       }
       UIView.performWithoutAnimation {
         leftTable.reloadData()
@@ -392,9 +392,9 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
     let tappedItemID = tapped.id
     selectedHeaderSectionID = nil
 
-    let effectiveMode = FKFilterSelection.effectiveMode(
-      requestedMode: sec.selectionMode,
-      allowsMultipleSelection: allowsMultipleSelection
+    let effectiveMode = FKFilterSelectionMode.effective(
+      requested: sec.selectionMode,
+      allowsMultipleFromTab: allowsMultipleSelection
     )
 
     switch effectiveMode {
@@ -428,7 +428,7 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
       rightTable.reloadSections(IndexSet(integer: indexPath.section), with: .none)
     }
     onChange(model)
-    onSelectItem?(sec.id, tapped, effectiveMode)
+    onSelection?(.init(sectionID: sec.id, item: tapped, effectiveSelectionMode: effectiveMode))
   }
 
   private func handleRightHeaderTap(sectionIndex: Int) {
@@ -452,7 +452,7 @@ extension FKFilterTwoColumnListViewController: UITableViewDataSource, UITableVie
 
     let title = target.title ?? ""
     let headerItem = FKFilterOptionItem(id: target.id, title: title, isSelected: true)
-    onSelectItem?(target.id, headerItem, .single)
+    onSelection?(.init(sectionID: target.id, item: headerItem, effectiveSelectionMode: .single))
   }
 }
 

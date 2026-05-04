@@ -1,14 +1,44 @@
-/// Extensible panel identifier. Use predefined static values or custom string literals.
-public struct FKFilterPanelKind: Hashable, Sendable, RawRepresentable, ExpressibleByStringLiteral {
-  public let rawValue: String
-  public init(rawValue: String) { self.rawValue = rawValue }
-  public init(stringLiteral value: String) { self.rawValue = value }
+import Foundation
 
-  // Generic presets.
-  public static let hierarchy: FKFilterPanelKind = "hierarchy"
-  public static let dualHierarchy: FKFilterPanelKind = "dualHierarchy"
-  public static let gridPrimary: FKFilterPanelKind = "gridPrimary"
-  public static let gridSecondary: FKFilterPanelKind = "gridSecondary"
-  public static let tags: FKFilterPanelKind = "tags"
-  public static let singleList: FKFilterPanelKind = "singleList"
+/// Identifies which panel recipe in ``FKFilterPanelFactory`` serves a tab.
+///
+/// Built-in cases match previous string identifiers for analytics / ``RawRepresentable``.
+/// Use ``custom(_:)`` for app-specific kinds and register a matching ``FKFilterPanelFactory/PanelSource``.
+public enum FKFilterPanelKind: Hashable, Sendable {
+  case hierarchy
+  case dualHierarchy
+  case gridPrimary
+  case gridSecondary
+  case tags
+  case singleList
+  case custom(String)
+}
+
+extension FKFilterPanelKind: RawRepresentable {
+  public typealias RawValue = String
+
+  public init?(rawValue: String) {
+    switch rawValue {
+    case "hierarchy": self = .hierarchy
+    case "dualHierarchy": self = .dualHierarchy
+    case "gridPrimary": self = .gridPrimary
+    case "gridSecondary": self = .gridSecondary
+    case "tags": self = .tags
+    case "singleList": self = .singleList
+    default:
+      self = .custom(rawValue)
+    }
+  }
+
+  public var rawValue: String {
+    switch self {
+    case .hierarchy: return "hierarchy"
+    case .dualHierarchy: return "dualHierarchy"
+    case .gridPrimary: return "gridPrimary"
+    case .gridSecondary: return "gridSecondary"
+    case .tags: return "tags"
+    case .singleList: return "singleList"
+    case .custom(let value): return value
+    }
+  }
 }

@@ -29,6 +29,9 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
 
   public var expandedTabID: TabID? { expandedTabInternal }
 
+  /// `true` while a tab’s panel is presented (from first expand through until fully dismissed).
+  public var isPanelExpanded: Bool { expandedTabInternal != nil }
+
   public let tabBarHost: any FKAnchoredDropdownTabBarHost
 
   public var tabBar: FKTabBar { tabBarHost.tabBar }
@@ -211,6 +214,7 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
   private var lastCollapsingTabID: TabID?
   private var pendingSwitchTargetTabID: TabID?
   private var pendingSwitchAnimated: Bool = true
+  /// Set during ``transitionToSwitch`` replace-in-place so ``reconcileIfPossible`` does not interleave.
   private var isSwitchingContentInPlace: Bool = false
 
   private struct DesiredExpandedRequest: Equatable {
@@ -219,7 +223,9 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     var collapseReasonWhenDismissing: DismissReason
   }
 
+  /// Latest expand/collapse intent; cleared when a reconciliation pass consumes it or starts an async transition.
   private var desiredExpanded: DesiredExpandedRequest?
+  /// Prevents nested ``reconcileIfPossible`` while mutating presentation state.
   private var isReconciling = false
   private var cachedContentControllers: [TabID: UIViewController] = [:]
   private var lastTabBarHostLayoutSize: CGSize = .zero
@@ -341,9 +347,10 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
     container.onPreferredContentSizeDidChange = { [weak self] in
       guard let self else { return }
       let shouldAnimate = self.configuration.switchAnimationStyle.isReplaceInPlace
+      let layoutDuration = self.configuration.presentationLayoutAnimation.duration
       self.fkPresentationController?.updateLayout(
         animated: shouldAnimate,
-        duration: shouldAnimate ? 0.24 : 0,
+        duration: shouldAnimate ? layoutDuration : 0,
         options: .curveEaseInOut
       )
     }
@@ -441,9 +448,14 @@ public final class FKAnchoredDropdownController<TabID: Hashable>: UIViewControll
       rebuildTabBarItems(keepSelectedTab: selectedTabInternal ?? to)
 
       isSwitchingContentInPlace = true
+      let layoutDuration = configuration.presentationLayoutAnimation.duration
       container.setContent(nextContent, transition: containerTransition(for: animation)) { [weak self] in
         guard let self else { return }
-        self.fkPresentationController?.updateLayout(animated: true, duration: 0.24, options: .curveEaseInOut)
+        self.fkPresentationController?.updateLayout(
+          animated: true,
+          duration: layoutDuration,
+          options: .curveEaseInOut
+        )
         self.isSwitchingContentInPlace = false
         if self.expandedTabInternal == to {
           self.events.onDidSwitchTab?(from, to)

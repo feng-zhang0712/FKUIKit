@@ -1,37 +1,26 @@
 import UIKit
 import FKCompositeKit
 
-/// Builds a ``FKFilterPanelFactory`` for each ``FKFilterPanelKind`` used in the sample app.
-enum FKFilterExamplePanelSupport {
+/// Builds a ``FKFilterPanelFactory`` bound to a shared ``FKFilterExampleDemoState`` (no per-kind no-op parameters at call sites).
+enum FKFilterExamplePanelFactoryBuilder {
   @MainActor
-  static func makePanelFactory(
-    knowledgeModel: @escaping () -> FKFilterTwoColumnModel?,
-    courseModel: @escaping () -> FKFilterTwoColumnModel?,
-    fileTypeSections: @escaping () -> [FKFilterSection],
-    platformSections: @escaping () -> [FKFilterSection],
-    tagsSections: @escaping () -> [FKFilterSection],
-    sortSection: @escaping () -> FKFilterSection?,
-    onKnowledgeChange: @escaping (FKFilterTwoColumnModel) -> Void,
-    onCourseChange: @escaping (FKFilterTwoColumnModel) -> Void,
-    onFileTypeChange: @escaping ([FKFilterSection]) -> Void,
-    onPlatformChange: @escaping ([FKFilterSection]) -> Void,
-    onTagsChange: @escaping ([FKFilterSection]) -> Void,
-    onSortChange: @escaping (FKFilterSection) -> Void,
+  static func makeFactory(
+    bindingTo state: FKFilterExampleState,
     onTagsSelectionEmptied: (() -> Void)? = nil
   ) -> FKFilterPanelFactory {
     FKFilterPanelFactory(
-      panelSources: [
+      sourcesByPanelKind: [
         .hierarchy: .twoColumnList(
-          model: knowledgeModel,
-          onChange: onKnowledgeChange,
+          model: { state.knowledgeModel },
+          onChange: { state.knowledgeModel = $0 },
           configuration: .init(
             leftCellStyle: FKFilterExampleAppearance.panelSidebarListCellStyle,
             rightCellStyle: FKFilterExampleAppearance.panelListCellStyle
           )
         ),
         .dualHierarchy: .twoColumnGrid(
-          model: courseModel,
-          onChange: onCourseChange,
+          model: { state.courseModel },
+          onChange: { state.courseModel = $0 },
           configuration: .init(
             itemHeight: 36,
             itemColumns: 2,
@@ -39,8 +28,8 @@ enum FKFilterExamplePanelSupport {
           )
         ),
         .gridPrimary: .chips(
-          sections: fileTypeSections,
-          onChange: onFileTypeChange,
+          sections: { state.fileTypeSections },
+          onChange: { state.fileTypeSections = $0 },
           configuration: .init(
             columns: 4,
             interitemSpacing: 8,
@@ -51,8 +40,8 @@ enum FKFilterExamplePanelSupport {
           )
         ),
         .gridSecondary: .chips(
-          sections: platformSections,
-          onChange: onPlatformChange,
+          sections: { state.platformSections },
+          onChange: { state.platformSections = $0 },
           configuration: .init(
             columns: 2,
             interitemSpacing: 8,
@@ -63,9 +52,9 @@ enum FKFilterExamplePanelSupport {
           )
         ),
         .tags: .chips(
-          sections: tagsSections,
+          sections: { state.tagsSections },
           onChange: { newSections in
-            onTagsChange(newSections)
+            state.tagsSections = newSections
             let selectedCount = newSections.flatMap(\.items).filter(\.isSelected).count
             if selectedCount == 0 {
               onTagsSelectionEmptied?()
@@ -82,8 +71,8 @@ enum FKFilterExamplePanelSupport {
           )
         ),
         .singleList: .singleList(
-          section: sortSection,
-          onChange: onSortChange,
+          section: { state.sortSection },
+          onChange: { state.sortSection = $0 },
           configuration: .init(
             rowHeight: 44,
             cellStyle: FKFilterListCellStyle(

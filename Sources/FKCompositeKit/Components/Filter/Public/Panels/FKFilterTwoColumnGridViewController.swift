@@ -246,7 +246,7 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
   private var model: FKFilterTwoColumnModel
   private let configuration: Configuration
   private let onChange: (FKFilterTwoColumnModel) -> Void
-  private let onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)?
+  private let onSelection: ((FKFilterPanelSelection) -> Void)?
   private let allowsMultipleSelection: Bool
   private var selectedHeaderSectionID: FKFilterID?
 
@@ -275,13 +275,13 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
     model: FKFilterTwoColumnModel,
     configuration: Configuration = .init(),
     onChange: @escaping (FKFilterTwoColumnModel) -> Void,
-    onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)? = nil,
+    onSelection: ((FKFilterPanelSelection) -> Void)? = nil,
     allowsMultipleSelection: Bool = false
   ) {
     self.model = model
     self.configuration = configuration
     self.onChange = onChange
-    self.onSelectItem = onSelectItem
+    self.onSelection = onSelection
     self.allowsMultipleSelection = allowsMultipleSelection
     super.init(nibName: nil, bundle: nil)
   }
@@ -360,7 +360,13 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
     model.sectionsByCategoryID[catID] = sections
     rightCollectionView.reloadData()
     onChange(model)
-    onSelectItem?(target.id, FKFilterOptionItem(id: target.id, title: target.title ?? "", isSelected: true), .single)
+    onSelection?(
+      .init(
+        sectionID: target.id,
+        item: FKFilterOptionItem(id: target.id, title: target.title ?? "", isSelected: true),
+        effectiveSelectionMode: .single
+      )
+    )
   }
 
   private func handleItemSelection(at indexPath: IndexPath) {
@@ -373,9 +379,9 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
     let tappedID = tapped.id
     selectedHeaderSectionID = nil
 
-    let effectiveMode = FKFilterSelection.effectiveMode(
-      requestedMode: section.selectionMode,
-      allowsMultipleSelection: allowsMultipleSelection
+    let effectiveMode = FKFilterSelectionMode.effective(
+      requested: section.selectionMode,
+      allowsMultipleFromTab: allowsMultipleSelection
     )
 
     switch effectiveMode {
@@ -404,7 +410,7 @@ public final class FKFilterTwoColumnGridViewController: UIViewController {
     model.sectionsByCategoryID[catID] = sections
     rightCollectionView.reloadData()
     onChange(model)
-    onSelectItem?(section.id, tapped, effectiveMode)
+    onSelection?(.init(sectionID: section.id, item: tapped, effectiveSelectionMode: effectiveMode))
   }
 }
 

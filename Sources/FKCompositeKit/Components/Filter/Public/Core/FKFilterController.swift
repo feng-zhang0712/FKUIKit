@@ -1,17 +1,12 @@
 import UIKit
 
-/// Called after the panel updates its model when the user selects an option.
-public typealias FKFilterItemSelectionHandler = @MainActor (
-  _ panelKind: FKFilterPanelKind,
-  _ sectionID: FKFilterID?,
-  _ item: FKFilterOptionItem,
-  _ effectiveSelectionMode: FKFilterSelectionMode
-) -> Void
+/// Invoked on the main actor after the panel applies the selection; single-select panels also update the tab title and collapse.
+public typealias FKFilterSelectionHandler<TabID: Hashable> = @MainActor (_ context: FKFilterSelectionContext<TabID>) -> Void
 
 @MainActor
 private final class FKFilterRuntimeState<TabID: Hashable> {
   weak var dropdown: FKAnchoredDropdownController<TabID>?
-  var onItemSelected: FKFilterItemSelectionHandler?
+  var onSelection: FKFilterSelectionHandler<TabID>?
   private var titleOverrides: [TabID: String] = [:]
 
   func displayTitle(for id: TabID, fallback: @escaping () -> String) -> String {
@@ -46,9 +41,9 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
   private let runtime = FKFilterRuntimeState<TabID>()
 
   /// Invoked after the panel applies the selection; single-select panels also update the tab title and collapse.
-  public var onItemSelected: FKFilterItemSelectionHandler? {
-    get { runtime.onItemSelected }
-    set { runtime.onItemSelected = newValue }
+  public var onSelection: FKFilterSelectionHandler<TabID>? {
+    get { runtime.onSelection }
+    set { runtime.onSelection = newValue }
   }
 
   public init(
@@ -57,11 +52,11 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
     configuration: FKAnchoredDropdownConfiguration = .default,
     tabBarHost: (any FKAnchoredDropdownTabBarHost)? = nil,
     events: FKAnchoredDropdownConfiguration.Events<TabID> = .init(),
-    onItemSelected: FKFilterItemSelectionHandler? = nil
+    onSelection: FKFilterSelectionHandler<TabID>? = nil
   ) {
     self.filterTabs = tabs
     self.panelFactory = panelFactory
-    runtime.onItemSelected = onItemSelected
+    runtime.onSelection = onSelection
     self.dropdownController = FKAnchoredDropdownController(
       tabs: Self.makeAnchoredTabs(tabs: tabs, panelFactory: panelFactory, runtime: runtime),
       tabBarHost: tabBarHost,
@@ -154,13 +149,14 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
           panelFactory.makePanel(
             for: tab.panelKind,
             allowsMultipleSelection: tab.allowsMultipleSelection,
-            onSelectItem: { sectionID, item, mode in
-              if mode == .single {
-                runtime.setTitleOverride(item.title, for: tab.id)
+            onSelection: { selection in
+              if selection.effectiveSelectionMode == .single {
+                runtime.setTitleOverride(selection.item.title, for: tab.id)
                 runtime.dropdown?.reloadTabBarItems()
               }
-              runtime.onItemSelected?(tab.panelKind, sectionID, item, mode)
-              runtime.dismissIfSingleSelect(mode: mode)
+              let context = FKFilterSelectionContext(tabID: tab.id, panelKind: tab.panelKind, selection: selection)
+              runtime.onSelection?(context)
+              runtime.dismissIfSingleSelect(mode: selection.effectiveSelectionMode)
             }
           ) ?? UIViewController()
         }

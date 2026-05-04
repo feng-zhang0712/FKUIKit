@@ -8,7 +8,7 @@ import UIKit
 ///
 /// Key behaviors:
 /// - Selection updates the in-memory model and calls `onChange`
-/// - Also forwards a concise selection event via `onSelectItem` (used by ``FKFilterPanelFactory`` / ``FKFilterController``)
+/// - Also forwards a concise selection event via `onSelection` (used by ``FKFilterPanelFactory`` / ``FKFilterController``)
 /// - Height is controlled by `Configuration.heightBehavior` (auto/capped/fixed/ratio)
 public final class FKFilterSingleListViewController: UITableViewController {
   public typealias CellContentConfiguration = (
@@ -48,7 +48,7 @@ public final class FKFilterSingleListViewController: UITableViewController {
   private var section: FKFilterSection
   private let configuration: Configuration
   private let onChange: (FKFilterSection) -> Void
-  private let onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)?
+  private let onSelection: ((FKFilterPanelSelection) -> Void)?
   private let allowsMultipleSelection: Bool
 
   /// Row height used for `FKPresentation` sizing before the table has a real layout pass.
@@ -58,13 +58,13 @@ public final class FKFilterSingleListViewController: UITableViewController {
     section: FKFilterSection,
     configuration: Configuration = .init(),
     onChange: @escaping (FKFilterSection) -> Void,
-    onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)? = nil,
+    onSelection: ((FKFilterPanelSelection) -> Void)? = nil,
     allowsMultipleSelection: Bool = false
   ) {
     self.section = section
     self.configuration = configuration
     self.onChange = onChange
-    self.onSelectItem = onSelectItem
+    self.onSelection = onSelection
     self.allowsMultipleSelection = allowsMultipleSelection
     super.init(style: .plain)
   }
@@ -141,9 +141,9 @@ public final class FKFilterSingleListViewController: UITableViewController {
     let tapped = section.items[indexPath.row]
     let tappedID = tapped.id
 
-    let effectiveMode = FKFilterSelection.effectiveMode(
-      requestedMode: section.selectionMode,
-      allowsMultipleSelection: allowsMultipleSelection
+    let effectiveMode = FKFilterSelectionMode.effective(
+      requested: section.selectionMode,
+      allowsMultipleFromTab: allowsMultipleSelection
     )
 
     switch effectiveMode {
@@ -159,7 +159,7 @@ public final class FKFilterSingleListViewController: UITableViewController {
 
     tableView.reloadData()
     onChange(section)
-    onSelectItem?(section.id, tapped, effectiveMode)
+    onSelection?(.init(sectionID: section.id, item: tapped, effectiveSelectionMode: effectiveMode))
   }
 }
 

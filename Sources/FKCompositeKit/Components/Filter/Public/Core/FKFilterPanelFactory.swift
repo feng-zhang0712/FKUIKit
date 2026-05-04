@@ -27,30 +27,30 @@ public final class FKFilterPanelFactory {
     )
   }
 
-  public var panelSources: [FKFilterPanelKind: PanelSource]
+  public var sourcesByPanelKind: [FKFilterPanelKind: PanelSource]
   public var loadingTitle: String
   /// When true, panel controllers are wrapped with a one-pixel top hairline under the tab strip.
   public var wrapsPanelWithTopHairline: Bool
 
   public init(
-    panelSources: [FKFilterPanelKind: PanelSource],
+    sourcesByPanelKind: [FKFilterPanelKind: PanelSource],
     loadingTitle: String = "Loading...",
     wrapsPanelWithTopHairline: Bool = true
   ) {
-    self.panelSources = panelSources
+    self.sourcesByPanelKind = sourcesByPanelKind
     self.loadingTitle = loadingTitle
     self.wrapsPanelWithTopHairline = wrapsPanelWithTopHairline
   }
 
-  /// Builds the panel for `kind` and forwards taps to `onSelectItem`.
+  /// Builds the panel for `kind` and forwards taps to `onSelection`.
   ///
   /// `allowsMultipleSelection` is combined with each section’s ``FKFilterSection/selectionMode`` (single wins unless both allow multiple).
   public func makePanel(
     for kind: FKFilterPanelKind,
     allowsMultipleSelection: Bool,
-    onSelectItem: @escaping (FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void
+    onSelection: @escaping (FKFilterPanelSelection) -> Void
   ) -> UIViewController? {
-    guard let source = panelSources[kind] else { return nil }
+    guard let source = sourcesByPanelKind[kind] else { return nil }
     let panel: UIViewController
     switch source {
     case let .twoColumnList(model, onChange, configuration):
@@ -59,8 +59,8 @@ public final class FKFilterPanelFactory {
         model: model,
         configuration: configuration,
         onChange: onChange,
-        onSelectItem: { sectionID, item, mode in
-          onSelectItem(sectionID, item, mode)
+        onSelection: { selection in
+          onSelection(selection)
         },
         allowsMultipleSelection: allowsMultipleSelection
       )
@@ -70,8 +70,8 @@ public final class FKFilterPanelFactory {
         model: model,
         configuration: configuration,
         onChange: onChange,
-        onSelectItem: { sectionID, item, mode in
-          onSelectItem(sectionID, item, mode)
+        onSelection: { selection in
+          onSelection(selection)
         },
         allowsMultipleSelection: allowsMultipleSelection
       )
@@ -82,8 +82,8 @@ public final class FKFilterPanelFactory {
         sections: sections,
         configuration: configuration,
         onChange: onChange,
-        onSelectItem: { sectionID, item, mode in
-          onSelectItem(sectionID, item, mode)
+        onSelection: { selection in
+          onSelection(selection)
         },
         allowsMultipleSelection: allowsMultipleSelection
       )
@@ -93,8 +93,8 @@ public final class FKFilterPanelFactory {
         section: section,
         configuration: configuration,
         onChange: onChange,
-        onSelectItem: { sectionID, item, mode in
-          onSelectItem(sectionID, item, mode)
+        onSelection: { selection in
+          onSelection(selection)
         },
         allowsMultipleSelection: allowsMultipleSelection
       )

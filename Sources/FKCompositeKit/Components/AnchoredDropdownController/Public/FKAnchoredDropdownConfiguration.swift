@@ -29,6 +29,19 @@ public struct FKAnchoredDropdownConfiguration {
     case cachePerTab
   }
 
+  /// Durations used when the presented shell asks ``FKPresentationController`` to relayout after
+  /// content height changes (``preferredContentSize`` / in-place tab switch completion).
+  ///
+  /// This is separate from ``SwitchAnimationStyle`` crossfade/slide durations, which only affect
+  /// the inner content container, not the anchor-attached frame.
+  public struct PresentationLayoutAnimation: Equatable, Sendable {
+    public var duration: TimeInterval
+
+    public init(duration: TimeInterval = 0.24) {
+      self.duration = duration
+    }
+  }
+
   /// Lifecycle hooks (optional). Prefer this over subclassing.
   public struct Events<TabID: Hashable> {
     public var onStateChange: (@MainActor (_ state: FKAnchoredDropdownController<TabID>.State) -> Void)?
@@ -66,6 +79,8 @@ public struct FKAnchoredDropdownConfiguration {
   public var presentationConfiguration: FKPresentationConfiguration
   public var switchAnimationStyle: SwitchAnimationStyle
   public var contentCachingPolicy: ContentCachingPolicy
+  /// Anchor presentation relayout animation after content size / tab content changes.
+  public var presentationLayoutAnimation: PresentationLayoutAnimation
   /// Optional custom anchor; when `nil`, the tab bar is the source and the tab bar host view is the overlay container.
   public var anchorPlacement: FKAnchoredDropdownAnchorPlacement?
 
@@ -74,12 +89,14 @@ public struct FKAnchoredDropdownConfiguration {
     presentationConfiguration: FKPresentationConfiguration = FKAnchoredDropdownConfiguration.default.presentationConfiguration,
     switchAnimationStyle: SwitchAnimationStyle = .replaceInPlace(animation: .crossfade(duration: 0.18)),
     contentCachingPolicy: ContentCachingPolicy = .cachePerTab,
+    presentationLayoutAnimation: PresentationLayoutAnimation = PresentationLayoutAnimation(),
     anchorPlacement: FKAnchoredDropdownAnchorPlacement? = nil
   ) {
     self.tabBarConfiguration = tabBarConfiguration
     self.presentationConfiguration = presentationConfiguration
     self.switchAnimationStyle = switchAnimationStyle
     self.contentCachingPolicy = contentCachingPolicy
+    self.presentationLayoutAnimation = presentationLayoutAnimation
     self.anchorPlacement = anchorPlacement
   }
 }

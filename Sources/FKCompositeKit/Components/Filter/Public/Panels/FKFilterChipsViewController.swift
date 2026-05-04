@@ -106,7 +106,7 @@ public final class FKFilterChipsViewController: UIViewController {
   private var sections: [FKFilterSection]
   private let config: Configuration
   private let onChange: ([FKFilterSection]) -> Void
-  private let onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)?
+  private let onSelection: ((FKFilterPanelSelection) -> Void)?
   private let allowsMultipleSelection: Bool
   private var lastCollectionBoundsSize: CGSize = .zero
 
@@ -130,13 +130,13 @@ public final class FKFilterChipsViewController: UIViewController {
     sections: [FKFilterSection],
     configuration: Configuration = .init(),
     onChange: @escaping ([FKFilterSection]) -> Void,
-    onSelectItem: ((FKFilterID?, FKFilterOptionItem, FKFilterSelectionMode) -> Void)? = nil,
+    onSelection: ((FKFilterPanelSelection) -> Void)? = nil,
     allowsMultipleSelection: Bool = false
   ) {
     self.sections = sections
     self.config = configuration
     self.onChange = onChange
-    self.onSelectItem = onSelectItem
+    self.onSelection = onSelection
     self.allowsMultipleSelection = allowsMultipleSelection
     super.init(nibName: nil, bundle: nil)
   }
@@ -245,9 +245,9 @@ extension FKFilterChipsViewController: UICollectionViewDelegateFlowLayout {
     let tapped = section.items[indexPath.item]
     let tappedID = tapped.id
 
-    let effectiveMode = FKFilterSelection.effectiveMode(
-      requestedMode: section.selectionMode,
-      allowsMultipleSelection: allowsMultipleSelection
+    let effectiveMode = FKFilterSelectionMode.effective(
+      requested: section.selectionMode,
+      allowsMultipleFromTab: allowsMultipleSelection
     )
 
     switch effectiveMode {
@@ -264,7 +264,7 @@ extension FKFilterChipsViewController: UICollectionViewDelegateFlowLayout {
     sections[indexPath.section] = section
     collectionView.reloadSections(IndexSet(integer: indexPath.section))
     onChange(sections)
-    onSelectItem?(section.id, tapped, effectiveMode)
+    onSelection?(.init(sectionID: section.id, item: tapped, effectiveSelectionMode: effectiveMode))
   }
 }
 

@@ -10,6 +10,44 @@ public struct FKFilterID: Hashable, Sendable, RawRepresentable {
 public enum FKFilterSelectionMode: Sendable {
   case single
   case multiple
+
+  /// Combines tab-level multi-select with each section’s ``FKFilterSection/selectionMode``.
+  public static func effective(
+    requested: FKFilterSelectionMode,
+    allowsMultipleFromTab: Bool
+  ) -> FKFilterSelectionMode {
+    (allowsMultipleFromTab && requested == .multiple) ? .multiple : .single
+  }
+}
+
+/// Payload emitted by a panel when the user changes the selection (before host adds tab id / panel kind).
+public struct FKFilterPanelSelection: Sendable {
+  public let sectionID: FKFilterID?
+  public let item: FKFilterOptionItem
+  public let effectiveSelectionMode: FKFilterSelectionMode
+
+  public init(sectionID: FKFilterID?, item: FKFilterOptionItem, effectiveSelectionMode: FKFilterSelectionMode) {
+    self.sectionID = sectionID
+    self.item = item
+    self.effectiveSelectionMode = effectiveSelectionMode
+  }
+}
+
+/// Full selection event for a strip tab (after the panel model has been updated).
+public struct FKFilterSelectionContext<TabID: Hashable> {
+  public let tabID: TabID
+  public let panelKind: FKFilterPanelKind
+  public let sectionID: FKFilterID?
+  public let item: FKFilterOptionItem
+  public let effectiveSelectionMode: FKFilterSelectionMode
+
+  public init(tabID: TabID, panelKind: FKFilterPanelKind, selection: FKFilterPanelSelection) {
+    self.tabID = tabID
+    self.panelKind = panelKind
+    self.sectionID = selection.sectionID
+    self.item = selection.item
+    self.effectiveSelectionMode = selection.effectiveSelectionMode
+  }
 }
 
 /// One selectable row, chip, or grid cell in a filter panel.
@@ -83,16 +121,6 @@ public struct FKFilterTwoColumnModel: Hashable, Sendable {
   public init(categories: [Category], sectionsByCategoryID: [FKFilterID: [FKFilterSection]]) {
     self.categories = categories
     self.sectionsByCategoryID = sectionsByCategoryID
-  }
-}
-
-/// Combines panel-level multi-select with each section’s requested mode.
-enum FKFilterSelection {
-  static func effectiveMode(
-    requestedMode: FKFilterSelectionMode,
-    allowsMultipleSelection: Bool
-  ) -> FKFilterSelectionMode {
-    (allowsMultipleSelection && requestedMode == .multiple) ? .multiple : .single
   }
 }
 
