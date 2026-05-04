@@ -7,7 +7,8 @@ public struct FKFilterTab<TabID: Hashable> {
   public let title: () -> String
   public let subtitle: (() -> String?)?
   public let allowsMultipleSelection: Bool
-  public let stripMetrics: FKFilterStripMetrics
+  /// When `nil`, ``FKFilterController`` uses ``FKFilterConfiguration/defaultTabStrip``.
+  public let tabStrip: FKFilterTabStripConfiguration?
 
   public init(
     id: TabID,
@@ -15,14 +16,14 @@ public struct FKFilterTab<TabID: Hashable> {
     title: @escaping () -> String,
     subtitle: (() -> String?)? = nil,
     allowsMultipleSelection: Bool = false,
-    stripMetrics: FKFilterStripMetrics = FKFilterStripMetrics()
+    tabStrip: FKFilterTabStripConfiguration? = nil
   ) {
     self.id = id
     self.panelKind = panelKind
     self.title = title
     self.subtitle = subtitle
     self.allowsMultipleSelection = allowsMultipleSelection
-    self.stripMetrics = stripMetrics
+    self.tabStrip = tabStrip
   }
 
   /// Convenience for static title and optional subtitle strings.
@@ -32,7 +33,7 @@ public struct FKFilterTab<TabID: Hashable> {
     title: String,
     subtitle: String? = nil,
     allowsMultipleSelection: Bool = false,
-    stripMetrics: FKFilterStripMetrics = FKFilterStripMetrics()
+    tabStrip: FKFilterTabStripConfiguration? = nil
   ) {
     let titleClosure: () -> String = { title }
     let subtitleClosure: (() -> String?)? = subtitle.map { value in { value } }
@@ -42,7 +43,7 @@ public struct FKFilterTab<TabID: Hashable> {
       title: titleClosure,
       subtitle: subtitleClosure,
       allowsMultipleSelection: allowsMultipleSelection,
-      stripMetrics: stripMetrics
+      tabStrip: tabStrip
     )
   }
 }

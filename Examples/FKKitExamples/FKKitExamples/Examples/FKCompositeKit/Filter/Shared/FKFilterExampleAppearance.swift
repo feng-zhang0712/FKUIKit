@@ -7,27 +7,6 @@ enum FKFilterExampleAppearance {
   /// Total height for the embedded ``FKFilterController`` chrome row (was 56; −4pt).
   static let filterStripChromeHeight: CGFloat = 52
 
-  /// Horizontal ``FKButton`` content insets for each tab (default in cells is 8pt; −4pt per side for demos).
-  private static let filterTabButtonHorizontalInset: CGFloat = 4
-
-  /// Applies tighter tab button insets on the dropdown’s ``FKTabBar`` (runs after each cell refresh).
-  static func applyFilterExampleTabButtonContentInsets(to tabBar: FKTabBar) {
-    tabBar.itemButtonConfigurator = { button, _, _ in
-      let appearance = FKButtonAppearance(
-        backgroundColor: .clear,
-        contentInsets: .init(
-          top: 6,
-          leading: filterTabButtonHorizontalInset,
-          bottom: 6,
-          trailing: filterTabButtonHorizontalInset
-        )
-      )
-      button.setAppearance(appearance, for: .normal)
-      button.setAppearance(appearance, for: .selected)
-      button.setAppearance(appearance, for: .disabled)
-    }
-  }
-
   /// Selected chip / grid label color in filter panels (`FKFilterPillStyle` default); strip expanded tab uses the same.
   private static let filterSelectionAccentColor = UIColor.systemRed
 
@@ -54,8 +33,8 @@ enum FKFilterExampleAppearance {
   static let chevronSpacing: CGFloat = 4
   static let titleSubtitleSpacing: CGFloat = 2
 
-  static var filterStripMetrics: FKFilterStripMetrics {
-    FKFilterStripMetrics(
+  static var filterTabStrip: FKFilterTabStripConfiguration {
+    FKFilterTabStripConfiguration(
       titleTextStyle: titleStyle,
       subtitleTextStyle: subtitleStyle,
       chevronSize: chevronSize,
@@ -63,6 +42,22 @@ enum FKFilterExampleAppearance {
       titleSubtitleSpacing: titleSubtitleSpacing,
       expandedTitleColor: filterSelectionAccentColor,
       expandedChevronColor: filterSelectionAccentColor
+    )
+  }
+
+  /// ``FKFilterController`` defaults for the six-tab hub demo.
+  static func makeHubFilterConfiguration() -> FKFilterConfiguration<String> {
+    FKFilterConfiguration(
+      anchoredDropdown: hubAnchoredConfiguration(),
+      defaultTabStrip: filterTabStrip
+    )
+  }
+
+  /// ``FKFilterController`` defaults for the three equal-width tab demos.
+  static func makeEqualThreeFilterConfiguration() -> FKFilterConfiguration<String> {
+    FKFilterConfiguration(
+      anchoredDropdown: equalThreeAnchoredConfiguration(),
+      defaultTabStrip: filterTabStrip
     )
   }
 

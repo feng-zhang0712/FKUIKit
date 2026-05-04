@@ -37,6 +37,9 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
   public let dropdownController: FKAnchoredDropdownController<TabID>
   public let panelFactory: FKFilterPanelFactory
 
+  /// Shared filter chrome and dropdown defaults.
+  public private(set) var filterConfiguration: FKFilterConfiguration<TabID>
+
   private var filterTabs: [FKFilterTab<TabID>]
   private let runtime = FKFilterRuntimeState<TabID>()
 
@@ -49,19 +52,24 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
   public init(
     tabs: [FKFilterTab<TabID>],
     panelFactory: FKFilterPanelFactory,
-    configuration: FKAnchoredDropdownConfiguration = .default,
+    filterConfiguration: FKFilterConfiguration<TabID> = FKFilterConfiguration(),
     tabBarHost: (any FKAnchoredDropdownTabBarHost)? = nil,
-    events: FKAnchoredDropdownConfiguration.Events<TabID> = .init(),
     onSelection: FKFilterSelectionHandler<TabID>? = nil
   ) {
     self.filterTabs = tabs
     self.panelFactory = panelFactory
+    self.filterConfiguration = filterConfiguration
     runtime.onSelection = onSelection
     self.dropdownController = FKAnchoredDropdownController(
-      tabs: Self.makeAnchoredTabs(tabs: tabs, panelFactory: panelFactory, runtime: runtime),
+      tabs: Self.makeAnchoredTabs(
+        tabs: tabs,
+        panelFactory: panelFactory,
+        runtime: runtime,
+        defaultTabStrip: filterConfiguration.defaultTabStrip
+      ),
       tabBarHost: tabBarHost,
-      configuration: configuration,
-      events: events
+      configuration: filterConfiguration.anchoredDropdown,
+      events: filterConfiguration.anchoredEvents
     )
     super.init(nibName: nil, bundle: nil)
     runtime.dropdown = dropdownController
@@ -97,7 +105,27 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
     filterTabs = tabs
     runtime.removeAllTitleOverrides()
     dropdownController.updateTabs(
-      Self.makeAnchoredTabs(tabs: tabs, panelFactory: panelFactory, runtime: runtime)
+      Self.makeAnchoredTabs(
+        tabs: tabs,
+        panelFactory: panelFactory,
+        runtime: runtime,
+        defaultTabStrip: filterConfiguration.defaultTabStrip
+      )
+    )
+  }
+
+  /// Updates dropdown configuration and strip defaults without changing the tab list.
+  public func setFilterConfiguration(_ configuration: FKFilterConfiguration<TabID>) {
+    filterConfiguration = configuration
+    dropdownController.configuration = configuration.anchoredDropdown
+    dropdownController.events = configuration.anchoredEvents
+    dropdownController.updateTabs(
+      Self.makeAnchoredTabs(
+        tabs: filterTabs,
+        panelFactory: panelFactory,
+        runtime: runtime,
+        defaultTabStrip: configuration.defaultTabStrip
+      )
     )
   }
 
@@ -123,12 +151,13 @@ public final class FKFilterController<TabID: Hashable>: UIViewController {
   private static func makeAnchoredTabs(
     tabs: [FKFilterTab<TabID>],
     panelFactory: FKFilterPanelFactory,
-    runtime: FKFilterRuntimeState<TabID>
+    runtime: FKFilterRuntimeState<TabID>,
+    defaultTabStrip: FKFilterTabStripConfiguration
   ) -> [FKAnchoredDropdownTab<TabID>] {
     tabs.map { tab in
       let tabID = tab.id
       let baseTitle = tab.title
-      let m = tab.stripMetrics
+      let m = tab.tabStrip ?? defaultTabStrip
       let titleForBar: () -> String = {
         runtime.displayTitle(for: tabID, fallback: baseTitle)
       }

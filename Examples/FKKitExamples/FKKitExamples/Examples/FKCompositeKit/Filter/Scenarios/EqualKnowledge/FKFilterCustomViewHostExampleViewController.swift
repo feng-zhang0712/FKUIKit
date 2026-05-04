@@ -9,32 +9,30 @@ final class FKFilterCustomViewHostExampleViewController: UIViewController {
     case sort
   }
 
+  private let filterConfiguration = FKFilterExampleAppearance.makeEqualThreeFilterConfiguration()
   private let demoState = FKFilterExampleState.presetEqualKnowledge()
   private let tabStrip = FKFilterExampleTabStripView()
 
   private lazy var panelFactory: FKFilterPanelFactory = FKFilterExamplePanelFactoryBuilder.makeFactory(
-    bindingTo: demoState
+    bindingTo: demoState,
+    filterConfiguration: filterConfiguration
   )
 
   private lazy var filterHost: FKFilterController<String> = {
-    let sm = FKFilterExampleAppearance.filterStripMetrics
-    return FKFilterController(
+    FKFilterController(
       tabs: [
         .init(
-          id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录",
-          stripMetrics: sm
+          id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录"
         ),
         .init(
-          id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部",
-          stripMetrics: sm
+          id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部"
         ),
         .init(
-          id: TabID.sort.rawValue, panelKind: .singleList, title: "最新",
-          stripMetrics: sm
+          id: TabID.sort.rawValue, panelKind: .singleList, title: "最新"
         ),
       ],
       panelFactory: panelFactory,
-      configuration: FKFilterExampleAppearance.equalThreeAnchoredConfiguration(),
+      filterConfiguration: filterConfiguration,
       tabBarHost: tabStrip
     )
   }()

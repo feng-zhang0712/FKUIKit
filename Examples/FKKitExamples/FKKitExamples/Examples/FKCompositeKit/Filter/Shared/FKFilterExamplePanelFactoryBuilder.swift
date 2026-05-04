@@ -1,11 +1,12 @@
 import UIKit
 import FKCompositeKit
 
-/// Builds a ``FKFilterPanelFactory`` bound to a shared ``FKFilterExampleDemoState`` (no per-kind no-op parameters at call sites).
+/// Builds a ``FKFilterPanelFactory`` bound to a shared ``FKFilterExampleState`` (no per-kind no-op parameters at call sites).
 enum FKFilterExamplePanelFactoryBuilder {
   @MainActor
   static func makeFactory(
     bindingTo state: FKFilterExampleState,
+    filterConfiguration: FKFilterConfiguration<String>,
     onTagsSelectionEmptied: (() -> Void)? = nil
   ) -> FKFilterPanelFactory {
     FKFilterPanelFactory(
@@ -81,8 +82,8 @@ enum FKFilterExamplePanelFactoryBuilder {
           )
         ),
       ],
-      loadingTitle: "Loading...",
-      wrapsPanelWithTopHairline: true
+      loadingTitle: filterConfiguration.panelLoadingTitle,
+      wrapsPanelWithTopHairline: filterConfiguration.wrapsPanelWithTopHairline
     )
   }
 }

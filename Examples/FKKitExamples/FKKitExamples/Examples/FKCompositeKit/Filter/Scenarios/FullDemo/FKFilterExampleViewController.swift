@@ -12,12 +12,14 @@ final class FKFilterExampleViewController: UIViewController {
     case sort
   }
 
+  private let filterConfiguration = FKFilterExampleAppearance.makeHubFilterConfiguration()
   private let demoState = FKFilterExampleState.presetFullHub()
   private let tabStrip = FKFilterExampleTabStripView()
   private var tagsTabTitle = "标签"
 
   private lazy var panelFactory: FKFilterPanelFactory = FKFilterExamplePanelFactoryBuilder.makeFactory(
     bindingTo: demoState,
+    filterConfiguration: filterConfiguration,
     onTagsSelectionEmptied: { [weak self] in
       guard let self else { return }
       self.tagsTabTitle = "标签"
@@ -29,7 +31,7 @@ final class FKFilterExampleViewController: UIViewController {
     FKFilterController(
       tabs: Self.makeTabs(tagsTitle: { [weak self] in self?.tagsTabTitle ?? "标签" }),
       panelFactory: panelFactory,
-      configuration: FKFilterExampleAppearance.hubAnchoredConfiguration(),
+      filterConfiguration: filterConfiguration,
       tabBarHost: tabStrip
     )
   }()
@@ -54,35 +56,28 @@ final class FKFilterExampleViewController: UIViewController {
   }
 
   private static func makeTabs(tagsTitle: @escaping () -> String) -> [FKFilterTab<String>] {
-    let sm = FKFilterExampleAppearance.filterStripMetrics
-    return [
+    [
       .init(
-        id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录",
-        stripMetrics: sm
+        id: TabID.knowledge.rawValue, panelKind: .hierarchy, title: "知识目录"
       ),
       .init(
-        id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程", subtitle: "精选",
-        stripMetrics: sm
+        id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程"
       ),
       .init(
-        id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部",
-        stripMetrics: sm
+        id: TabID.fileType.rawValue, panelKind: .gridPrimary, title: "全部"
       ),
       .init(
-        id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属",
-        stripMetrics: sm
+        id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属"
       ),
       FKFilterTab(
         id: TabID.tags.rawValue,
         panelKind: .tags,
         title: tagsTitle,
         subtitle: { Optional("可多选") },
-        allowsMultipleSelection: true,
-        stripMetrics: sm
+        allowsMultipleSelection: true
       ),
       .init(
-        id: TabID.sort.rawValue, panelKind: .singleList, title: "最新",
-        stripMetrics: sm
+        id: TabID.sort.rawValue, panelKind: .singleList, title: "最新"
       ),
     ]
   }

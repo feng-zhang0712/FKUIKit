@@ -9,34 +9,32 @@ final class FKFilterTableHostExampleViewController: UIViewController {
     case tags
   }
 
+  private let filterConfiguration = FKFilterExampleAppearance.makeEqualThreeFilterConfiguration()
   private let demoState = FKFilterExampleState.presetEqualBusiness()
   private let tabStrip = FKFilterExampleTabStripView()
 
   private lazy var panelFactory: FKFilterPanelFactory = FKFilterExamplePanelFactoryBuilder.makeFactory(
-    bindingTo: demoState
+    bindingTo: demoState,
+    filterConfiguration: filterConfiguration
   )
 
   private lazy var filterHost: FKFilterController<String> = {
-    let sm = FKFilterExampleAppearance.filterStripMetrics
-    return FKFilterController(
+    FKFilterController(
       tabs: [
         .init(
-          id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属",
-          stripMetrics: sm
+          id: TabID.platform.rawValue, panelKind: .gridSecondary, title: "课程归属"
         ),
         .init(
-          id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程",
-          stripMetrics: sm
+          id: TabID.allCourses.rawValue, panelKind: .dualHierarchy, title: "全部课程"
         ),
         .init(
           id: TabID.tags.rawValue,
           panelKind: .tags,
-          title: "标签",
-          stripMetrics: sm
+          title: "标签"
         ),
       ],
       panelFactory: panelFactory,
-      configuration: FKFilterExampleAppearance.equalThreeAnchoredConfiguration(),
+      filterConfiguration: filterConfiguration,
       tabBarHost: tabStrip
     )
   }()
