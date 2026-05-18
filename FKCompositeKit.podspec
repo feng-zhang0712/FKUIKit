@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'FKCompositeKit'
-  s.version = '0.50.2'
+  s.version = '0.51.0'
   s.summary = 'FKKit composite module: list coordination and shared controller/cell foundations.'
   s.description = <<-DESC
     Higher-level compositions built on FKCoreKit and FKUIKit: list state and

@@ -123,6 +123,14 @@ public enum FKToastDismissReason: Sendable, Equatable {
   case sceneDestroyed
 }
 
+/// High-level scheduling for repeated toast requests (e.g. rapid status taps).
+public enum FKToastPresentationStrategy: Sendable, Equatable {
+  /// Show one toast at a time; additional requests wait until the current toast dismisses.
+  case sequential
+  /// Replace the visible toast immediately with the newest message and style.
+  case replaceActive
+}
+
 /// Strategy for handling a new request while something is visible.
 public enum FKToastArrivalPolicy: Sendable, Equatable {
   /// Keep current one and enqueue new one.

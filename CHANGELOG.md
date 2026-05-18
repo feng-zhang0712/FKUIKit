@@ -8,6 +8,39 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 
 - Optional: Example app under `Examples/` (depending on this package locally)
 
+## [0.51.0] - 2026-05-18
+
+### Added (FKUIKit — Player)
+
+- **Core** (`Sources/FKUIKit/Components/Player/Core/`): **`FKMediaPlaybackCoordinator`**, **`FKAVPlayerEngine`**, playlist navigation, Now Playing / remote commands, resume store, offline playback providers, HLS download service, FairPlay hooks, and **`FKExtendedPlayerEngine`** plugin surface (MKV/DASH not bundled).
+- **`FKAudioPlayer`**: queue modes, lyrics (LRC/plain), **`FKAudioMiniBar`**, sleep timer, chapters, waveform extraction view, play history, CarPlay remote-skip helper, SwiftUI bridge.
+- **`FKVideoPlayer`**: default transport chrome, mini player shell, fullscreen host, feed **`FKVideoPlayerPool`**, external/bundled subtitles, PiP/AirPlay presenters, playlist/chapter APIs, QoE reporter hook, SharePlay stub coordinator.
+- **Examples**: AudioPlayer, VideoPlayer, and Core extended-engine hubs under **`Examples/FKKitExamples/.../Player/`** with scenario catalog URLs and shared **`FKPlayerExampleLayout`** / **`FKPlayerExampleEventLog`** helpers.
+
+### Fixed (FKUIKit — Player)
+
+- **Fullscreen**: restore embedded **`FKVideoPlayerView`** to its inline container after **`FKVideoPlayerViewController`** dismiss (rebind video layer and controls).
+- **Waveform**: decode PCM from a downloaded copy of the track URL instead of the shared **`AVPlayer`** asset (avoids “Operation Stopped”).
+- **Feed pool**: enforce **`maxPlayers`** by recycling in-use instances when the pool is at capacity.
+- **Coordinator**: report seek failure when no engine is attached; cancel **`AVPlayerItem`** ready KVO cleanly on prepare timeout.
+- **Audio session**: multicast interruption handlers per coordinator owner (no last-writer overwrite on **`shared`**).
+- **Now Playing**: apply loaded artwork on the main actor.
+- **Audio**: mirror lyrics/progress on attached Now Playing chrome; cancel stale cross-track fade transitions.
+
+### Changed (FKUIKit — Player)
+
+- **`FKVideoUIConfiguration`**: default **`controlsAutoHideInterval`** is **5** seconds.
+- **`FKVideoMiniPlayerView`** / **`FKDefaultVideoControlView`**: layout and loading UX polish (transport alignment, play-button spinner, combined time label).
+- **Documentation**: Core/VideoPlayer README notes for extended engine expectations; stub APIs (SharePlay, CarPlay template metadata) documented honestly.
+
+### Fixed (FKUIKit — Presentation)
+
+- **Center modal**: stabilize scale animation when presenting with **`FKPresentationController`**.
+
+### Changed (CocoaPods)
+
+- Root **`*.podspec`**: **`s.version`** set to **0.51.0** (Git tag **`0.51.0`**).
+
 ## [0.50.2] - 2026-05-15
 
 ### Added (FKCompositeKit — Filter)
@@ -2141,7 +2174,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [
 - Mark `FKBar.Item.FKButtonSpec.apply(to:)` as `@MainActor`.
 - Make `FKPopover.PresentationDismissReason` conform to `Sendable`.
 
-[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.50.2...HEAD
+[Unreleased]: https://github.com/feng-zhang0712/FKKit/compare/0.51.0...HEAD
+[0.51.0]: https://github.com/feng-zhang0712/FKKit/compare/0.50.2...0.51.0
 [0.50.2]: https://github.com/feng-zhang0712/FKKit/compare/0.50.1...0.50.2
 [0.50.1]: https://github.com/feng-zhang0712/FKKit/compare/0.50.0...0.50.1
 [0.50.0]: https://github.com/feng-zhang0712/FKKit/compare/0.49.0...0.50.0

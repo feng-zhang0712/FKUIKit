@@ -69,6 +69,16 @@ final class ExampleMenuViewController: UITableViewController {
           make: { FKMultiPickerExampleViewController() }
         ),
         ExampleMenuItem(
+          title: "VideoPlayer",
+          subtitle: "Hub: VOD/HLS/live, playlist, subtitles, feed pool, offline, ads, QoE, SwiftUI",
+          make: { FKVideoPlayerExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
+          title: "AudioPlayer",
+          subtitle: "Hub: MP3/HLS, queue modes, lyrics, mini bar, sleep timer, history, QoE, SwiftUI",
+          make: { FKAudioPlayerExamplesHubViewController() }
+        ),
+        ExampleMenuItem(
           title: "PagingController",
           subtitle: "FKTabBar ↔ UIPageViewController sync: lazy/SwiftUI/delegate, RTL & gestures (Public/Internal/Extension)",
           make: { FKPagingControllerExamplesHubViewController() }

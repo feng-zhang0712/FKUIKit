@@ -30,6 +30,9 @@ final class FKToastView: UIView {
     applyChrome(configuration: request.configuration)
     bindContent(request: request)
     reinstallInteractions(configuration: request.configuration)
+    invalidateIntrinsicContentSize()
+    setNeedsLayout()
+    layoutIfNeeded()
   }
 
   required init?(coder: NSCoder) {
@@ -122,18 +125,21 @@ final class FKToastView: UIView {
 
     switch request.content {
     case let .message(message):
-      titleLabel.isHidden = true
       subtitleLabel.text = message
+      subtitleLabel.isHidden = message.isEmpty
+      textStack.addArrangedSubview(subtitleLabel)
     case let .titleSubtitle(title, subtitle):
-      titleLabel.isHidden = false
       titleLabel.text = title
+      titleLabel.isHidden = title.isEmpty
       subtitleLabel.text = subtitle
+      subtitleLabel.isHidden = subtitle.isEmpty
+      textStack.addArrangedSubview(titleLabel)
+      textStack.addArrangedSubview(subtitleLabel)
     case .customView:
       break
     }
 
-    textStack.addArrangedSubview(titleLabel)
-    textStack.addArrangedSubview(subtitleLabel)
+    guard !textStack.arrangedSubviews.isEmpty else { return }
     containerStack.addArrangedSubview(textStack)
 
     if let action = configuration.action {
@@ -155,7 +161,14 @@ final class FKToastView: UIView {
 
     isAccessibilityElement = true
     accessibilityTraits = configuration.kind == .hud ? [.updatesFrequently] : [.staticText]
-    accessibilityLabel = titleLabel.isHidden ? subtitleLabel.text : "\(titleLabel.text ?? ""), \(subtitleLabel.text ?? "")"
+    switch request.content {
+    case let .message(message):
+      accessibilityLabel = message
+    case let .titleSubtitle(title, subtitle):
+      accessibilityLabel = "\(title). \(subtitle)"
+    case .customView:
+      accessibilityLabel = request.configuration.accessibilityAnnouncementOverride
+    }
   }
 
   private func installVisualEffectIfNeeded(configuration: FKToastConfiguration) {
@@ -220,9 +233,16 @@ final class FKToastView: UIView {
       containerStack.removeArrangedSubview(view)
       view.removeFromSuperview()
     }
+    for view in textStack.arrangedSubviews {
+      textStack.removeArrangedSubview(view)
+      view.removeFromSuperview()
+    }
     spinner.stopAnimating()
     titleLabel.text = nil
+    titleLabel.isHidden = false
     subtitleLabel.text = nil
+    subtitleLabel.isHidden = false
+    iconView.image = nil
     primaryActionButton.removeTarget(self, action: #selector(handlePrimaryActionTap), for: .touchUpInside)
     secondaryActionButton.removeTarget(self, action: #selector(handleSecondaryActionTap), for: .touchUpInside)
   }

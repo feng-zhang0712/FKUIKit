@@ -67,6 +67,8 @@ public struct FKToastLifecycleHooks: Sendable {
 public struct FKToastQueueConfiguration: Sendable, Equatable {
   /// Maximum number of overlays shown at once.
   public var maxConcurrentDisplayCount: Int
+  /// Preferred scheduling when callers fire toasts in quick succession.
+  public var presentationStrategy: FKToastPresentationStrategy
   /// Policy used when a new request arrives during display.
   public var arrivalPolicy: FKToastArrivalPolicy
   /// Time window for duplicate coalescing.
@@ -76,11 +78,13 @@ public struct FKToastQueueConfiguration: Sendable, Equatable {
 
   public init(
     maxConcurrentDisplayCount: Int = 1,
+    presentationStrategy: FKToastPresentationStrategy = .sequential,
     arrivalPolicy: FKToastArrivalPolicy = .queue,
     deduplicationWindow: TimeInterval = 2.5,
     allowPriorityPreemption: Bool = true
   ) {
     self.maxConcurrentDisplayCount = max(1, maxConcurrentDisplayCount)
+    self.presentationStrategy = presentationStrategy
     self.arrivalPolicy = arrivalPolicy
     self.deduplicationWindow = max(0, deduplicationWindow)
     self.allowPriorityPreemption = allowPriorityPreemption

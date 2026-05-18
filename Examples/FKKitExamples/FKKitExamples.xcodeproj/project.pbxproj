@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		0156C17A2F90961C008C5109 /* FKCompositeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0156C1792F90961C008C5109 /* FKCompositeKit */; };
 		0156C17C2F90961C008C5109 /* FKUIKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0156C17B2F90961C008C5109 /* FKUIKit */; };
+		0156C1812F909700008C5109 /* sample.lrc in Resources */ = {isa = PBXBuildFile; fileRef = 0156C1822F909700008C5109 /* sample.lrc */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0156C11C2F90932E008C5109 /* FKKitExamples.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FKKitExamples.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0156C1822F909700008C5109 /* sample.lrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = sample.lrc; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -40,6 +42,7 @@
 			isa = PBXGroup;
 			children = (
 				0156C11E2F90932E008C5109 /* FKKitExamples */,
+				0156C1832F909700008C5109 /* Resources */,
 				0156C11D2F90932E008C5109 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +53,14 @@
 				0156C11C2F90932E008C5109 /* FKKitExamples.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0156C1832F909700008C5109 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				0156C1822F909700008C5109 /* sample.lrc */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -121,6 +132,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0156C1812F909700008C5109 /* sample.lrc in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

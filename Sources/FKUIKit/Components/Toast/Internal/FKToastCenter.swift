@@ -11,6 +11,7 @@ final class FKToastCenter {
   private let queueActor = FKToastQueueActor()
   private var current: [UUID: FKToastPresentation] = [:]
   private var dismissTasks: [UUID: Task<Void, Never>] = [:]
+  private var dismissGenerations: [UUID: UInt] = [:]
   private var blockers: [UUID: FKToastBlockingView] = [:]
   private var keyboardHeight: CGFloat = 0
 
@@ -37,6 +38,14 @@ final class FKToastCenter {
       secondaryActionHandler: builder.secondaryActionHandler,
       createdAt: Date()
     )
+    if request.configuration.queue.presentationStrategy == .replaceActive {
+      if let visibleID = current.keys.first {
+        replaceVisibleToast(id: visibleID, with: request)
+        return visibleID
+      }
+      present(request: request)
+      return request.id
+    }
     Task {
       if let interrupt = await queueActor.enqueue(request) {
         await MainActor.run {
@@ -66,6 +75,7 @@ final class FKToastCenter {
     presentation.request.hooks.willDismiss?(id, reason)
     dismissTasks[id]?.cancel()
     dismissTasks[id] = nil
+    dismissGenerations[id] = nil
     current[id] = nil
     Task { await queueActor.markDismissed(id: id) }
 
@@ -108,6 +118,9 @@ final class FKToastCenter {
     presentation.view.updateDisplayedRequest(updatedRequest)
     syncSwipeGestureRecognizer(on: presentation.view, swipeToDismiss: updatedRequest.configuration.swipeToDismiss)
     Task { await queueActor.updateDisplayed(updatedRequest) }
+    if updatedRequest.configuration.queue.presentationStrategy == .replaceActive {
+      scheduleAutoDismiss(for: id, configuration: updatedRequest.configuration)
+    }
     return true
   }
 
@@ -130,6 +143,16 @@ final class FKToastCenter {
       }
     }()
     return update(id: id, content: .titleSubtitle(title: resolvedTitle, subtitle: progressText))
+  }
+
+  private func replaceVisibleToast(id: UUID, with request: FKToastRequest) {
+    guard let presentation = current[id] else { return }
+    presentation.request = request
+    presentation.view.updateDisplayedRequest(request)
+    syncSwipeGestureRecognizer(on: presentation.view, swipeToDismiss: request.configuration.swipeToDismiss)
+    Task { await queueActor.updateDisplayed(request) }
+    scheduleAutoDismiss(for: id, configuration: request.configuration)
+    announceIfNeeded(request)
   }
 
   private func presentNextIfNeeded() {
@@ -230,13 +253,17 @@ final class FKToastCenter {
 
   private func scheduleAutoDismiss(for id: UUID, configuration: FKToastConfiguration) {
     dismissTasks[id]?.cancel()
+    dismissTasks[id] = nil
+    let generation = (dismissGenerations[id] ?? 0) &+ 1
+    dismissGenerations[id] = generation
     let timeout = configuration.timeout ?? configuration.duration
     guard timeout > 0 else { return }
     dismissTasks[id] = Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
       guard !Task.isCancelled else { return }
       await MainActor.run {
-        self?.dismiss(id: id, reason: .timeout)
+        guard let self, self.dismissGenerations[id] == generation else { return }
+        self.dismiss(id: id, reason: .timeout)
       }
     }
   }

@@ -16,6 +16,15 @@ final class FKToastQueueStrategyExampleViewController: FKToastExampleBaseViewCon
     actions.addArrangedSubview(FKToastExampleUI.button("Priority Interrupt Compare") {
       FKToastExamplePlaybook.interruptionComparison()
     })
+    actions.addArrangedSubview(FKToastExampleUI.button("Replace active burst") {
+      for index in 1...5 {
+        FKToast.show(
+          "Replace #\(index)",
+          style: index.isMultiple(of: 2) ? .warning : .info,
+          presentationStrategy: .replaceActive
+        )
+      }
+    })
 
     contentStack.addArrangedSubview(
       FKToastExampleUI.section(

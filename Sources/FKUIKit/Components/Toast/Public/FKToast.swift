@@ -50,14 +50,38 @@ public enum FKToast {
   public static func show(
     _ message: String,
     style: FKToastStyle = .normal,
-    kind: FKToastKind = .toast
+    kind: FKToastKind = .toast,
+    presentationStrategy: FKToastPresentationStrategy = .sequential
   ) {
+    var configuration = FKToastConfiguration(kind: kind, style: style)
+    configuration.queue.presentationStrategy = presentationStrategy
     show(
       builder: .init(
         content: .message(message),
-        configuration: FKToastConfiguration(kind: kind, style: style)
+        configuration: configuration
       )
     )
+  }
+
+  /// Presents or updates a toast bound to `handle`, reusing the same overlay when possible.
+  @MainActor
+  @discardableResult
+  public static func showOrUpdate(
+    _ message: String,
+    handle: FKToastHandle? = nil,
+    style: FKToastStyle = .normal,
+    kind: FKToastKind = .toast,
+    presentationStrategy: FKToastPresentationStrategy = .replaceActive
+  ) -> FKToastHandle {
+    var configuration = FKToastConfiguration(kind: kind, style: style)
+    configuration.queue.presentationStrategy = presentationStrategy
+    if let handle, update(handle.id, content: .message(message), configuration: configuration) {
+      return handle
+    }
+    let id = FKToastCenter.shared.enqueue(
+      builder: .init(content: .message(message), configuration: configuration)
+    )
+    return FKToastHandle(id: id)
   }
 
   /// Full control: icon override, configuration, lifecycle hooks, and primary action handler.
@@ -115,20 +139,26 @@ public enum FKToast {
   }
 #endif
 
-  /// Advanced enqueue; thread-safe — UI work is isolated to the main actor.
+  /// Advanced enqueue; runs synchronously on the main thread when already on the main actor.
   public static func show(builder: FKToastBuilder) {
-    Task { @MainActor in
+    runOnMainActor {
       _ = FKToastCenter.shared.enqueue(builder: builder)
     }
   }
 
-  /// Enqueues using a caller-supplied `id` (for correlating with your own models) and awaits that id.
-  public static func showReturningID(builder: FKToastBuilder) async -> UUID {
-    let id = UUID()
-    await MainActor.run {
-      _ = FKToastCenter.shared.enqueue(builder: builder, id: id)
+  private static func runOnMainActor(_ work: @escaping @MainActor () -> Void) {
+    if Thread.isMainThread {
+      MainActor.assumeIsolated(work)
+    } else {
+      Task { @MainActor in work() }
     }
-    return id
+  }
+
+  /// Enqueues using a caller-supplied `id` (for correlating with your own models) and returns the active id.
+  public static func showReturningID(builder: FKToastBuilder) async -> UUID {
+    await MainActor.run {
+      FKToastCenter.shared.enqueue(builder: builder, id: UUID())
+    }
   }
 
   /// Convenience around `showReturningID` returning a `FKToastHandle`.
@@ -152,14 +182,14 @@ public enum FKToast {
   }
 
   /// In-place content refresh for a visible instance.
+  @MainActor
+  @discardableResult
   public static func update(
     _ id: UUID,
     content: FKToastContent,
     configuration: FKToastConfiguration? = nil
-  ) async -> Bool {
-    await MainActor.run {
-      FKToastCenter.shared.update(id: id, content: content, configuration: configuration)
-    }
+  ) -> Bool {
+    FKToastCenter.shared.update(id: id, content: content, configuration: configuration)
   }
 
   /// Progress helper built on `titleSubtitle` content.

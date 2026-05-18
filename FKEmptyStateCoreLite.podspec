@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'FKEmptyStateCoreLite'
-  s.version = '0.50.2'
+  s.version = '0.51.0'
   s.summary = 'Foundation-only EmptyState resolver, i18n, and type factory for FKUIKit.'
   s.description = <<-DESC
     Lightweight, UIKit-free subset of EmptyState: semantic resolution, i18n,

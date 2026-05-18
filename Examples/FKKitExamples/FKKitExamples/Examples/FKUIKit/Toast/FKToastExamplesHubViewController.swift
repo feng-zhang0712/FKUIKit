@@ -19,6 +19,11 @@ final class FKToastExamplesHubViewController: UITableViewController {
       make: { FKToastQueueStrategyExampleViewController() }
     ),
     Row(
+      title: "Live Update",
+      subtitle: "Sequential vs replace-active presentation strategy",
+      make: { FKToastLiveUpdateExampleViewController() }
+    ),
+    Row(
       title: "HUD",
       subtitle: "Loading, progress, success/failure, blocking and timeout",
       make: { FKToastHUDExampleViewController() }

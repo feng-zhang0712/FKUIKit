@@ -37,6 +37,10 @@
 	<string>The FKPermissions example demonstrates speech recognition authorization.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>The FKPermissions example demonstrates App Tracking Transparency.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
